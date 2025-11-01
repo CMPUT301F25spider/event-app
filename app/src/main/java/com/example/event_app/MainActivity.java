@@ -26,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
     public void toggle(View v) {
-       s.setEnabled(false);
+       v.setEnabled(false);
 
     }
 }
