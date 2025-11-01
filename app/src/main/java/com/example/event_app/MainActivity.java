@@ -25,8 +25,7 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
     }
-
-    public void toggle(View s) {
+    public void toggle(View v) {
        s.setEnabled(false);
 
     }
