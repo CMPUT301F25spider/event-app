@@ -25,8 +25,12 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
     }
+<<<<<<< HEAD
+    public void toggle(View s) {
+=======
     public void toggle(View v) {
-       v.setEnabled(false);
+>>>>>>> 0acb126 (changing commit account)
+       s.setEnabled(false);
 
     }
 }
