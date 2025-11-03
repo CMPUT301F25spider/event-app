@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "748494723183",
+    "project_id": "luckyspot-1e65b",
+    "storage_bucket": "luckyspot-1e65b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:748494723183:android:963e2ea0fbc4ef5b8b559a",
+        "android_client_info": {
+          "package_name": "com.example.event_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCANIF3TywUpUgvOU6NGtPerlxRr_Xk4es"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
