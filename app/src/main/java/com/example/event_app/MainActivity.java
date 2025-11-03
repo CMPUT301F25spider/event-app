@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         Toast.makeText(this,"hi", Toast.LENGTH_LONG).show();
-        Log.d("input", "hi");
+        Log.d("input", "hi"); //This is so cooked
 
     }
     public void launchSettings(View v){
