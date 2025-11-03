@@ -1,10 +1,14 @@
 package com.example.event_app;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -27,6 +31,21 @@ public class MainActivity extends AppCompatActivity {
     }
     public void toggle(View v) {
        v.setEnabled(false);
+       Log.d("successbro", "button disabled"); //loggging
+        Button button = (Button) v;
+        button.setText("Disabled");
+    }
+    public void handleText(View v){
+
+
+        Toast.makeText(this,"hi", Toast.LENGTH_LONG).show();
+        Log.d("input", "hi");
+
+    }
+    public void launchSettings(View v){
+        //launch a new activity
+        Intent i = new Intent(this,SettingsActivity.class );
+        startActivity(i);
 
     }
 }
