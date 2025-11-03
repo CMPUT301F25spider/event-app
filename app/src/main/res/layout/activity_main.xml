@@ -5,38 +5,17 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:onClick="launchSettings"
     tools:context=".MainActivity">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Bombaclat"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/button"
-        android:layout_width="219dp"
-        android:layout_height="139dp"
+        android:layout_width="167dp"
+        android:layout_height="129dp"
+        android:layout_marginTop="16dp"
+        android:onClick="launchSettings"
         android:text="Button"
-        tools:layout_editor_absoluteX="96dp"
-        tools:layout_editor_absoluteY="104dp" />
-
-    <com.google.android.material.chip.Chip
-        android:id="@+id/chip"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        tools:layout_editor_absoluteX="168dp"
-        tools:layout_editor_absoluteY="531dp" />
-
-    <Switch
-        android:id="@+id/switch1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Switch"
-        tools:layout_editor_absoluteX="106dp"
-        tools:layout_editor_absoluteY="466dp" />
-
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
