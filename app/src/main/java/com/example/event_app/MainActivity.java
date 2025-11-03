@@ -46,6 +46,11 @@ public class MainActivity extends AppCompatActivity {
         //launch a new activity
         Intent i = new Intent(this,SettingsActivity.class );
         startActivity(i);
+        TextView t = findViewById(R.id.editText);
+        String input  = t.getText().toString();
+        ((TextView)findViewById(R.id.output)).setText(input);
+        Toast.makeText(this, input, Toast.LENGTH_LONG).show();
+        Log.d("input", input);
 
     }
 }
