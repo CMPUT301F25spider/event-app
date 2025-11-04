@@ -5,17 +5,43 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:onClick="launchSettings"
     tools:context=".MainActivity">
 
-    <Button
-        android:id="@+id/button"
-        android:layout_width="167dp"
-        android:layout_height="129dp"
-        android:layout_marginTop="16dp"
-        android:onClick="launchSettings"
-        android:text="Button"
-        app:layout_constraintEnd_toEndOf="parent"
+    <!-- Title -->
+    <TextView
+        android:id="@+id/tvWelcome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Welcome to Event Lottery"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="40dp" />
+
+    <!-- Browse Events Button -->
+    <Button
+        android:id="@+id/btnBrowseEvents"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Browse Events"
+        android:onClick="openBrowseEvents"
+        app:layout_constraintTop_toBottomOf="@id/tvWelcome"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="40dp" />
+
+    <!-- Settings Button -->
+    <Button
+        android:id="@+id/btnSettings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Settings"
+        android:onClick="launchSettings"
+        app:layout_constraintTop_toBottomOf="@id/btnBrowseEvents"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="20dp" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

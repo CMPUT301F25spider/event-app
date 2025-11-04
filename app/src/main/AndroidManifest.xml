@@ -38,6 +38,12 @@
             android:name=".MainActivity"
             android:exported="false" />
 
+        <!-- Entrant: Browse Events screen -->
+        <activity
+            android:name=".BrowseEventsActivity"
+            android:exported="false"
+            android:label="Browse Events" />
+
         <!-- Organizer Home Activity -->
         <activity
             android:name=".OrganizerHomeActivity"
