@@ -2,32 +2,49 @@ package com.example.event_app;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.event_app.models.Event;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * SettingsActivity
  *  - View and update entrant profile (name, email, phone)
- *  - Deletes profile document from Firestore
+ *  - Delete profile document from Firestore
+ *  - Show history of joined events with ability to leave (US 01.02.03)
+ *
  * Covers:
  *  - US 01.02.01 / 01.02.02 (profile provide/update)
+ *  - US 01.02.03 (joined events history)
  *  - US 01.02.04 (delete profile)
  */
 public class SettingsActivity extends AppCompatActivity {
 
     private EditText etName, etEmail, etPhone;
     private Button btnSaveProfile, btnDeleteProfile;
+
+    private RecyclerView recyclerMyEvents;
+    private JoinedEventsAdapter joinedEventsAdapter;
+    private final List<Event> joinedEvents = new ArrayList<>();
 
     private FirebaseAuth auth;
     private FirebaseFirestore db;
@@ -54,8 +71,19 @@ public class SettingsActivity extends AppCompatActivity {
         btnSaveProfile = findViewById(R.id.btnSaveProfile);
         btnDeleteProfile = findViewById(R.id.btnDeleteProfile);
 
+        recyclerMyEvents = findViewById(R.id.recyclerMyEvents);
+        recyclerMyEvents.setLayoutManager(new LinearLayoutManager(this));
+        if (auth.getCurrentUser() != null) {
+            joinedEventsAdapter = new JoinedEventsAdapter(joinedEvents,
+                    auth.getCurrentUser().getUid(), db);
+            recyclerMyEvents.setAdapter(joinedEventsAdapter);
+        }
+
         // Load existing profile info
         loadUserProfile();
+
+        // Load joined events history (US 01.02.03)
+        loadJoinedEvents();
 
         // Save profile changes
         btnSaveProfile.setOnClickListener(v -> saveUserProfile());
@@ -115,6 +143,39 @@ public class SettingsActivity extends AppCompatActivity {
                         Toast.makeText(this, "Error updating profile", Toast.LENGTH_SHORT).show());
     }
 
+    // US 01.02.03 – load events this user has joined (waitingList contains userId)
+    private void loadJoinedEvents() {
+        if (auth.getCurrentUser() == null || joinedEventsAdapter == null) return;
+        String userId = auth.getCurrentUser().getUid();
+
+        db.collection("events")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    joinedEvents.clear();
+
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        // For each event, check if user is in its waitingList subcollection
+                        DocumentReference waitingRef = doc.getReference()
+                                .collection("waitingList")
+                                .document(userId);
+
+                        Event event = doc.toObject(Event.class);
+                        if (event == null) continue;
+                        event.setEventId(doc.getId());
+
+                        waitingRef.get().addOnSuccessListener(waitSnap -> {
+                            if (waitSnap.exists()) {
+                                // User is in this event's waiting list → add to history
+                                joinedEvents.add(event);
+                                joinedEventsAdapter.notifyDataSetChanged();
+                            }
+                        });
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Failed to load joined events", Toast.LENGTH_SHORT).show());
+    }
+
     // Delete profile document from Firestore
     // US 01.02.04 – As an entrant, I want to delete my profile
     private void deleteProfile() {
@@ -123,11 +184,18 @@ public class SettingsActivity extends AppCompatActivity {
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        // Delete user from all event waiting lists (subcollection version)
+        // Remove userId from all waiting lists in events (current implementation)
         db.collection("events").get()
                 .addOnSuccessListener(querySnapshot -> {
-                    for (com.google.firebase.firestore.DocumentSnapshot eventDoc : querySnapshot.getDocuments()) {
-                        eventDoc.getReference()
+                    for (DocumentSnapshot document : querySnapshot.getDocuments()) {
+                        // If you're using array-based waitingList, this is fine.
+                        // If using subcollections only, you can adjust later.
+                        if (document.contains("waitingList")) {
+                            document.getReference()
+                                    .update("waitingList", com.google.firebase.firestore.FieldValue.arrayRemove(userId));
+                        }
+                        // Also try subcollection cleanup for safety:
+                        document.getReference()
                                 .collection("waitingList")
                                 .document(userId)
                                 .delete();
@@ -138,16 +206,14 @@ public class SettingsActivity extends AppCompatActivity {
                             .delete()
                             .addOnSuccessListener(unused -> {
                                 Toast.makeText(this, "Profile deleted", Toast.LENGTH_SHORT).show();
+                                // sign out
+                                auth.signOut();
 
-                                // Delete FirebaseAuth user too!
-                                auth.getCurrentUser().delete()
-                                        .addOnCompleteListener(task -> {
-                                            // Redirect to MainActivity
-                                            Intent intent = new Intent(SettingsActivity.this, MainActivity.class);
-                                            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                                            startActivity(intent);
-                                            finish();
-                                        });
+                                // Redirect to MainActivity
+                                Intent intent = new Intent(SettingsActivity.this, MainActivity.class);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(intent);
+                                finish();
                             })
                             .addOnFailureListener(e ->
                                     Toast.makeText(this, "Failed to delete profile", Toast.LENGTH_SHORT).show());
@@ -156,5 +222,82 @@ public class SettingsActivity extends AppCompatActivity {
                         Toast.makeText(this, "Failed to clean up waiting lists", Toast.LENGTH_SHORT).show());
     }
 
+    /**
+     * Simple adapter to show joined events in Settings, with a Leave button.
+     * When Leave is tapped:
+     *  - removes user from event's waitingList subcollection
+     *  - removes item from this list
+     */
+    private static class JoinedEventsAdapter extends RecyclerView.Adapter<JoinedEventsAdapter.JoinedEventViewHolder> {
 
+        private final List<Event> events;
+        private final String userId;
+        private final FirebaseFirestore db;
+
+        JoinedEventsAdapter(List<Event> events, String userId, FirebaseFirestore db) {
+            this.events = events;
+            this.userId = userId;
+            this.db = db;
+        }
+
+        @NonNull
+        @Override
+        public JoinedEventViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = android.view.LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_event, parent, false);
+            return new JoinedEventViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull JoinedEventViewHolder holder, int position) {
+            holder.bind(events.get(position));
+        }
+
+        @Override
+        public int getItemCount() {
+            return events.size();
+        }
+
+        class JoinedEventViewHolder extends RecyclerView.ViewHolder {
+            TextView tvName, tvDescription, tvStatus;
+            Button btnJoinLeave;
+
+            JoinedEventViewHolder(@NonNull View itemView) {
+                super(itemView);
+                tvName = itemView.findViewById(R.id.tvEventName);
+                tvDescription = itemView.findViewById(R.id.tvEventDescription);
+                tvStatus = itemView.findViewById(R.id.tvEventStatus);
+                btnJoinLeave = itemView.findViewById(R.id.btnJoinLeave);
+            }
+
+            void bind(Event event) {
+                tvName.setText(event.getName());
+                tvDescription.setText(event.getDescription());
+                tvStatus.setText("Status: " + (event.getStatus() != null ? event.getStatus() : "Joined"));
+
+                btnJoinLeave.setText("Leave waiting list");
+                btnJoinLeave.setOnClickListener(v -> {
+                    // Delete from this event's waitingList/{userId}
+                    db.collection("events")
+                            .document(event.getEventId())
+                            .collection("waitingList")
+                            .document(userId)
+                            .delete()
+                            .addOnSuccessListener(aVoid -> {
+                                int pos = getBindingAdapterPosition();
+                                if (pos != RecyclerView.NO_POSITION) {
+                                    events.remove(pos);
+                                    notifyItemRemoved(pos);
+                                }
+                                Toast.makeText(itemView.getContext(),
+                                        "Left " + event.getName(), Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e ->
+                                    Toast.makeText(itemView.getContext(),
+                                            "Failed to leave: " + e.getMessage(),
+                                            Toast.LENGTH_SHORT).show());
+                });
+            }
+        }
+    }
 }

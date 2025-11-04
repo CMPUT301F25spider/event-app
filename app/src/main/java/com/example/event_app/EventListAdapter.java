@@ -139,7 +139,7 @@ public class EventListAdapter extends RecyclerView.Adapter<EventListAdapter.Even
         public String userId;
         public long joinedAt;
 
-        public WaitingEntry() { } // needed for Firestore
+        public WaitingEntry() { }       // needed for Firestore
         public WaitingEntry(String userId, long joinedAt) {
             this.userId = userId;
             this.joinedAt = joinedAt;
