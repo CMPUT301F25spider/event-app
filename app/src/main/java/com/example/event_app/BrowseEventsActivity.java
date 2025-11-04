@@ -38,6 +38,11 @@ public class BrowseEventsActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle("Browse Events");
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true); // ← back arrow
+        }
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_browse_events);
 
@@ -51,6 +56,12 @@ public class BrowseEventsActivity extends AppCompatActivity {
 
         loadEvents();       // fetch data from Firestore
         setupSearch();       // attach filter listener
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        onBackPressed();
+        return true;
     }
 
     /**
