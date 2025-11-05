@@ -1,4 +1,4 @@
-package com.example.event_app;
+package com.example.event_app.admin;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,18 +8,23 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.event_app.R;
 import com.example.event_app.models.Event;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import com.example.event_app.utils.ReportExporter;
+import com.example.event_app.models.User;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 public class AdminHomeActivity extends AppCompatActivity {
 
     private static final String TAG = "AdminHomeActivity";
 
     private TextView tvEventsCount, tvUsersCount, tvOrganizersCount, tvActiveCount;
-    private MaterialButton btnBrowseEvents, btnBrowseUsers, btnBrowseImages;
-    private MaterialButton btnTestFirebase; // TEST BUTTON - will remove later
+    private MaterialButton btnBrowseEvents, btnBrowseUsers, btnBrowseImages, btnGenerateReports;
 
     private FirebaseFirestore db;
 
@@ -36,15 +41,7 @@ public class AdminHomeActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
 
         // Initialize views
-        tvEventsCount = findViewById(R.id.tvEventsCount);
-        tvUsersCount = findViewById(R.id.tvUsersCount);
-        tvOrganizersCount = findViewById(R.id.tvOrganizersCount);
-        tvActiveCount = findViewById(R.id.tvActiveCount);
-
-        btnBrowseEvents = findViewById(R.id.btnBrowseEvents);
-        btnBrowseUsers = findViewById(R.id.btnBrowseUsers);
-        btnBrowseImages = findViewById(R.id.btnBrowseImages);
-        btnTestFirebase = findViewById(R.id.btnTestFirebase);
+        initViews();
 
         // Set up button clicks
         setupButtonListeners();
@@ -53,79 +50,37 @@ public class AdminHomeActivity extends AppCompatActivity {
         loadStatistics();
     }
 
-    private void setupButtonListeners() {
-        // Test Firebase Button - TEMPORARY
-        btnTestFirebase.setOnClickListener(v -> testFirebaseConnection());
+    private void initViews() {
+        tvEventsCount = findViewById(R.id.tvEventsCount);
+        tvUsersCount = findViewById(R.id.tvUsersCount);
+        tvOrganizersCount = findViewById(R.id.tvOrganizersCount);
+        tvActiveCount = findViewById(R.id.tvActiveCount);
 
+        btnBrowseEvents = findViewById(R.id.btnBrowseEvents);
+        btnBrowseUsers = findViewById(R.id.btnBrowseUsers);
+        btnBrowseImages = findViewById(R.id.btnBrowseImages);
+        btnGenerateReports = findViewById(R.id.btnGenerateReports);
+    }
+
+    private void setupButtonListeners() {
         btnBrowseEvents.setOnClickListener(v -> {
-            Toast.makeText(this, "Browse Events - Coming soon", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, AdminBrowseEventsActivity.class);
+            startActivity(intent);
         });
 
         btnBrowseUsers.setOnClickListener(v -> {
-            Toast.makeText(this, "Browse Users - Coming soon", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, AdminBrowseUsersActivity.class);
+            startActivity(intent);
         });
 
         btnBrowseImages.setOnClickListener(v -> {
-            Toast.makeText(this, "Browse Images - Coming soon", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, AdminBrowseImagesActivity.class);
+            startActivity(intent);
         });
-    }
 
-    /**
-     * TEST METHOD - Step 2: Test Firebase Connection
-     * This will create a test event and verify Firebase works
-     */
-    private void testFirebaseConnection() {
-        Log.d(TAG, "Testing Firebase connection...");
-        Toast.makeText(this, "Testing Firebase...", Toast.LENGTH_SHORT).show();
-
-        // Create a test event
-        String testId = "test_event_" + System.currentTimeMillis();
-        Event testEvent = new Event(
-                testId,
-                "Test Event",
-                "This is a test event to verify Firebase works",
-                "test_organizer"
-        );
-
-        // Write to Firebase
-        db.collection("events")
-                .document(testId)
-                .set(testEvent)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "✅ SUCCESS: Event written to Firebase!");
-                    Toast.makeText(this, "✅ Firebase Write Success!", Toast.LENGTH_SHORT).show();
-
-                    // Now try to read it back
-                    readTestEvent(testId);
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "❌ FAILED: Could not write to Firebase", e);
-                    Toast.makeText(this, "❌ Firebase Write Failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                });
-    }
-
-    /**
-     * Read back the test event to verify Firebase read works
-     */
-    private void readTestEvent(String testId) {
-        db.collection("events")
-                .document(testId)
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        Event event = documentSnapshot.toObject(Event.class);
-                        Log.d(TAG, "✅ SUCCESS: Event read from Firebase!");
-                        Log.d(TAG, "Event name: " + event.getName());
-                        Toast.makeText(this, "✅ Firebase Read Success! Event: " + event.getName(), Toast.LENGTH_LONG).show();
-                    } else {
-                        Log.e(TAG, "❌ Event not found");
-                        Toast.makeText(this, "❌ Event not found", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "❌ FAILED: Could not read from Firebase", e);
-                    Toast.makeText(this, "❌ Firebase Read Failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                });
+        btnGenerateReports.setOnClickListener(v -> {
+            generateAndExportReport();
+        });
     }
 
     private void loadStatistics() {
@@ -177,6 +132,46 @@ public class AdminHomeActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(e -> {
                     tvActiveCount.setText("0");
+                });
+    }
+
+    /**
+     * Generate and export platform usage report
+     * US 03.13.01: Export platform usage reports
+     */
+    private void generateAndExportReport() {
+        Toast.makeText(this, "Generating report...", Toast.LENGTH_SHORT).show();
+
+        // Fetch all events
+        db.collection("events")
+                .get()
+                .addOnSuccessListener(eventSnapshots -> {
+                    List<Event> events = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : eventSnapshots) {
+                        events.add(doc.toObject(Event.class));
+                    }
+
+                    // Fetch all users
+                    db.collection("users")
+                            .get()
+                            .addOnSuccessListener(userSnapshots -> {
+                                List<User> users = new ArrayList<>();
+                                for (QueryDocumentSnapshot doc : userSnapshots) {
+                                    users.add(doc.toObject(User.class));
+                                }
+
+                                // Export report
+                                ReportExporter.exportPlatformReport(this, events, users);
+                                Toast.makeText(this, "Report generated!", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(this, "Error loading users: " + e.getMessage(),
+                                        Toast.LENGTH_SHORT).show();
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Error loading events: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
                 });
     }
 

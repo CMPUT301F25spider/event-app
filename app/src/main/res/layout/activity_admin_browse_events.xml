@@ -5,7 +5,7 @@
     android:orientation="vertical"
     android:background="@color/white">
 
-    <!-- Search Bar -->
+    <!-- Search Bar (optional for now) -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -17,7 +17,8 @@
             android:id="@+id/searchEvents"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="text" />
+            android:inputType="text"
+            android:visibility="gone" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <!-- Events List -->
@@ -29,14 +30,30 @@
         android:padding="8dp" />
 
     <!-- Empty State -->
-    <TextView
-        android:id="@+id/tvEmptyEvents"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="No events found"
-        android:textSize="16sp"
-        android:textColor="@color/gray_dark"
-        android:layout_gravity="center"
-        android:visibility="gone" />
+    <LinearLayout
+        android:id="@+id/emptyStateLayout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No events found"
+            android:textSize="18sp"
+            android:textColor="@color/gray_dark" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Events will appear here once created"
+            android:textSize="14sp"
+            android:textColor="@color/gray_dark"
+            android:layout_marginTop="8dp" />
+
+    </LinearLayout>
 
 </LinearLayout>
