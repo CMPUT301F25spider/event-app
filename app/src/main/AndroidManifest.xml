@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Internet permission for Firebase -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -12,20 +16,54 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Event_App">
 
-        <!-- Splash Screen Activity - First screen users see -->
+        <!-- Splash Screen Activity -->
         <activity
             android:name=".SplashActivity"
-            android:theme="@style/SplashTheme"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/SplashTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- Main Activity -->
+        <!-- Profile Setup Activity -->
+        <activity
+            android:name=".ProfileSetupActivity"
+            android:exported="false" />
+
+        <!-- Main Activity (Entrant Home) -->
         <activity
             android:name=".MainActivity"
+            android:exported="false" />
+
+        <!-- Entrant: Browse Events screen -->
+        <activity
+            android:name=".BrowseEventsActivity"
+            android:exported="false"
+            android:label="Browse Events" />
+
+        <!-- Entrant: Profile Screen -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="Profile Settings" />
+
+
+        <!-- Organizer Home Activity -->
+        <activity
+            android:name=".OrganizerHomeActivity"
+            android:exported="false" />
+
+        <!-- Admin Home Activity -->
+        <activity
+            android:name=".AdminHomeActivity"
+            android:exported="false" />
+
+        <!-- Organizer: Selected/Confirmed lists + cancel -->
+        <activity
+            android:name=".ui.OrganizerEntrantsListActivity"
             android:exported="false" />
 
     </application>
