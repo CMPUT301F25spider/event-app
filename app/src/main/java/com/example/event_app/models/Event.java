@@ -1,5 +1,10 @@
 package com.example.event_app.models;
 
+import com.google.firebase.firestore.ServerTimestamp;
+
+import java.util.Date;
+import java.util.List;
+
 /**
  * Event Model - Simplified version for halfway checkpoint
  * Represents an event in the LuckySpot system
@@ -13,6 +18,20 @@ public class Event {
     private String organizerId;
     private String status;  // "active", "cancelled", "completed"
     private long createdAt;
+    private String posterUrl; // Added for poster image
+
+    // Registration and Capacity
+    private Long capacity;
+    private List<String> waitingList;
+    private List<String> signedUpUsers;
+
+    // Timestamps
+    @ServerTimestamp
+    private Date date;
+    @ServerTimestamp
+    private Date registrationStartDate;
+    @ServerTimestamp
+    private Date registrationEndDate;
 
     // Empty constructor required for Firebase
     public Event() {
@@ -49,6 +68,19 @@ public class Event {
         return status;
     }
 
+    public String getPosterUrl() { return posterUrl; }
+    public void setPosterUrl(String posterUrl) {
+        this.posterUrl = posterUrl;
+    }
+
+    public Date getRegistrationEndDate() {return registrationEndDate;}
+
+    public List<String> getWaitingList() {return waitingList;}
+
+    public List<String> getSignedUpUsers() {return signedUpUsers;}
+
+    public Date getRegistrationStartDate() {return registrationStartDate;}
+
     public long getCreatedAt() {
         return createdAt;
     }
@@ -78,3 +110,5 @@ public class Event {
         this.createdAt = createdAt;
     }
 }
+
+
