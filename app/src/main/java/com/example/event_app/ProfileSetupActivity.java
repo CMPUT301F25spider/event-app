@@ -9,7 +9,6 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.event_app.admin.AdminHomeActivity;
 import com.example.event_app.models.User;
 import com.example.event_app.utils.UserRole;
 import com.google.android.material.button.MaterialButton;
@@ -185,7 +184,7 @@ public class ProfileSetupActivity extends AppCompatActivity {
         // Priority: Admin > Organizer > Entrant
         if (user.isAdmin()) {
             Log.d(TAG, "Navigating to AdminHomeActivity");
-            intent = new Intent(this, AdminHomeActivity.class);
+            intent = new Intent(this, com.example.event_app.admin.AdminHomeActivity.class);
         } else if (user.isOrganizer()) {
             Log.d(TAG, "Navigating to OrganizerHomeActivity");
             intent = new Intent(this, OrganizerHomeActivity.class);

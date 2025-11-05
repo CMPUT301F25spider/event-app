@@ -3,4 +3,8 @@
     <string name="pick_image">Pick Image</string>
     <string name="todo_2">TODO</string>
     <string name="app_tagline">Making event access fair and fun!</string>
+
+    <!-- Navigation Drawer Strings -->
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
 </resources>

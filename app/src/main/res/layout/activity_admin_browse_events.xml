@@ -3,23 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/white">
-
-    <!-- Search Bar (optional for now) -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Search events..."
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-        android:layout_margin="16dp">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/searchEvents"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="text"
-            android:visibility="gone" />
-    </com.google.android.material.textfield.TextInputLayout>
+    android:background="@android:color/white">
 
     <!-- Events List -->
     <androidx.recyclerview.widget.RecyclerView
@@ -27,7 +11,8 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="8dp" />
+        android:padding="16dp"
+        android:clipToPadding="false" />
 
     <!-- Empty State -->
     <LinearLayout
@@ -37,21 +22,22 @@
         android:layout_weight="1"
         android:orientation="vertical"
         android:gravity="center"
-        android:visibility="gone">
+        android:visibility="gone"
+        android:padding="16dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="No events found"
             android:textSize="18sp"
-            android:textColor="@color/gray_dark" />
+            android:textColor="@android:color/darker_gray" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Events will appear here once created"
             android:textSize="14sp"
-            android:textColor="@color/gray_dark"
+            android:textColor="@android:color/darker_gray"
             android:layout_marginTop="8dp" />
 
     </LinearLayout>
