@@ -48,4 +48,13 @@ public class MainActivity extends AppCompatActivity {
         startActivity(i);
 
     }
+
+    /**
+     * Opens the Browse Events screen for entrants.
+     */
+    public void openBrowseEvents(View v) {
+        Intent intent = new Intent(this, BrowseEventsActivity.class);
+        startActivity(intent);
+    }
+
 }
