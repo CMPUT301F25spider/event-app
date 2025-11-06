@@ -8,4 +8,11 @@
     <!-- Navigation Drawer Strings -->
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <!-- Event Created Activity Strings -->
+    <string name="event_created_message">Event Created Successfully!</string>
+    <string name="qr_code_description">QR Code for event registration</string>
+    <string name="done_button">Done</string>
+    <string name="save_button">Save</string>
+    <string name="share_button">Share</string>
 </resources>
