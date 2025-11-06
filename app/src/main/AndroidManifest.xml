@@ -82,16 +82,6 @@
             android:name=".EventDetailsActivity"
             android:exported="false" />
 
-        <!-- BrowseEventsActivity -->
-        <activity
-            android:name=".BrowseEventsActivity"
-            android:exported="false" />
-
-        <!-- SettingsActivity -->
-        <activity
-            android:name=".SettingsActivity"
-            android:exported="false" />
-
         <!-- FileProvider for sharing CSV files -->
         <provider
             android:name="androidx.core.content.FileProvider"
