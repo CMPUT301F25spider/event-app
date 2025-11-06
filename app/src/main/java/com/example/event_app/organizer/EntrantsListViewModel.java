@@ -1,19 +1,11 @@
-package com.example.event_app.ui;
+package com.example.event_app.organizer;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.example.event_app.data.EntrantsRepository;
-import com.example.event_app.domain.EntrantRow;
-import com.example.event_app.domain.EntrantsFilter;
-
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.StorageMetadata;
 
 
 import java.util.Collections;

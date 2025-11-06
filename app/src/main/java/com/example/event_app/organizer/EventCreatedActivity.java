@@ -1,4 +1,4 @@
-package com.example.event_app;//ani
+package com.example.event_app.organizer;//ani
 
 import android.content.ContentValues;
 import android.graphics.Bitmap;
@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.event_app.R;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.journeyapps.barcodescanner.BarcodeEncoder;

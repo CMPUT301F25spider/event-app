@@ -1,4 +1,4 @@
-package com.example.event_app.domain;
+package com.example.event_app.organizer;
 
 import android.content.ContentResolver;
 import android.database.Cursor;

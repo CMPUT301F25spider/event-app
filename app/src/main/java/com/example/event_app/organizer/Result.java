@@ -1,4 +1,4 @@
-package com.example.event_app.domain;
+package com.example.event_app.organizer;
 
 public class Result<T> {
     public final T data;

@@ -1,4 +1,4 @@
-package com.example.event_app.domain;
+package com.example.event_app.organizer;
 
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;

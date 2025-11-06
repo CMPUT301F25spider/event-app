@@ -1,8 +1,6 @@
-package com.example.event_app.data;
+package com.example.event_app.organizer;
 
 import android.net.Uri;
-
-import com.example.event_app.domain.Result;
 
 public interface PosterStorage {
     interface Callback<T> { void onComplete(Result<T> result); }

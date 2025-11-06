@@ -1,14 +1,12 @@
-package com.example.event_app.data;
+package com.example.event_app.organizer;
 
-import static com.example.event_app.domain.EntrantsFilter.Accepted;
-import static com.example.event_app.domain.EntrantsFilter.Cancelled;
-import static com.example.event_app.domain.EntrantsFilter.Confirmed;
-import static com.example.event_app.domain.EntrantsFilter.Declined;
-import static com.example.event_app.domain.EntrantsFilter.Pending;
-import static com.example.event_app.domain.EntrantsFilter.Selected;
+import static com.example.event_app.organizer.EntrantsFilter.Accepted;
+import static com.example.event_app.organizer.EntrantsFilter.Cancelled;
+import static com.example.event_app.organizer.EntrantsFilter.Confirmed;
+import static com.example.event_app.organizer.EntrantsFilter.Declined;
+import static com.example.event_app.organizer.EntrantsFilter.Pending;
+import static com.example.event_app.organizer.EntrantsFilter.Selected;
 
-import com.example.event_app.domain.EntrantRow;
-import com.example.event_app.domain.EntrantsFilter;
 import com.example.event_app.models.Event;
 import com.google.firebase.firestore.*;
 

@@ -1,4 +1,4 @@
-package com.example.event_app.ui;
+package com.example.event_app.organizer;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -15,8 +15,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.event_app.R;
-import com.example.event_app.domain.PosterValidator;
-import com.example.event_app.domain.Result;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageMetadata;

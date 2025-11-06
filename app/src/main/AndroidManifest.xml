@@ -56,7 +56,7 @@
 
         <!-- Organizer: Selected/Confirmed lists + cancel -->
         <activity
-            android:name=".ui.OrganizerEntrantsListActivity"
+            android:name=".organizer.OrganizerEntrantsListActivity"
             android:exported="false" />
 
         <!-- Browse Events Activity -->
@@ -83,7 +83,7 @@
             android:exported="false" />
         <!-- Event Creation Activity -->
         <activity
-            android:name=".EventCreationActivity"
+            android:name=".organizer.EventCreationActivity"
             android:exported="false" />
         <!-- Admin Event Details Activity -->
         <activity

@@ -1,9 +1,6 @@
-package com.example.event_app.domain;
+package com.example.event_app.organizer;
 
 import android.net.Uri;
-
-import com.example.event_app.data.EventRepository;
-import com.example.event_app.data.PosterStorage;
 
 public class ChangePosterUseCase {
 

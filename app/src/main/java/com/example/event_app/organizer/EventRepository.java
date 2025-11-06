@@ -1,6 +1,4 @@
-package com.example.event_app.data;
-
-import com.example.event_app.domain.Result;
+package com.example.event_app.organizer;
 
 public interface EventRepository {
     interface Callback { void onComplete(Result<Void> result); }

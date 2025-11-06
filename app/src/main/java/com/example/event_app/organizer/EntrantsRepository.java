@@ -1,7 +1,5 @@
-package com.example.event_app.data;
+package com.example.event_app.organizer;
 
-import com.example.event_app.domain.EntrantRow;
-import com.example.event_app.domain.EntrantsFilter;
 import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.List;

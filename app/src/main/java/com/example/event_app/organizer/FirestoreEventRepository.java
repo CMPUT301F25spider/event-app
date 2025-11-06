@@ -1,6 +1,5 @@
-package com.example.event_app.data;
+package com.example.event_app.organizer;
 
-import com.example.event_app.domain.Result;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;

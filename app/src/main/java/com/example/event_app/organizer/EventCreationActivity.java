@@ -1,4 +1,5 @@
-package com.example.event_app;
+package com.example.event_app.organizer;
+import com.example.event_app.R;
 import com.example.event_app.models.Event;
 
 
@@ -8,9 +9,6 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
-
-import com.example.event_app.data.FirestoreEntrantsRepository;
-import com.example.event_app.models.Event;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;

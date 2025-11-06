@@ -1,8 +1,7 @@
-package com.example.event_app.data;
+package com.example.event_app.organizer;
 
 import android.net.Uri;
 
-import com.example.event_app.domain.Result;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;

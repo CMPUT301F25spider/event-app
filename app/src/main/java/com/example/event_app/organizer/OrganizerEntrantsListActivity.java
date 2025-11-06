@@ -1,4 +1,4 @@
-package com.example.event_app.ui;
+package com.example.event_app.organizer;
 
 import android.os.Bundle;
 import android.view.View;
@@ -12,9 +12,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.event_app.R;
-import com.example.event_app.data.FirestoreEntrantsRepository;
-import com.example.event_app.domain.EntrantRow;
-import com.example.event_app.domain.EntrantsFilter;
 
 public class OrganizerEntrantsListActivity extends AppCompatActivity {
 

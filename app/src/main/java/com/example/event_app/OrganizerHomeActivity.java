@@ -7,8 +7,8 @@ import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
 
 
-import com.example.event_app.ui.EventPosterActivity;
-import com.example.event_app.ui.OrganizerEntrantsListActivity;
+import com.example.event_app.organizer.EventPosterActivity;
+import com.example.event_app.organizer.OrganizerEntrantsListActivity;
 
 public class OrganizerHomeActivity extends AppCompatActivity {
 

@@ -1,4 +1,4 @@
-package com.example.event_app.domain;
+package com.example.event_app.organizer;
 
 /**
  * Filter options to view different entrant statuses in organizer UI.

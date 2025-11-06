@@ -1,4 +1,4 @@
-package com.example.event_app;
+package com.example.event_app.organizer;
 
 public class Organizer {
     private String id;
