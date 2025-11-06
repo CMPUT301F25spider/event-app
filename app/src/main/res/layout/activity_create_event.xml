@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layoutRoot"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Top half: Poster (already implemented by you) -->
+    <FrameLayout
+        android:id="@+id/posterContainer"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:background="@android:color/darker_gray">
+        <!-- Your existing poster/image upload view goes here -->
+    </FrameLayout>
+
+    <!-- Bottom half: Event details form -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- Event Name -->
+            <EditText
+                android:id="@+id/inputEventName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Event Name"
+                android:inputType="textPersonName"/>
+
+            <!-- Location -->
+            <EditText
+                android:id="@+id/inputLocation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Location"
+                android:inputType="textPostalAddress"
+                android:layout_marginTop="12dp"/>
+
+            <!-- Start Date -->
+            <TextView
+                android:id="@+id/inputStartDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Start Date"
+                android:padding="12dp"
+                android:background="@android:drawable/edit_text"
+                android:layout_marginTop="12dp"/>
+
+            <!-- End Date -->
+            <TextView
+                android:id="@+id/inputEndDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="End Date"
+                android:padding="12dp"
+                android:background="@android:drawable/edit_text"
+                android:layout_marginTop="12dp"/>
+
+            <!-- Start Time -->
+            <TextView
+                android:id="@+id/inputStartTime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Start Time"
+                android:padding="12dp"
+                android:background="@android:drawable/edit_text"
+                android:layout_marginTop="12dp"/>
+
+            <!-- End Time -->
+            <TextView
+                android:id="@+id/inputEndTime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="End Time"
+                android:padding="12dp"
+                android:background="@android:drawable/edit_text"
+                android:layout_marginTop="12dp"/>
+
+            <!-- Number of Entrants -->
+            <EditText
+                android:id="@+id/inputEntrantsCount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Number of Entrants"
+                android:inputType="number"
+                android:layout_marginTop="12dp"/>
+
+            <!-- Registration Opens -->
+            <TextView
+                android:id="@+id/inputRegOpens"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Registration Opens"
+                android:padding="12dp"
+                android:background="@android:drawable/edit_text"
+                android:layout_marginTop="12dp"/>
+
+            <!-- Registration Closes -->
+            <TextView
+                android:id="@+id/inputRegCloses"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Registration Closes"
+                android:padding="12dp"
+                android:background="@android:drawable/edit_text"
+                android:layout_marginTop="12dp"/>
+
+            <!-- Enable Geolocation -->
+            <LinearLayout
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Enable Geolocation"/>
+
+                <Switch
+                    android:id="@+id/switchGeolocation"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"/>
+            </LinearLayout>
+
+            <!-- Buttons -->
+            <LinearLayout
+                android:orientation="horizontal"
+                android:gravity="end"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp">
+
+                <Button
+                    android:id="@+id/btnSaveDraft"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="12dp"
+                    android:text="Save draft" />
+
+                <Button
+                    android:id="@+id/btnCancel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Cancel"/>
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
