@@ -1,4 +1,6 @@
 package com.example.event_app;
+import com.example.event_app.models.Event;
+
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
@@ -154,6 +156,19 @@ public class EventCreationActivity extends AppCompatActivity {
         }
         
         return isValid;
+        if (TextUtils.isEmpty(inputEventName.getText())) {
+            inputEventName.setError("Event name required");
+            return false;
+        }
+        if (TextUtils.isEmpty(inputLocation.getText())) {
+            inputLocation.setError("Location required");
+            return false;
+        }
+        if (TextUtils.isEmpty(inputEntrantsCount.getText())) {
+            inputEntrantsCount.setError("Number of entrants required");
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -207,6 +222,19 @@ public class EventCreationActivity extends AppCompatActivity {
 
         // Set location
         event.setLocation(inputLocation.getText().toString());
+
+        try {
+            Date startDate = dateFmt.parse(inputStartDate.getText().toString());
+            Date endDate = dateFmt.parse(inputEndDate.getText().toString());
+            Date regOpen = dateFmt.parse(inputRegOpens.getText().toString());
+            Date regClose = dateFmt.parse(inputRegCloses.getText().toString());
+
+            event.setDate(startDate);
+            event.setRegistrationStartDate(regOpen);
+            event.setRegistrationEndDate(regClose);
+        } catch (Exception e) {
+            Toast.makeText(this, "Invalid date format", Toast.LENGTH_SHORT).show();
+        }
 
         return event;
     }
