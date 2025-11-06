@@ -9,7 +9,7 @@ import static com.example.event_app.domain.EntrantsFilter.Selected;
 
 import com.example.event_app.domain.EntrantRow;
 import com.example.event_app.domain.EntrantsFilter;
-import com.google.firebase.FieldValue;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.*;
 

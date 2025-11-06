@@ -80,5 +80,18 @@
             app:layout_constraintEnd_toEndOf="parent"
             tools:text="Join Waiting List" />
 
+        <!-- 7. Home Button -->
+        <Button
+            android:id="@+id/button_go_back"
+            android:layout_width="223dp"
+            android:layout_height="72dp"
+            android:layout_marginTop="8dp"
+            android:text="Back to Home"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/button_join_event" />
+
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

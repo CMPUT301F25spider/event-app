@@ -39,6 +39,11 @@
             android:name=".MainActivity"
             android:exported="false" />
 
+        <!-- Entrant Browse Events Activity -->
+        <activity android:name=".EntrantBrowseEventsActivity" />
+        <!-- Entrant Settings Activity -->
+        <activity android:name=".SettingsActivity" />
+
         <!-- Organizer Home Activity -->
         <activity
             android:name=".OrganizerHomeActivity"
@@ -53,6 +58,7 @@
         <activity
             android:name=".ui.OrganizerEntrantsListActivity"
             android:exported="false" />
+
         <!-- Browse Events Activity -->
         <activity
             android:name=".admin.AdminBrowseEventsActivity"
@@ -70,6 +76,11 @@
             android:name=".admin.AdminBrowseImagesActivity"
             android:exported="false"
             android:parentActivityName=".admin.AdminHomeActivity" />
+
+        <!-- EventDetailsActivity -->
+        <activity
+            android:name=".EventDetailsActivity"
+            android:exported="false" />
 
         <!-- FileProvider for sharing CSV files -->
         <provider
