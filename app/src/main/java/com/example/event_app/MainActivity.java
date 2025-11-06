@@ -2,13 +2,10 @@ package com.example.event_app;
 
 import android.Manifest;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -101,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
      * Opens the Browse Events screen for entrants.
      */
     public void openBrowseEvents(View v) {
-        Intent intent = new Intent(this, BrowseEventsActivity.class);
+        Intent intent = new Intent(this, EntrantBrowseEventsActivity.class);
         startActivity(intent);
     }
 

@@ -21,11 +21,10 @@ import java.util.List;
 
 /**
  * BrowseEventsActivity
- * --------------------
  * Shows a list of available events that entrants can join.
  * Also supports text filtering (US 01.01.03 & US 01.01.04).
  */
-public class BrowseEventsActivity extends AppCompatActivity {
+public class EntrantBrowseEventsActivity extends AppCompatActivity {
 
     private RecyclerView recyclerViewEvents;
     private TextView tvEmptyEvents;
@@ -44,7 +43,7 @@ public class BrowseEventsActivity extends AppCompatActivity {
         }
 
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_browse_events);
+        setContentView(R.layout.activity_entrant_browse_events);
 
         recyclerViewEvents = findViewById(R.id.recyclerViewEvents);
         tvEmptyEvents = findViewById(R.id.tvEmptyEvents);
