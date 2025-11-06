@@ -48,6 +48,13 @@ public class EventDetailsActivity extends AppCompatActivity {
         textEventName = findViewById(R.id.text_event_name);
         textEventDescription = findViewById(R.id.text_event_description);
         buttonJoinEvent = findViewById(R.id.button_join_event);
+        Button backButton = findViewById(R.id.button_go_back);
+
+        //Go back to main page
+        backButton.setOnClickListener(v -> {
+            finish(); // or onBackPressed();
+        });
+
 
         // Get event ID from QR scan
         eventId = getIntent().getStringExtra(Navigator.EXTRA_EVENT_ID);
