@@ -156,19 +156,7 @@ public class EventCreationActivity extends AppCompatActivity {
         }
         
         return isValid;
-        if (TextUtils.isEmpty(inputEventName.getText())) {
-            inputEventName.setError("Event name required");
-            return false;
-        }
-        if (TextUtils.isEmpty(inputLocation.getText())) {
-            inputLocation.setError("Location required");
-            return false;
-        }
-        if (TextUtils.isEmpty(inputEntrantsCount.getText())) {
-            inputEntrantsCount.setError("Number of entrants required");
-            return false;
-        }
-        return true;
+
     }
 
     /**
