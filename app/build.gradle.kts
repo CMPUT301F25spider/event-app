@@ -40,9 +40,18 @@ dependencies {
     implementation(libs.constraintlayout)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.storage)
-    implementation("com.google.firebase:firebase-auth:23.1.0")
-    implementation("com.google.firebase:firebase-messaging:24.1.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    implementation(platform("com.google.firebase:firebase-bom:34.5.0")) // Use the latest version
+    implementation("com.google.firebase:firebase-auth:24.0.1")
+    implementation("com.google.firebase:firebase-messaging:25.0.1")
+    implementation("com.google.firebase:firebase-firestore")
+
+
+    implementation(libs.appcompat)
+    implementation(libs.material)
+    implementation(libs.zxing.android.embedded)
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+
 }

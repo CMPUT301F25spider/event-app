@@ -5,6 +5,7 @@
     <!-- Internet permission for Firebase -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:allowBackup="true"
@@ -38,19 +39,6 @@
             android:name=".MainActivity"
             android:exported="false" />
 
-        <!-- Entrant: Browse Events screen -->
-        <activity
-            android:name=".BrowseEventsActivity"
-            android:exported="false"
-            android:label="Browse Events" />
-
-        <!-- Entrant: Profile Screen -->
-        <activity
-            android:name=".SettingsActivity"
-            android:exported="false"
-            android:label="Profile Settings" />
-
-
         <!-- Organizer Home Activity -->
         <activity
             android:name=".OrganizerHomeActivity"
@@ -58,8 +46,41 @@
 
         <!-- Admin Home Activity -->
         <activity
-            android:name=".AdminHomeActivity"
+            android:name=".admin.AdminHomeActivity"
             android:exported="false" />
+
+        <!-- Organizer: Selected/Confirmed lists + cancel -->
+        <activity
+            android:name=".ui.OrganizerEntrantsListActivity"
+            android:exported="false" />
+        <!-- Browse Events Activity -->
+        <activity
+            android:name=".admin.AdminBrowseEventsActivity"
+            android:exported="false"
+            android:parentActivityName=".admin.AdminHomeActivity" />
+
+        <!-- Browse Users Activity -->
+        <activity
+            android:name=".admin.AdminBrowseUsersActivity"
+            android:exported="false"
+            android:parentActivityName=".admin.AdminHomeActivity" />
+
+        <!-- Browse Images Activity -->
+        <activity
+            android:name=".admin.AdminBrowseImagesActivity"
+            android:exported="false"
+            android:parentActivityName=".admin.AdminHomeActivity" />
+
+        <!-- FileProvider for sharing CSV files -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 
