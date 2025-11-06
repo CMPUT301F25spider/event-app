@@ -17,11 +17,15 @@ public class Event {
     private String status;  // "active", "cancelled", "completed"
     private long createdAt;
     private String posterUrl; // Added for poster image
+    private String location; // Event location
 
     // Registration and Capacity
     private Long capacity;
     private List<String> waitingList;
     private List<String> signedUpUsers;
+    private String organizerName;    // Name of organizer
+    private Date eventDate;          // Date of the event
+    private int entrantCount;
 
     // Timestamps
     @ServerTimestamp
@@ -81,6 +85,10 @@ public class Event {
 
     public String getPosterUrl() {
         return posterUrl;
+    }
+
+    public String getLocation() {
+        return location;
     }
 
     public Long getCapacity() {
@@ -150,6 +158,10 @@ public class Event {
         this.posterUrl = posterUrl;
     }
 
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
     public void setCapacity(Long capacity) {
         this.capacity = capacity;
     }
@@ -201,4 +213,28 @@ public class Event {
     public boolean hasHighCancellationRate() {
         return getCancellationRate() > 30.0;
     }
+    public String getOrganizerName() {
+        return organizerName;
+    }
+
+    public void setOrganizerName(String organizerName) {
+        this.organizerName = organizerName;
+    }
+
+    public Date getEventDate() {
+        return eventDate;
+    }
+
+    public void setEventDate(Date eventDate) {
+        this.eventDate = eventDate;
+    }
+
+    public int getEntrantCount() {
+        return entrantCount;
+    }
+
+    public void setEntrantCount(int entrantCount) {
+        this.entrantCount = entrantCount;
+    }
+
 }

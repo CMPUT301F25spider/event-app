@@ -1,5 +1,6 @@
 <resources>
-    <string name="app_name">Event_App</string>
+
+    <string name="app_name">LuckySpot</string>
     <string name="pick_image">Pick Image</string>
     <string name="todo_2">TODO</string>
     <string name="app_tagline">Making event access fair and fun!</string>
@@ -7,4 +8,10 @@
     <!-- Navigation Drawer Strings -->
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="event_created_message">Your event has been successfully created!</string>
+    <string name="qr_code_description">Scan this QR code to access event details.</string>
+    <string name="done_button">Done</string>
+    <string name="save_button">Save</string>
+    <string name="share_button">Share</string>
 </resources>
+

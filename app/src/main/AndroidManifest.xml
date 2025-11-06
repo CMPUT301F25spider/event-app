@@ -11,9 +11,9 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_luckyspotx2"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_luckyspotx2_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Event_App">
 
@@ -76,6 +76,20 @@
             android:name=".admin.AdminBrowseImagesActivity"
             android:exported="false"
             android:parentActivityName=".admin.AdminHomeActivity" />
+
+        <!-- EventDetailsActivity -->
+        <activity
+            android:name=".EventDetailsActivity"
+            android:exported="false" />
+        <!-- Event Creation Activity -->
+        <activity
+            android:name=".EventCreationActivity"
+            android:exported="false" />
+        <!-- Admin Event Details Activity -->
+        <activity
+            android:name=".admin.AdminEventDetailsActivity"
+            android:exported="false"
+            android:parentActivityName=".admin.AdminBrowseEventsActivity" />
 
         <!-- FileProvider for sharing CSV files -->
         <provider

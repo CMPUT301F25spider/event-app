@@ -12,7 +12,7 @@ Welcome to LuckySpot, a lottery-based event management Android application!
 |------|----------------|
 | Devesh Balaji Kotapally | Dev-creator09 |
 | Gurkeerat Kakar | Gskakar |
-| Animesh Tirkey | sleepypant |
+| Animesh Tirkey | sleepypant/sleepsonrockss |
 | Tanisha Dhull | Tanisha-Dhull |
 | Amaan Khan | amk237 |
 | Sahil Fidhaullah | sahilfidha |

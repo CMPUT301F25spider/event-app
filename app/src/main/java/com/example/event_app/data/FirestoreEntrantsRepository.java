@@ -9,8 +9,7 @@ import static com.example.event_app.domain.EntrantsFilter.Selected;
 
 import com.example.event_app.domain.EntrantRow;
 import com.example.event_app.domain.EntrantsFilter;
-import com.google.firebase.firestore.FieldValue;
-import com.google.firebase.Timestamp;
+import com.example.event_app.models.Event;
 import com.google.firebase.firestore.*;
 
 import java.util.*;
@@ -29,7 +28,6 @@ public class FirestoreEntrantsRepository implements EntrantsRepository {
 
     private Query getQuery(String eventId, EntrantsFilter filter) {
         CollectionReference col = entrants(eventId);
-        // NOTE: The secondary orderBy("uid") is optional, but helps avoid "inequality requires orderBy" issues on ties.
         if (filter.equals(Selected)) {
             return col.whereEqualTo("selected", true)
                     .orderBy("selectionTimestamp", Query.Direction.DESCENDING)
@@ -82,18 +80,16 @@ public class FirestoreEntrantsRepository implements EntrantsRepository {
     public ListenerRegistration listenToCount(String eventId, EntrantsFilter filter,
                                               Consumer<Integer> onSuccess,
                                               Consumer<Throwable> onError) {
-        // Use Aggregate COUNT to avoid streaming all docs for a badge number
         Query q;
         if (filter == Selected) {
             q = entrants(eventId).whereEqualTo("selected", true);
         } else if (filter == Confirmed) {
             q = entrants(eventId).whereEqualTo("status", "confirmed");
         } else {
-            return NOOP; // no-op instead of null
+            return NOOP;
         }
 
         AggregateQuery countQuery = q.count();
-        // No real-time listener for aggregate; poll by re-invoking when filter changes (that’s fine for a badge).
         countQuery.get(AggregateSource.SERVER)
                 .addOnSuccessListener(r -> onSuccess.accept((int) r.getCount()))
                 .addOnFailureListener(ex -> { if (onError != null) onError.accept(ex); });
@@ -104,7 +100,6 @@ public class FirestoreEntrantsRepository implements EntrantsRepository {
     @Override
     public void cancelEntrant(String eventId, String entrantId, String reason,
                               Runnable onSuccess, Consumer<Throwable> onError) {
-        // Guard with a transaction: only allow cancel if currently pending
         DocumentReference doc = entrants(eventId).document(entrantId);
         db.runTransaction(trx -> {
                     DocumentSnapshot snap = trx.get(doc);
@@ -128,11 +123,9 @@ public class FirestoreEntrantsRepository implements EntrantsRepository {
     public void promoteNextFromWaitlist(String eventId,
                                         Runnable onSuccess,
                                         Consumer<Throwable> onError) {
-        // Stub — hook up your draw/promote logic later (transaction or CF).
         if (onSuccess != null) onSuccess.run();
     }
 
-    // OPTIONAL: pagination overload (use if you expect long lists)
     public ListenerRegistration listenToEntrantsPage(String eventId,
                                                      EntrantsFilter filter,
                                                      int pageSize,
@@ -153,5 +146,22 @@ public class FirestoreEntrantsRepository implements EntrantsRepository {
             }
             onSuccess.accept(list);
         });
+    }
+
+    /**
+     * Saves a new event draft into the "events" collection.
+     * Uses the com.example.event_app.models.Event POJO directly.
+     */
+    public void saveEventDraft(Event event,
+                               Runnable onSuccess,
+                               Consumer<Throwable> onError) {
+        db.collection("events")
+                .add(event) // ✅ Firestore serializes the Event object automatically
+                .addOnSuccessListener(docRef -> {
+                    if (onSuccess != null) onSuccess.run();
+                })
+                .addOnFailureListener(ex -> {
+                    if (onError != null) onError.accept(ex);
+                });
     }
 }
