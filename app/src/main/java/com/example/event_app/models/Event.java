@@ -17,6 +17,7 @@ public class Event {
     private String status;  // "active", "cancelled", "completed"
     private long createdAt;
     private String posterUrl; // Added for poster image
+    private String location; // Event location
 
     // Registration and Capacity
     private Long capacity;
@@ -86,6 +87,10 @@ public class Event {
         return posterUrl;
     }
 
+    public String getLocation() {
+        return location;
+    }
+
     public Long getCapacity() {
         return capacity;
     }
@@ -151,6 +156,10 @@ public class Event {
 
     public void setPosterUrl(String posterUrl) {
         this.posterUrl = posterUrl;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     public void setCapacity(Long capacity) {

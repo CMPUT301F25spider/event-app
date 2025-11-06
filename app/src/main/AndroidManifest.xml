@@ -81,6 +81,10 @@
         <activity
             android:name=".EventDetailsActivity"
             android:exported="false" />
+        <!-- Event Creation Activity -->
+        <activity
+            android:name=".EventCreationActivity"
+            android:exported="false" />
         <!-- Admin Event Details Activity -->
         <activity
             android:name=".admin.AdminEventDetailsActivity"
