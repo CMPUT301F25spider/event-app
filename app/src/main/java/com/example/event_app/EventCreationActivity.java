@@ -116,45 +116,82 @@ public class EventCreationActivity extends AppCompatActivity {
 
     private boolean validateForm() {
         boolean isValid = true;
-        
-        if (TextUtils.isEmpty(inputEventName.getText())) {
+
+        // Safe null checks for EditText.getText()
+        if (inputEventName.getText() == null || TextUtils.isEmpty(inputEventName.getText())) {
             inputEventName.setError("Event name required");
             isValid = false;
         }
-        if (TextUtils.isEmpty(inputLocation.getText())) {
+        if (inputLocation.getText() == null || TextUtils.isEmpty(inputLocation.getText())) {
             inputLocation.setError("Location required");
             isValid = false;
         }
-        if (TextUtils.isEmpty(inputEntrantsCount.getText())) {
+        if (inputEntrantsCount.getText() == null || TextUtils.isEmpty(inputEntrantsCount.getText())) {
             inputEntrantsCount.setError("Number of entrants required");
             isValid = false;
+        } else {
+            // Validate that entrants count is a positive number
+            try {
+                long count = Long.parseLong(inputEntrantsCount.getText().toString());
+                if (count <= 0) {
+                    inputEntrantsCount.setError("Number of entrants must be greater than 0");
+                    isValid = false;
+                }
+            } catch (NumberFormatException e) {
+                inputEntrantsCount.setError("Invalid number");
+                isValid = false;
+            }
         }
-        
+
         // Validate dates - check if they're set (not empty and not just hint text)
-        String startDateText = inputStartDate.getText().toString();
+        String startDateText = inputStartDate.getText() != null ? inputStartDate.getText().toString() : "";
         if (TextUtils.isEmpty(startDateText) || startDateText.equals(inputStartDate.getHint())) {
             inputStartDate.setError("Start date required");
             isValid = false;
         }
-        
-        String endDateText = inputEndDate.getText().toString();
+
+        String endDateText = inputEndDate.getText() != null ? inputEndDate.getText().toString() : "";
         if (TextUtils.isEmpty(endDateText) || endDateText.equals(inputEndDate.getHint())) {
             inputEndDate.setError("End date required");
             isValid = false;
+        } else if (!TextUtils.isEmpty(startDateText) && !startDateText.equals(inputStartDate.getHint())) {
+            // Validate that end date is after start date
+            try {
+                Date startDate = dateFmt.parse(startDateText);
+                Date endDate = dateFmt.parse(endDateText);
+                if (endDate.before(startDate)) {
+                    inputEndDate.setError("End date must be after start date");
+                    isValid = false;
+                }
+            } catch (Exception e) {
+                // Date parsing error will be caught elsewhere
+            }
         }
-        
-        String regOpenText = inputRegOpens.getText().toString();
+
+        String regOpenText = inputRegOpens.getText() != null ? inputRegOpens.getText().toString() : "";
         if (TextUtils.isEmpty(regOpenText) || regOpenText.equals(inputRegOpens.getHint())) {
             inputRegOpens.setError("Registration open date required");
             isValid = false;
         }
-        
-        String regCloseText = inputRegCloses.getText().toString();
+
+        String regCloseText = inputRegCloses.getText() != null ? inputRegCloses.getText().toString() : "";
         if (TextUtils.isEmpty(regCloseText) || regCloseText.equals(inputRegCloses.getHint())) {
             inputRegCloses.setError("Registration close date required");
             isValid = false;
+        } else if (!TextUtils.isEmpty(regOpenText) && !regOpenText.equals(inputRegOpens.getHint())) {
+            // Validate that registration close is after registration open
+            try {
+                Date regOpen = dateFmt.parse(regOpenText);
+                Date regClose = dateFmt.parse(regCloseText);
+                if (regClose.before(regOpen)) {
+                    inputRegCloses.setError("Registration close must be after registration open");
+                    isValid = false;
+                }
+            } catch (Exception e) {
+                // Date parsing error will be caught elsewhere
+            }
         }
-        
+
         return isValid;
 
     }
@@ -164,17 +201,29 @@ public class EventCreationActivity extends AppCompatActivity {
      */
     private Event buildEventFromForm() {
         Event event = new Event();
-        event.setName(inputEventName.getText().toString());
+
+        // Safe text extraction with null checks
+        String eventName = inputEventName.getText() != null ? inputEventName.getText().toString() : "";
+        String location = inputLocation.getText() != null ? inputLocation.getText().toString() : "";
+        String entrantsCountStr = inputEntrantsCount.getText() != null ? inputEntrantsCount.getText().toString() : "";
+
+        event.setName(eventName);
         event.setDescription("Draft created via form"); // optional: add description field in UI
         event.setOrganizerId("organizer123"); // TODO: replace with actual logged-in organizer ID
         event.setPosterUrl("https://example.com/poster.png"); // TODO: replace with actual poster upload URL
-        event.setCapacity(Long.parseLong(inputEntrantsCount.getText().toString()));
 
-        // Combine date and time for start date
         try {
-            String startDateText = inputStartDate.getText().toString();
-            String startTimeText = inputStartTime.getText().toString();
-            
+            event.setCapacity(Long.parseLong(entrantsCountStr));
+        } catch (NumberFormatException e) {
+            Toast.makeText(this, "Invalid number of entrants", Toast.LENGTH_SHORT).show();
+            event.setCapacity(0L);
+        }
+
+        // Parse dates - combine date and time for start date
+        try {
+            String startDateText = inputStartDate.getText() != null ? inputStartDate.getText().toString() : "";
+            String startTimeText = inputStartTime.getText() != null ? inputStartTime.getText().toString() : "";
+
             if (!TextUtils.isEmpty(startDateText) && !startDateText.equals(inputStartDate.getHint())) {
                 Date startDate = dateFmt.parse(startDateText);
                 if (!TextUtils.isEmpty(startTimeText) && !startTimeText.equals(inputStartTime.getHint())) {
@@ -191,15 +240,34 @@ public class EventCreationActivity extends AppCompatActivity {
                     event.setDate(startDate);
                 }
             }
-            
+
+            // Parse end date (if provided)
+            String endDateText = inputEndDate.getText() != null ? inputEndDate.getText().toString() : "";
+            if (!TextUtils.isEmpty(endDateText) && !endDateText.equals(inputEndDate.getHint())) {
+                Date endDate = dateFmt.parse(endDateText);
+                // Combine with end time if provided
+                String endTimeText = inputEndTime.getText() != null ? inputEndTime.getText().toString() : "";
+                if (!TextUtils.isEmpty(endTimeText) && !endTimeText.equals(inputEndTime.getHint())) {
+                    Calendar endCalCombined = Calendar.getInstance();
+                    endCalCombined.setTime(endDate);
+                    endCalCombined.set(Calendar.HOUR_OF_DAY, endCal.get(Calendar.HOUR_OF_DAY));
+                    endCalCombined.set(Calendar.MINUTE, endCal.get(Calendar.MINUTE));
+                    endCalCombined.set(Calendar.SECOND, 0);
+                    endCalCombined.set(Calendar.MILLISECOND, 0);
+                    event.setEventDate(endCalCombined.getTime());
+                } else {
+                    event.setEventDate(endDate);
+                }
+            }
+
             // Parse registration dates
-            String regOpenText = inputRegOpens.getText().toString();
+            String regOpenText = inputRegOpens.getText() != null ? inputRegOpens.getText().toString() : "";
             if (!TextUtils.isEmpty(regOpenText) && !regOpenText.equals(inputRegOpens.getHint())) {
                 Date regOpen = dateFmt.parse(regOpenText);
                 event.setRegistrationStartDate(regOpen);
             }
-            
-            String regCloseText = inputRegCloses.getText().toString();
+
+            String regCloseText = inputRegCloses.getText() != null ? inputRegCloses.getText().toString() : "";
             if (!TextUtils.isEmpty(regCloseText) && !regCloseText.equals(inputRegCloses.getHint())) {
                 Date regClose = dateFmt.parse(regCloseText);
                 event.setRegistrationEndDate(regClose);
@@ -209,20 +277,7 @@ public class EventCreationActivity extends AppCompatActivity {
         }
 
         // Set location
-        event.setLocation(inputLocation.getText().toString());
-
-        try {
-            Date startDate = dateFmt.parse(inputStartDate.getText().toString());
-            Date endDate = dateFmt.parse(inputEndDate.getText().toString());
-            Date regOpen = dateFmt.parse(inputRegOpens.getText().toString());
-            Date regClose = dateFmt.parse(inputRegCloses.getText().toString());
-
-            event.setDate(startDate);
-            event.setRegistrationStartDate(regOpen);
-            event.setRegistrationEndDate(regClose);
-        } catch (Exception e) {
-            Toast.makeText(this, "Invalid date format", Toast.LENGTH_SHORT).show();
-        }
+        event.setLocation(location);
 
         return event;
     }
