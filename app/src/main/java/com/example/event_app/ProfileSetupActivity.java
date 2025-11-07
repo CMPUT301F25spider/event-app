@@ -53,6 +53,14 @@ public class ProfileSetupActivity extends AppCompatActivity {
         deviceId = getIntent().getStringExtra("deviceId");
         userId = getIntent().getStringExtra("userId");
 
+        // Validate device ID redirect to android ID if not protected
+        if (deviceId == null || deviceId.isEmpty()) {
+            deviceId = android.provider.Settings.Secure.getString(
+                    getContentResolver(),
+                    android.provider.Settings.Secure.ANDROID_ID
+            );
+            Log.w(TAG, "Device ID not provided in intent, using ANDROID_ID: " + deviceId);
+        }
         Log.d(TAG, "Device ID: " + deviceId);
         Log.d(TAG, "User ID: " + userId);
 
@@ -187,7 +195,7 @@ public class ProfileSetupActivity extends AppCompatActivity {
             intent = new Intent(this, com.example.event_app.admin.AdminHomeActivity.class);
         } else if (user.isOrganizer()) {
             Log.d(TAG, "Navigating to OrganizerHomeActivity");
-            intent = new Intent(this, OrganizerHomeActivity.class);
+            intent = new Intent(this, com.example.event_app.OrganizerHomeActivity.class);
         } else {
             Log.d(TAG, "Navigating to MainActivity (Entrant)");
             intent = new Intent(this, MainActivity.class);
