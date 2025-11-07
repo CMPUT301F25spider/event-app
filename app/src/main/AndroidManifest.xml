@@ -5,14 +5,15 @@
     <!-- Internet permission for Firebase -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_luckyspotx2"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_luckyspotx2_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Event_App">
 
@@ -38,28 +39,68 @@
             android:name=".MainActivity"
             android:exported="false" />
 
-        <!-- Entrant: Browse Events screen -->
-        <activity
-            android:name=".BrowseEventsActivity"
-            android:exported="false"
-            android:label="Browse Events" />
+        <!-- Entrant Browse Events Activity -->
+        <activity android:name=".EntrantBrowseEventsActivity" />
+        <!-- Entrant Settings Activity -->
+        <activity android:name=".SettingsActivity" />
 
-        <!-- Entrant: Profile Screen -->
-        <activity
-            android:name=".SettingsActivity"
-            android:exported="false"
-            android:label="Profile Settings" />
+       <!-- Organizer Home Activity -->
+        <!-- <activity android:name=".OrganizerHomeActivity" android:exported="false" /> -->
 
 
-        <!-- Organizer Home Activity -->
-        <activity
-            android:name=".OrganizerHomeActivity"
-            android:exported="false" />
 
         <!-- Admin Home Activity -->
         <activity
-            android:name=".AdminHomeActivity"
+            android:name=".admin.AdminHomeActivity"
             android:exported="false" />
+
+        <!-- Organizer: Selected/Confirmed lists + cancel -->
+        <activity
+            android:name=".ui.OrganizerEntrantsListActivity"
+            android:exported="false" />
+
+        <!-- Browse Events Activity -->
+        <activity
+            android:name=".admin.AdminBrowseEventsActivity"
+            android:exported="false"
+            android:parentActivityName=".admin.AdminHomeActivity" />
+
+        <!-- Browse Users Activity -->
+        <activity
+            android:name=".admin.AdminBrowseUsersActivity"
+            android:exported="false"
+            android:parentActivityName=".admin.AdminHomeActivity" />
+
+        <!-- Browse Images Activity -->
+        <activity
+            android:name=".admin.AdminBrowseImagesActivity"
+            android:exported="false"
+            android:parentActivityName=".admin.AdminHomeActivity" />
+
+        <!-- EventDetailsActivity -->
+        <activity
+            android:name=".EventDetailsActivity"
+            android:exported="false" />
+        <!-- Event Creation Activity -->
+        <activity
+            android:name=".EventCreationActivity"
+            android:exported="false" />
+        <!-- Admin Event Details Activity -->
+        <activity
+            android:name=".admin.AdminEventDetailsActivity"
+            android:exported="false"
+            android:parentActivityName=".admin.AdminBrowseEventsActivity" />
+
+        <!-- FileProvider for sharing CSV files -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 

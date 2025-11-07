@@ -244,7 +244,7 @@ public class SettingsActivity extends AppCompatActivity {
         @Override
         public JoinedEventViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View view = android.view.LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.item_event, parent, false);
+                    .inflate(R.layout.entrant_item_event, parent, false);
             return new JoinedEventViewHolder(view);
         }
 

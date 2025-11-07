@@ -1,5 +1,8 @@
 package com.example.event_app.models;
 
+import com.google.firebase.firestore.ServerTimestamp;import java.util.Date;
+import java.util.List;
+
 /**
  * Event Model - Simplified version for halfway checkpoint
  * Represents an event in the LuckySpot system
@@ -13,6 +16,29 @@ public class Event {
     private String organizerId;
     private String status;  // "active", "cancelled", "completed"
     private long createdAt;
+    private String posterUrl; // Added for poster image
+    private String location; // Event location
+
+    // Registration and Capacity
+    private Long capacity;
+    private List<String> waitingList;
+    private List<String> signedUpUsers;
+    private String organizerName;    // Name of organizer
+    private Date eventDate;          // Date of the event
+    private int entrantCount;
+
+    // Timestamps
+    @ServerTimestamp
+    private Date date;
+    @ServerTimestamp
+    private Date registrationStartDate;
+    @ServerTimestamp
+    private Date registrationEndDate;
+
+    // Lottery statistics (for cancellation tracking)
+    private int totalSelected;      // Total number selected in lottery
+    private int totalCancelled;     // Number who cancelled/declined
+    private int totalAttending;     // Number confirmed attending
 
     // Empty constructor required for Firebase
     public Event() {
@@ -26,9 +52,13 @@ public class Event {
         this.organizerId = organizerId;
         this.status = "active";
         this.createdAt = System.currentTimeMillis();
+        this.totalSelected = 0;
+        this.totalCancelled = 0;
+        this.totalAttending = 0;
     }
 
-    // Getters
+    // --- Getters ---
+
     public String getEventId() {
         return eventId;
     }
@@ -53,7 +83,53 @@ public class Event {
         return createdAt;
     }
 
-    // Setters
+    public String getPosterUrl() {
+        return posterUrl;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public Long getCapacity() {
+        return capacity;
+    }
+
+    public List<String> getWaitingList() {
+        return waitingList;
+    }
+
+    public List<String> getSignedUpUsers() {
+        return signedUpUsers;
+    }
+
+    public Date getDate() {
+        return date;
+    }
+
+    public Date getRegistrationStartDate() {
+        return registrationStartDate;
+    }
+
+    public Date getRegistrationEndDate() {
+        return registrationEndDate;
+    }
+
+    public int getTotalSelected() {
+        return totalSelected;
+    }
+
+    public int getTotalCancelled() {
+        return totalCancelled;
+    }
+
+    public int getTotalAttending() {
+        return totalAttending;
+    }
+
+
+    // --- Setters ---
+
     public void setEventId(String eventId) {
         this.eventId = eventId;
     }
@@ -77,4 +153,88 @@ public class Event {
     public void setCreatedAt(long createdAt) {
         this.createdAt = createdAt;
     }
+
+    public void setPosterUrl(String posterUrl) {
+        this.posterUrl = posterUrl;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public void setCapacity(Long capacity) {
+        this.capacity = capacity;
+    }
+
+    public void setWaitingList(List<String> waitingList) {
+        this.waitingList = waitingList;
+    }
+
+    public void setSignedUpUsers(List<String> signedUpUsers) {
+        this.signedUpUsers = signedUpUsers;
+    }
+
+    public void setDate(Date date) {
+        this.date = date;
+    }
+
+    public void setRegistrationStartDate(Date registrationStartDate) {
+        this.registrationStartDate = registrationStartDate;
+    }
+
+    public void setRegistrationEndDate(Date registrationEndDate) {
+        this.registrationEndDate = registrationEndDate;
+    }
+
+    public void setTotalSelected(int totalSelected) {
+        this.totalSelected = totalSelected;
+    }
+
+    public void setTotalCancelled(int totalCancelled) {
+        this.totalCancelled = totalCancelled;
+    }
+
+    public void setTotalAttending(int totalAttending) {
+        this.totalAttending = totalAttending;
+    }
+
+
+    // --- Logic Methods ---
+
+    // Calculate cancellation rate
+    public double getCancellationRate() {
+        if (totalSelected == 0) {
+            return 0.0;
+        }
+        return (double) totalCancelled / totalSelected * 100;
+    }
+
+    // Check if cancellation rate is high (>30%)
+    public boolean hasHighCancellationRate() {
+        return getCancellationRate() > 30.0;
+    }
+    public String getOrganizerName() {
+        return organizerName;
+    }
+
+    public void setOrganizerName(String organizerName) {
+        this.organizerName = organizerName;
+    }
+
+    public Date getEventDate() {
+        return eventDate;
+    }
+
+    public void setEventDate(Date eventDate) {
+        this.eventDate = eventDate;
+    }
+
+    public int getEntrantCount() {
+        return entrantCount;
+    }
+
+    public void setEntrantCount(int entrantCount) {
+        this.entrantCount = entrantCount;
+    }
+
 }

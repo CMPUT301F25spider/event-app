@@ -32,16 +32,17 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="40dp" />
 
-    <!-- Settings Button -->
+    <!-- Scan QR Code Button -->
     <Button
-        android:id="@+id/btnSettings"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Settings"
-        android:onClick="launchSettings"
-        app:layout_constraintTop_toBottomOf="@id/btnBrowseEvents"
-        app:layout_constraintStart_toStartOf="parent"
+        android:id="@+id/btnScanQr"
+        android:layout_width="159dp"
+        android:layout_height="53dp"
+        android:onClick="scanQrCode"
+        android:text="Scan Event QR"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="20dp" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnBrowseEvents" />
+
+    <!-- Settings Button -->
 
 </androidx.constraintlayout.widget.ConstraintLayout>
