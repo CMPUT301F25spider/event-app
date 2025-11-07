@@ -155,7 +155,7 @@ public class SplashActivity extends AppCompatActivity {
                 intent = new Intent(this, AdminHomeActivity.class);
             } else if (rolesList.contains(UserRole.ORGANIZER)) {
                 Log.d(TAG, "User is organizer, going to OrganizerHomeActivity");
-                intent = new Intent(this, OrganizerHomeActivity.class);
+                intent = new Intent(this, OrganizerCreateEventActivity.class);
             } else {
                 // Default to entrant
                 Log.d(TAG, "User is entrant, going to MainActivity");

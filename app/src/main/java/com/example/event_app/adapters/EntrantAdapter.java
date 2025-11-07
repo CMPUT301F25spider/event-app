@@ -1,4 +1,4 @@
-package com.example.event_app.organizer;
+package com.example.event_app.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.event_app.R;
+import com.example.event_app.organizer.EntrantRow;
 
 import java.text.DateFormat;
 import java.util.ArrayList;

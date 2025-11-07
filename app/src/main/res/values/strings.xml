@@ -13,5 +13,28 @@
     <string name="done_button">Done</string>
     <string name="save_button">Save</string>
     <string name="share_button">Share</string>
+
+    <string name="organizer_view_title">Organizer View</string>
+    <string name="create_event">Create Event</string>
+    <string name="view_entrants">View Entrants</string>
+    <string name="send_notification">Send Notification</string>
+    <string name="your_events">Your Events</string>
+    <string name="search_events">Search Events</string>
+    <string name="search_hint">Type to search…</string>
+    <string name="filter">Filter</string>
+    <string name="sort">Sort</string>
+    <string name="event_thumbnail">Event thumbnail</string>
+
+    <string name="empty"></string>
+    <string name="hint_search">Search</string>
+    <string name="tab_selected">Selected</string>
+    <string name="tab_waitlisted">Waitlisted</string>
+    <string name="tab_cancelled">Cancelled</string>
+    <string name="cd_back">Back</string>
+    <string name="label_event_name">Enter event name</string>
+    <string name="hint_event_sample">e.g., Yoga @ SUB</string>
+    <string name="btn_open_entrants">Open Entrants</string>
+
+
 </resources>
 

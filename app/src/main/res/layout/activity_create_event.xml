@@ -1,161 +1,166 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/layoutRoot"
-    android:orientation="vertical"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:padding="16dp">
 
-    <!-- Top half: Poster (already implemented by you) -->
-    <FrameLayout
-        android:id="@+id/posterContainer"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:background="@android:color/darker_gray">
-        <!-- Your existing poster/image upload view goes here -->
-    </FrameLayout>
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-    <!-- Bottom half: Event details form -->
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:fillViewport="true">
-
-        <LinearLayout
-            android:orientation="vertical"
-            android:padding="16dp"
+        <!-- Header -->
+        <TextView
+            android:id="@+id/create_event_title"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:text="CREATE EVENT"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:paddingBottom="16dp" />
 
-            <!-- Event Name -->
-            <EditText
-                android:id="@+id/inputEventName"
+        <!-- Large Poster Upload Section -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="220dp"
+            android:layout_marginBottom="16dp">
+
+            <ImageView
+                android:id="@+id/img_event_poster"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Event Name"
-                android:inputType="textPersonName"/>
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_event_placeholder"
+                android:contentDescription="@string/event_thumbnail" />
 
-            <!-- Location -->
-            <EditText
-                android:id="@+id/inputLocation"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Location"
-                android:inputType="textPostalAddress"
-                android:layout_marginTop="12dp"/>
-
-            <!-- Start Date -->
             <TextView
-                android:id="@+id/inputStartDate"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Start Date"
-                android:padding="12dp"
-                android:background="@android:drawable/edit_text"
-                android:layout_marginTop="12dp"/>
+                android:id="@+id/txt_insert_picture"
+                android:layout_width="195dp"
+                android:layout_height="140dp"
+                android:layout_gravity="center"
+                android:drawableTop="@drawable/ic_add_photo"
+                android:gravity="center"
+                android:text="Insert Picture"
+                android:textColor="@android:color/darker_gray"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+        </FrameLayout>
 
-            <!-- End Date -->
+        <!-- Event Fields -->
+        <EditText
+            android:id="@+id/input_event_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Event Name"
+            android:inputType="text" />
+
+        <EditText
+            android:id="@+id/input_event_location"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Location"
+            android:inputType="text"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/btn_start_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Start Date"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/btn_end_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="End Date"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/btn_start_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Start Time"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/btn_end_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="End Time"
+            android:layout_marginTop="8dp" />
+
+        <EditText
+            android:id="@+id/input_event_capacity"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Number of Entrants"
+            android:inputType="number"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/btn_registration_open"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Registration Opens"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/btn_registration_close"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Registration Closes"
+            android:layout_marginTop="8dp" />
+
+        <!-- Geolocation Toggle -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="8dp">
+
             <TextView
-                android:id="@+id/inputEndDate"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:hint="End Date"
-                android:padding="12dp"
-                android:background="@android:drawable/edit_text"
-                android:layout_marginTop="12dp"/>
+                android:text="Enable Geolocation"
+                android:textSize="16sp"
+                android:layout_marginEnd="12dp" />
 
-            <!-- Start Time -->
-            <TextView
-                android:id="@+id/inputStartTime"
-                android:layout_width="match_parent"
+            <Switch
+                android:id="@+id/switch_geolocation"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:hint="Start Time"
-                android:padding="12dp"
-                android:background="@android:drawable/edit_text"
-                android:layout_marginTop="12dp"/>
-
-            <!-- End Time -->
-            <TextView
-                android:id="@+id/inputEndTime"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="End Time"
-                android:padding="12dp"
-                android:background="@android:drawable/edit_text"
-                android:layout_marginTop="12dp"/>
-
-            <!-- Number of Entrants -->
-            <EditText
-                android:id="@+id/inputEntrantsCount"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Number of Entrants"
-                android:inputType="number"
-                android:layout_marginTop="12dp"/>
-
-            <!-- Registration Opens -->
-            <TextView
-                android:id="@+id/inputRegOpens"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Registration Opens"
-                android:padding="12dp"
-                android:background="@android:drawable/edit_text"
-                android:layout_marginTop="12dp"/>
-
-            <!-- Registration Closes -->
-            <TextView
-                android:id="@+id/inputRegCloses"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Registration Closes"
-                android:padding="12dp"
-                android:background="@android:drawable/edit_text"
-                android:layout_marginTop="12dp"/>
-
-            <!-- Enable Geolocation -->
-            <LinearLayout
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Enable Geolocation"/>
-
-                <Switch
-                    android:id="@+id/switchGeolocation"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"/>
-            </LinearLayout>
-
-            <!-- Buttons -->
-            <LinearLayout
-                android:orientation="horizontal"
-                android:gravity="end"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp">
-
-                <Button
-                    android:id="@+id/btnSaveDraft"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="12dp"
-                    android:text="Save draft" />
-
-                <Button
-                    android:id="@+id/btnCancel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Cancel"/>
-            </LinearLayout>
-
+                android:checked="true" />
         </LinearLayout>
-    </ScrollView>
-</LinearLayout>
+
+        <!-- Save / Cancel Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="16dp">
+
+            <Button
+                android:id="@+id/btn_save_event"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Save Draft"
+                android:backgroundTint="@android:color/holo_purple"
+                android:textColor="@android:color/white" />
+
+            <Button
+                android:id="@+id/btn_cancel_event"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Cancel"
+                android:layout_marginStart="8dp"
+                android:backgroundTint="@android:color/darker_gray"
+                android:textColor="@android:color/white" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.event_app.R;
+import com.example.event_app.adapters.EntrantAdapter;
 
 public class OrganizerEntrantsListActivity extends AppCompatActivity {
 

@@ -7,17 +7,18 @@
     android:layout_height="match_parent">
 
     <!-- Confirmation message -->
-    <TextView
-        android:id="@+id/tvConfirmation"
-        android:text="@string/event_created_message"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="16dp"/>
 
     <!-- QR Code -->
+    <TextView
+        android:id="@+id/tvConfirmation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="16dp"
+        android:text="@string/event_created_message"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
     <ImageView
         android:id="@+id/ivQrCode"
         android:layout_width="250dp"
@@ -35,7 +36,7 @@
 
     <!-- Save and Share buttons -->
     <LinearLayout
-        android:layout_width="202dp"
+        android:layout_width="204dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:gravity="center"
