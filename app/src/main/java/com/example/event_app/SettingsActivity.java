@@ -207,10 +207,10 @@ public class SettingsActivity extends AppCompatActivity {
                                 Toast.makeText(this, "Profile deleted", Toast.LENGTH_SHORT).show();
                                 // sign out
                                 auth.signOut();
-
-                                // Redirect to MainActivity
-                                Intent intent = new Intent(SettingsActivity.this, MainActivity.class);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                // Redirect to SplashActivity so normal login/profile flow runs again
+                                Intent intent = new Intent(SettingsActivity.this, SplashActivity.class);
+                                // Clear the whole task so user can't go "back" into a dead state
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                 startActivity(intent);
                                 finish();
                             })
