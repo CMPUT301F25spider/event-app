@@ -19,8 +19,13 @@ import static org.junit.Assert.*;
 public class ExampleInstrumentedTest {
     @Test
     public void useAppContext() {
-        // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         assertEquals("com.example.event_app", appContext.getPackageName());
+    }
+
+    @Test
+    public void testAppContextNotNull() {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        assertNotNull("App context should not be null", appContext);
     }
 }

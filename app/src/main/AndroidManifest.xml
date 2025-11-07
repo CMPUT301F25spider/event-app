@@ -40,14 +40,16 @@
             android:exported="false" />
 
         <!-- Entrant Browse Events Activity -->
-        <activity android:name=".EntrantBrowseEventsActivity" />
+        <activity
+            android:name=".EntrantBrowseEventsActivity"
+            android:exported="false" />
+
         <!-- Entrant Settings Activity -->
-        <activity android:name=".SettingsActivity" />
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false" />
 
         <!-- Organizer Home Activity -->
-        <activity
-            android:name=".OrganizerHomeActivity"
-            android:exported="false" />
 
         <!-- Admin Home Activity -->
         <activity
@@ -56,7 +58,7 @@
 
         <!-- Organizer: Selected/Confirmed lists + cancel -->
         <activity
-            android:name=".ui.OrganizerEntrantsListActivity"
+            android:name=".organizer.OrganizerEntrantsListActivity"
             android:exported="false" />
 
         <!-- Browse Events Activity -->
@@ -82,14 +84,18 @@
             android:name=".EventDetailsActivity"
             android:exported="false" />
         <!-- Event Creation Activity -->
-        <activity
-            android:name=".EventCreationActivity"
-            android:exported="false" />
+        <activity android:name=".OrganizerCreateEventActivity" />
+        <activity android:name=".organizer.CreateEventActivity" />
+
         <!-- Admin Event Details Activity -->
         <activity
             android:name=".admin.AdminEventDetailsActivity"
             android:exported="false"
             android:parentActivityName=".admin.AdminBrowseEventsActivity" />
+        <activity
+            android:name=".organizer.EventEntrantsActivityGskakar"
+            android:exported="false"
+            android:label="Event Entrants" />
 
         <!-- FileProvider for sharing CSV files -->
         <provider

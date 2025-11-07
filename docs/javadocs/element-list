@@ -1,0 +1,7 @@
+com.example.event_app
+com.example.event_app.adapters
+com.example.event_app.admin
+com.example.event_app.domain
+com.example.event_app.models
+com.example.event_app.organizer
+com.example.event_app.utils

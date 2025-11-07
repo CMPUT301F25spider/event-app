@@ -75,10 +75,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void toggle(View v) {
-       v.setEnabled(false);
-       Log.d("successbro", "button disabled"); //loggging
-        Button button = (Button) v;
-        button.setText("Disabled");
+        v.setEnabled(false);
+        Log.d("successbro", "button disabled"); //loggging
+        // Safe cast with instanceof check to avoid ClassCastException
+        if (v instanceof Button) {
+            Button button = (Button) v;
+            button.setText("Disabled");
+        }
     }
     public void handleText(View v){
 

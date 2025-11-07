@@ -92,8 +92,13 @@ public class EventDetailsActivity extends AppCompatActivity {
      * Populates the UI with the event data.
      */
     private void displayEventData() {
-        textEventName.setText(currentEvent.getName());
-        textEventDescription.setText(currentEvent.getDescription());
+        if (currentEvent == null) {
+            showError("Event data is invalid.");
+            return;
+        }
+
+        textEventName.setText(currentEvent.getName() != null ? currentEvent.getName() : "");
+        textEventDescription.setText(currentEvent.getDescription() != null ? currentEvent.getDescription() : "");
         if (currentEvent.getPosterUrl() != null && !currentEvent.getPosterUrl().isEmpty()) {
             Glide.with(this).load(currentEvent.getPosterUrl()).into(imageEventPoster);
         }
