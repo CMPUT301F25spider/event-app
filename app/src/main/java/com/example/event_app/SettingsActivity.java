@@ -120,11 +120,10 @@ public class SettingsActivity extends AppCompatActivity {
     private void saveUserProfile() {
         if (auth.getCurrentUser() == null) return;
         String userId = auth.getCurrentUser().getUid();
-
-        String name = etName.getText().toString().trim();
-        String email = etEmail.getText().toString().trim();
-        String phone = etPhone.getText().toString().trim();
-
+        // Null checking for string name
+        String name = etName.getText() != null ? etName.getText().toString().trim() : "";
+        String email = etEmail.getText() != null ? etEmail.getText().toString().trim() : "";
+        String phone = etPhone.getText() != null ? etPhone.getText().toString().trim() : "";
         if (name.isEmpty() || email.isEmpty()) {
             Toast.makeText(this, "Name and email are required", Toast.LENGTH_SHORT).show();
             return;

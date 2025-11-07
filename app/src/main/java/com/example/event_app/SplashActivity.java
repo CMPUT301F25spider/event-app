@@ -54,7 +54,8 @@ public class SplashActivity extends AppCompatActivity {
         Log.d(TAG, "Device ID: " + deviceId);
 
         // Wait for splash duration, then check authentication
-        new Handler().postDelayed(() -> checkUserAuthentication(), SPLASH_DURATION);
+        // Use Handler with Looper to avoid memory leaks
+        new Handler(getMainLooper()).postDelayed(() -> checkUserAuthentication(), SPLASH_DURATION);
     }
 
     /**

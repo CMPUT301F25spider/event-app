@@ -165,3 +165,5 @@ public class AdminEventAdapter extends RecyclerView.Adapter<AdminEventAdapter.Ad
         void onEventClick(Event event);
     }
 }
+
+//test

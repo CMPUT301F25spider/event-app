@@ -24,6 +24,7 @@
             android:theme="@style/SplashTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -82,7 +83,6 @@
         <activity
             android:name=".EventDetailsActivity"
             android:exported="false" />
-
         <!-- Event Creation Activity -->
         <activity android:name=".OrganizerCreateEventActivity" />
         <activity android:name=".organizer.CreateEventActivity" />
