@@ -570,3 +570,69 @@ public class CreateEventActivity extends AppCompatActivity {
     /**
      * US 02.01.01: Generate QR code for event
      */
+    private void generateAndUploadQRCode(String eventId) {
+        try {
+            // Generate QR code bitmap
+            QRCodeWriter writer = new QRCodeWriter();
+            BitMatrix bitMatrix = writer.encode(eventId, BarcodeFormat.QR_CODE, 512, 512);
+
+            int width = bitMatrix.getWidth();
+            int height = bitMatrix.getHeight();
+            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    bitmap.setPixel(x, y, bitMatrix.get(x, y) ? 0xFF000000 : 0xFFFFFFFF);
+                }
+            }
+
+            // Convert to byte array
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
+            byte[] data = baos.toByteArray();
+
+            // Upload to Firebase Storage
+            StorageReference qrRef = storage.getReference()
+                    .child("qr_codes")
+                    .child(eventId + ".png");
+
+            qrRef.putBytes(data)
+                    .addOnSuccessListener(taskSnapshot -> {
+                        Log.d(TAG, "âœ… QR code uploaded");
+                        hideLoading();
+                        showSuccessAndNavigate();
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "âŒ Error uploading QR code", e);
+                        hideLoading();
+                        // Still show success even if QR upload fails
+                        showSuccessAndNavigate();
+                    });
+
+        } catch (WriterException e) {
+            Log.e(TAG, "Error generating QR code", e);
+            hideLoading();
+            showSuccessAndNavigate();
+        }
+    }
+
+    private void showSuccessAndNavigate() {
+        Toast.makeText(this, "Event created successfully! ðŸŽ‰", Toast.LENGTH_LONG).show();
+
+        // Go back to main activity
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+        finish();
+    }
+
+    private void showLoading() {
+        loadingView.setVisibility(View.VISIBLE);
+        btnCreateEvent.setEnabled(false);
+    }
+
+    private void hideLoading() {
+        loadingView.setVisibility(View.GONE);
+        btnCreateEvent.setEnabled(true);
+    }
+}
