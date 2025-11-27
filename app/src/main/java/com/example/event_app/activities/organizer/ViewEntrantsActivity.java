@@ -136,11 +136,6 @@ public class ViewEntrantsActivity extends AppCompatActivity {
         });
     }
 
-    private void setupRecyclerView() {
-        adapter = new EntrantListAdapter(this, eventId);
-        rvEntrants.setLayoutManager(new LinearLayoutManager(this));
-        rvEntrants.setAdapter(adapter);
-    }
 
     private void loadEventDetails() {
         showLoading();
