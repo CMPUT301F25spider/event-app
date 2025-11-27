@@ -10,6 +10,7 @@ import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -39,8 +40,14 @@ import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * CreateEventActivity - Create new events with geolocation toggle
@@ -72,7 +79,8 @@ public class CreateEventActivity extends AppCompatActivity {
     private Uri posterUri;
     private Date eventDate, regStartDate, regEndDate;
     private boolean geolocationEnabled = false;
-    private String selectedCategory = "Other"; // Default category
+    private String selectedCategory = "Food & Dining"; // Default category
+    private List<String> customCategories = new ArrayList<>(); // User-added categories
 
     // Image picker launcher
     private final ActivityResultLauncher<Intent> imagePickerLauncher =
@@ -96,6 +104,9 @@ public class CreateEventActivity extends AppCompatActivity {
 
         // Initialize views
         initViews();
+        
+        // Load custom categories from Firestore
+        loadCustomCategories();
     }
 
     private void initViews() {
@@ -157,26 +168,57 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * Show category selection dialog
+     * Load custom categories from Firestore
+     */
+    private void loadCustomCategories() {
+        db.collection("categories")
+                .orderBy("name")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    customCategories.clear();
+                    for (com.google.firebase.firestore.QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                        String categoryName = doc.getString("name");
+                        if (categoryName != null && !categoryName.trim().isEmpty()) {
+                            customCategories.add(categoryName.trim());
+                        }
+                    }
+                    Log.d(TAG, "Loaded " + customCategories.size() + " custom categories");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error loading custom categories", e);
+                    // Continue with empty list if loading fails
+                });
+    }
+
+    /**
+     * Show category selection dialog with predefined and custom categories
      */
     private void showCategoryDialog() {
-        String[] categories = {
-                "Food & Dining",
-                "Sports & Fitness",
-                "Music & Entertainment",
-                "Education & Learning",
-                "Art & Culture",
-                "Technology",
-                "Health & Wellness",
-                "Business & Networking",
-                "Community & Social",
-                "Other"
-        };
+        // Predefined categories
+        List<String> predefinedCategories = new ArrayList<>();
+        predefinedCategories.add("Food & Dining");
+        predefinedCategories.add("Sports & Fitness");
+        predefinedCategories.add("Music & Entertainment");
+        predefinedCategories.add("Education & Learning");
+        predefinedCategories.add("Art & Culture");
+        predefinedCategories.add("Technology");
+        predefinedCategories.add("Health & Wellness");
+        predefinedCategories.add("Business & Networking");
+        predefinedCategories.add("Community & Social");
+
+        // Combine predefined and custom categories
+        List<String> allCategories = new ArrayList<>(predefinedCategories);
+        allCategories.addAll(customCategories);
+        
+        // Add "Add New Category" option at the end
+        allCategories.add("+ Add New Category");
+
+        String[] categoriesArray = allCategories.toArray(new String[0]);
 
         // Find currently selected index
-        int selectedIndex = 9; // Default to "Other"
-        for (int i = 0; i < categories.length; i++) {
-            if (categories[i].equals(selectedCategory)) {
+        int selectedIndex = 0; // Default to first category
+        for (int i = 0; i < categoriesArray.length; i++) {
+            if (categoriesArray[i].equals(selectedCategory)) {
                 selectedIndex = i;
                 break;
             }
@@ -184,13 +226,97 @@ public class CreateEventActivity extends AppCompatActivity {
 
         new AlertDialog.Builder(this)
                 .setTitle("Select Event Category")
-                .setSingleChoiceItems(categories, selectedIndex, (dialog, which) -> {
-                    selectedCategory = categories[which];
-                    btnSelectCategory.setText(selectedCategory);
-                    dialog.dismiss();
+                .setSingleChoiceItems(categoriesArray, selectedIndex, (dialog, which) -> {
+                    String selected = categoriesArray[which];
+                    
+                    // Check if user wants to add a new category
+                    if (selected.equals("+ Add New Category")) {
+                        dialog.dismiss();
+                        showAddCategoryDialog();
+                    } else {
+                        selectedCategory = selected;
+                        btnSelectCategory.setText(selectedCategory);
+                        dialog.dismiss();
+                    }
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    /**
+     * Show dialog to add a new custom category
+     */
+    private void showAddCategoryDialog() {
+        EditText input = new EditText(this);
+        input.setHint("Enter category name");
+        input.setMaxLines(1);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Add New Category")
+                .setView(input)
+                .setPositiveButton("Add", (dialog, which) -> {
+                    String categoryName = input.getText().toString().trim();
+                    if (!TextUtils.isEmpty(categoryName)) {
+                        addCustomCategory(categoryName);
+                    } else {
+                        Toast.makeText(this, "Category name cannot be empty", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /**
+     * Add a new custom category to Firestore
+     */
+    private void addCustomCategory(String categoryName) {
+        // Check if category already exists
+        if (customCategories.contains(categoryName)) {
+            Toast.makeText(this, "Category already exists", Toast.LENGTH_SHORT).show();
+            selectedCategory = categoryName;
+            btnSelectCategory.setText(selectedCategory);
+            return;
+        }
+
+        // Check if it's a predefined category
+        List<String> predefinedCategories = new ArrayList<>();
+        predefinedCategories.add("Food & Dining");
+        predefinedCategories.add("Sports & Fitness");
+        predefinedCategories.add("Music & Entertainment");
+        predefinedCategories.add("Education & Learning");
+        predefinedCategories.add("Art & Culture");
+        predefinedCategories.add("Technology");
+        predefinedCategories.add("Health & Wellness");
+        predefinedCategories.add("Business & Networking");
+        predefinedCategories.add("Community & Social");
+        
+        if (predefinedCategories.contains(categoryName)) {
+            Toast.makeText(this, "This is a predefined category", Toast.LENGTH_SHORT).show();
+            selectedCategory = categoryName;
+            btnSelectCategory.setText(selectedCategory);
+            return;
+        }
+
+        // Add to Firestore
+        Map<String, Object> categoryData = new HashMap<>();
+        categoryData.put("name", categoryName);
+        categoryData.put("createdAt", System.currentTimeMillis());
+        
+        db.collection("categories")
+                .document(categoryName.toLowerCase().replaceAll("\\s+", "_"))
+                .set(categoryData)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Custom category added: " + categoryName);
+                    customCategories.add(categoryName);
+                    Collections.sort(customCategories);
+                    selectedCategory = categoryName;
+                    btnSelectCategory.setText(selectedCategory);
+                    Toast.makeText(this, "Category added successfully", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error adding custom category", e);
+                    Toast.makeText(this, "Failed to add category", Toast.LENGTH_SHORT).show();
+                });
     }
 
     /**
