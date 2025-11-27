@@ -104,7 +104,7 @@ public class CreateEventActivity extends AppCompatActivity {
 
         // Initialize views
         initViews();
-        
+
         // Load custom categories from Firestore
         loadCustomCategories();
     }
@@ -210,7 +210,7 @@ public class CreateEventActivity extends AppCompatActivity {
         // Combine predefined and custom categories
         List<String> allCategories = new ArrayList<>(predefinedCategories);
         allCategories.addAll(customCategories);
-        
+
         // Add "Add New Category"
         allCategories.add("+ Add New Category");
 
@@ -229,7 +229,7 @@ public class CreateEventActivity extends AppCompatActivity {
                 .setTitle("Select Event Category")
                 .setSingleChoiceItems(categoriesArray, selectedIndex, (dialog, which) -> {
                     String selected = categoriesArray[which];
-                    
+
                     // Check if user wants to add a new category
                     if (selected.equals("+ Add New Category")) {
                         dialog.dismiss();
@@ -290,7 +290,7 @@ public class CreateEventActivity extends AppCompatActivity {
         predefinedCategories.add("Health & Wellness");
         predefinedCategories.add("Business & Networking");
         predefinedCategories.add("Community & Social");
-        
+
         if (predefinedCategories.contains(categoryName)) {
             Toast.makeText(this, "This is a predefined category", Toast.LENGTH_SHORT).show();
             selectedCategory = categoryName;
@@ -302,18 +302,18 @@ public class CreateEventActivity extends AppCompatActivity {
         Map<String, Object> categoryData = new HashMap<>();
         categoryData.put("name", categoryName);
         categoryData.put("createdAt", System.currentTimeMillis());
-        
+
         // Generate a safe document ID (remove special characters, keep only alphanumeric and underscores)
         String docId = categoryName.toLowerCase()
                 .replaceAll("[^a-z0-9_]", "_")  // Replace non-alphanumeric with underscore
                 .replaceAll("_+", "_")          // Replace multiple underscores with single
                 .replaceAll("^_|_$", "");      // Remove leading/trailing underscores
-        
+
         // If docId is empty after cleaning, use a generated ID
         if (docId.isEmpty()) {
             docId = db.collection("categories").document().getId();
         }
-        
+
         db.collection("categories")
                 .document(docId)
                 .set(categoryData)
@@ -570,69 +570,3 @@ public class CreateEventActivity extends AppCompatActivity {
     /**
      * US 02.01.01: Generate QR code for event
      */
-    private void generateAndUploadQRCode(String eventId) {
-        try {
-            // Generate QR code bitmap
-            QRCodeWriter writer = new QRCodeWriter();
-            BitMatrix bitMatrix = writer.encode(eventId, BarcodeFormat.QR_CODE, 512, 512);
-
-            int width = bitMatrix.getWidth();
-            int height = bitMatrix.getHeight();
-            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
-
-            for (int x = 0; x < width; x++) {
-                for (int y = 0; y < height; y++) {
-                    bitmap.setPixel(x, y, bitMatrix.get(x, y) ? 0xFF000000 : 0xFFFFFFFF);
-                }
-            }
-
-            // Convert to byte array
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
-            byte[] data = baos.toByteArray();
-
-            // Upload to Firebase Storage
-            StorageReference qrRef = storage.getReference()
-                    .child("qr_codes")
-                    .child(eventId + ".png");
-
-            qrRef.putBytes(data)
-                    .addOnSuccessListener(taskSnapshot -> {
-                        Log.d(TAG, "âœ… QR code uploaded");
-                        hideLoading();
-                        showSuccessAndNavigate();
-                    })
-                    .addOnFailureListener(e -> {
-                        Log.e(TAG, "âŒ Error uploading QR code", e);
-                        hideLoading();
-                        // Still show success even if QR upload fails
-                        showSuccessAndNavigate();
-                    });
-
-        } catch (WriterException e) {
-            Log.e(TAG, "Error generating QR code", e);
-            hideLoading();
-            showSuccessAndNavigate();
-        }
-    }
-
-    private void showSuccessAndNavigate() {
-        Toast.makeText(this, "Event created successfully! ðŸŽ‰", Toast.LENGTH_LONG).show();
-
-        // Go back to main activity
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(intent);
-        finish();
-    }
-
-    private void showLoading() {
-        loadingView.setVisibility(View.VISIBLE);
-        btnCreateEvent.setEnabled(false);
-    }
-
-    private void hideLoading() {
-        loadingView.setVisibility(View.GONE);
-        btnCreateEvent.setEnabled(true);
-    }
-}
