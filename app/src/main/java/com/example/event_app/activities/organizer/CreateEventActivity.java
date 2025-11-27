@@ -497,9 +497,9 @@ public class CreateEventActivity extends AppCompatActivity {
 
                     // Upload poster if selected
                     if (posterUri != null) {
-                        uploadPosterAndCreateEvent(eventId, event);
+                        uploadPosterAndCreateEvent(eventId, event, name);
                     } else {
-                        saveEventToFirestore(eventId, event);
+                        saveEventToFirestore(eventId, event, name);
                     }
                 });
     }
@@ -528,7 +528,7 @@ public class CreateEventActivity extends AppCompatActivity {
     /**
      * Upload poster to Firebase Storage
      */
-    private void uploadPosterAndCreateEvent(String eventId, Event event) {
+    private void uploadPosterAndCreateEvent(String eventId, Event event, String eventName) {
         StorageReference posterRef = storage.getReference()
                 .child("event_posters")
                 .child(eventId + ".jpg");
@@ -538,27 +538,27 @@ public class CreateEventActivity extends AppCompatActivity {
                     // Get download URL
                     posterRef.getDownloadUrl().addOnSuccessListener(uri -> {
                         event.setPosterUrl(uri.toString());
-                        saveEventToFirestore(eventId, event);
+                        saveEventToFirestore(eventId, event, eventName);
                     });
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error uploading poster", e);
                     Toast.makeText(this, "Failed to upload poster, creating event without it", Toast.LENGTH_SHORT).show();
-                    saveEventToFirestore(eventId, event);
+                    saveEventToFirestore(eventId, event, eventName);
                 });
     }
 
     /**
      * Save event to Firestore and generate QR code
      */
-    private void saveEventToFirestore(String eventId, Event event) {
+    private void saveEventToFirestore(String eventId, Event event, String eventName) {
         db.collection("events").document(eventId)
                 .set(event)
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "âœ… Event created successfully");
 
                     // Generate and upload QR code
-                    generateAndUploadQRCode(eventId);
+                    generateAndUploadQRCode(eventId, eventName);
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "âŒ Error creating event", e);
@@ -570,7 +570,7 @@ public class CreateEventActivity extends AppCompatActivity {
     /**
      * US 02.01.01: Generate QR code for event
      */
-    private void generateAndUploadQRCode(String eventId) {
+    private void generateAndUploadQRCode(String eventId, String eventName) {
         try {
             // Generate QR code bitmap
             QRCodeWriter writer = new QRCodeWriter();
@@ -600,28 +600,28 @@ public class CreateEventActivity extends AppCompatActivity {
                     .addOnSuccessListener(taskSnapshot -> {
                         Log.d(TAG, "âœ… QR code uploaded");
                         hideLoading();
-                        showSuccessAndNavigate();
+                        showSuccessAndNavigate(eventId, eventName);
                     })
                     .addOnFailureListener(e -> {
                         Log.e(TAG, "âŒ Error uploading QR code", e);
                         hideLoading();
                         // Still show success even if QR upload fails
-                        showSuccessAndNavigate();
+                        showSuccessAndNavigate(eventId, eventName);
                     });
 
         } catch (WriterException e) {
             Log.e(TAG, "Error generating QR code", e);
             hideLoading();
-            showSuccessAndNavigate();
+            // Still navigate to QR code display
+            showSuccessAndNavigate(eventId, eventName);
         }
     }
 
-    private void showSuccessAndNavigate() {
-        Toast.makeText(this, "Event created successfully! ðŸŽ‰", Toast.LENGTH_LONG).show();
-
-        // Go back to main activity
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+    private void showSuccessAndNavigate(String eventId, String eventName) {
+        // Navigate to QR code display activity
+        Intent intent = new Intent(this, QRCodeDisplayActivity.class);
+        intent.putExtra("eventId", eventId);
+        intent.putExtra("eventName", eventName);
         startActivity(intent);
         finish();
     }

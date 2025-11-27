@@ -50,6 +50,7 @@
         <!-- Organizer Activities -->
         <activity android:name=".activities.organizer.OrganizerEventDetailsActivity" />
         <activity android:name=".activities.organizer.CreateEventActivity" />
+        <activity android:name=".activities.organizer.QRCodeDisplayActivity" />
         <activity android:name=".activities.organizer.OrganizerEventsActivity" />
         <activity android:name=".activities.organizer.ViewEntrantsActivity" />
 

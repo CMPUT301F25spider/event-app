@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface">
+
+    <!-- Main Content -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:gravity="center_vertical"
+            android:background="?attr/colorSurface">
+
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:contentDescription="Back"
+                app:tint="?attr/colorOnSurface"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="16dp"
+                android:text="Event QR Code"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="24sp"
+                android:fontFamily="sans-serif-medium"/>
+
+        </LinearLayout>
+
+        <!-- Content -->
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="24dp"
+                android:gravity="center">
+
+                <!-- Success Message -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🎉 Event Created Successfully!"
+                    android:textColor="?attr/colorPrimary"
+                    android:textSize="28sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:layout_marginBottom="16dp"
+                    android:gravity="center"/>
+
+                <!-- Event Name -->
+                <TextView
+                    android:id="@+id/tvEventName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Event Name"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="22sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:layout_marginBottom="32dp"
+                    android:gravity="center"/>
+
+                <!-- QR Code Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="24dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="4dp"
+                    app:cardBackgroundColor="?attr/colorSurface">
+
+                    <ImageView
+                        android:id="@+id/ivQRCode"
+                        android:layout_width="400dp"
+                        android:layout_height="400dp"
+                        android:scaleType="fitCenter"
+                        android:padding="32dp"
+                        android:background="?attr/colorSurface"
+                        android:contentDescription="QR Code"/>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Instructions -->
+                <TextView
+                    android:id="@+id/tvInstructions"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Share this QR code with participants.\nThey can scan it to join your event."
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="16sp"
+                    android:textAlignment="center"
+                    android:lineSpacingMultiplier="1.2"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="32dp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"/>
+
+            </LinearLayout>
+
+        </androidx.core.widget.NestedScrollView>
+
+        <!-- Bottom Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:background="?attr/colorSurface"
+            android:elevation="8dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnShareQR"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Share QR Code"
+                android:textSize="16sp"
+                android:layout_marginBottom="12dp"
+                app:icon="@android:drawable/ic_menu_share"
+                style="@style/Widget.Material3.Button.OutlinedButton"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Done"
+                android:textSize="16sp"
+                style="@style/Widget.Material3.Button"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
+
