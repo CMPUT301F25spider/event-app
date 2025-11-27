@@ -211,7 +211,7 @@ public class CreateEventActivity extends AppCompatActivity {
         List<String> allCategories = new ArrayList<>(predefinedCategories);
         allCategories.addAll(customCategories);
         
-        // Add "Add New Category" option at the end
+        // Add "Add New Category"
         allCategories.add("+ Add New Category");
 
         String[] categoriesArray = allCategories.toArray(new String[0]);
