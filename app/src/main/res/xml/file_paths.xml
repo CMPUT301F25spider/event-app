@@ -3,4 +3,7 @@
     <external-files-path
         name="reports"
         path="." />
+    <cache-path
+        name="images"
+        path="images/" />
 </paths>
