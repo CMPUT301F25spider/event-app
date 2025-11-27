@@ -172,7 +172,6 @@ public class CreateEventActivity extends AppCompatActivity {
      */
     private void loadCustomCategories() {
         db.collection("categories")
-                .orderBy("name")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     customCategories.clear();
@@ -182,6 +181,8 @@ public class CreateEventActivity extends AppCompatActivity {
                             customCategories.add(categoryName.trim());
                         }
                     }
+                    // Sort alphabetically
+                    Collections.sort(customCategories);
                     Log.d(TAG, "Loaded " + customCategories.size() + " custom categories");
                 })
                 .addOnFailureListener(e -> {
@@ -302,8 +303,19 @@ public class CreateEventActivity extends AppCompatActivity {
         categoryData.put("name", categoryName);
         categoryData.put("createdAt", System.currentTimeMillis());
         
+        // Generate a safe document ID (remove special characters, keep only alphanumeric and underscores)
+        String docId = categoryName.toLowerCase()
+                .replaceAll("[^a-z0-9_]", "_")  // Replace non-alphanumeric with underscore
+                .replaceAll("_+", "_")          // Replace multiple underscores with single
+                .replaceAll("^_|_$", "");      // Remove leading/trailing underscores
+        
+        // If docId is empty after cleaning, use a generated ID
+        if (docId.isEmpty()) {
+            docId = db.collection("categories").document().getId();
+        }
+        
         db.collection("categories")
-                .document(categoryName.toLowerCase().replaceAll("\\s+", "_"))
+                .document(docId)
                 .set(categoryData)
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "Custom category added: " + categoryName);
@@ -315,7 +327,12 @@ public class CreateEventActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error adding custom category", e);
-                    Toast.makeText(this, "Failed to add category", Toast.LENGTH_SHORT).show();
+                    String errorMsg = e.getMessage();
+                    if (errorMsg != null && errorMsg.contains("PERMISSION_DENIED")) {
+                        Toast.makeText(this, "Permission denied. Please check Firestore rules.", Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(this, "Failed to add category: " + (errorMsg != null ? errorMsg : "Unknown error"), Toast.LENGTH_LONG).show();
+                    }
                 });
     }
 
