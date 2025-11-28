@@ -8,6 +8,7 @@ import java.util.List;
  * Users are identified by device ID (no password needed)
  *
  * UPDATED: Added favoriteEvents field for marking favorite events
+ * UPDATED: Added fcmToken for push notifications
  */
 public class User {
 
@@ -21,8 +22,11 @@ public class User {
     private long createdAt;
     private long updatedAt;
 
-    // NEW: Favorite events
+    // Favorite events
     private List<String> favoriteEvents;  // List of event IDs marked as favorite
+
+    // ✨ NEW: FCM push notification token
+    private String fcmToken;  // Firebase Cloud Messaging token for push notifications
 
     // Empty constructor for Firebase
     public User() {
@@ -69,7 +73,7 @@ public class User {
         return hasRole("entrant");
     }
 
-    // NEW: Favorite helper methods
+    // Favorite helper methods
     public void addFavorite(String eventId) {
         if (favoriteEvents == null) {
             favoriteEvents = new ArrayList<>();
@@ -99,7 +103,8 @@ public class User {
     public boolean isNotificationsEnabled() { return notificationsEnabled; }
     public long getCreatedAt() { return createdAt; }
     public long getUpdatedAt() { return updatedAt; }
-    public List<String> getFavoriteEvents() { return favoriteEvents; }  // NEW
+    public List<String> getFavoriteEvents() { return favoriteEvents; }
+    public String getFcmToken() { return fcmToken; }  // ✨ NEW
 
     // Setters
     public void setUserId(String userId) { this.userId = userId; }
@@ -111,5 +116,6 @@ public class User {
     public void setNotificationsEnabled(boolean notificationsEnabled) { this.notificationsEnabled = notificationsEnabled; }
     public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
     public void setUpdatedAt(long updatedAt) { this.updatedAt = updatedAt; }
-    public void setFavoriteEvents(List<String> favoriteEvents) { this.favoriteEvents = favoriteEvents; }  // NEW
+    public void setFavoriteEvents(List<String> favoriteEvents) { this.favoriteEvents = favoriteEvents; }
+    public void setFcmToken(String fcmToken) { this.fcmToken = fcmToken; }  // ✨ NEW
 }
