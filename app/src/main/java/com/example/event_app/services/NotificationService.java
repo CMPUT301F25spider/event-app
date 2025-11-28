@@ -6,22 +6,16 @@ import com.example.event_app.models.Notification;
 import com.example.event_app.models.NotificationLog;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.functions.FirebaseFunctions;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * NotificationService - Handles all notification operations
- *
- * Features:
- * - Send notifications to users
- * - Fetch user notifications
- * - Mark notifications as read
- * - Delete notifications
- * - Get unread count
- * - Respects user notification preferences
- * - Logs all notifications for admin audit trail
  */
 public class NotificationService {
 
@@ -35,78 +29,55 @@ public class NotificationService {
         this.db = FirebaseFirestore.getInstance();
     }
 
-    /**
-     * Send a notification to a single user
-     * Checks user preferences before sending
-     *
-     * @param userId Recipient user ID
-     * @param eventId Related event ID
-     * @param eventName Event name for display
-     * @param type Notification type (use Notification.TYPE_* constants)
-     * @param title Notification title
-     * @param message Notification message
-     * @param callback Success/failure callback
-     */
     public void sendNotification(String userId, String eventId, String eventName,
                                  String type, String title, String message,
                                  NotificationCallback callback) {
 
-        // ✨ First, check if user has notifications enabled
         db.collection("users").document(userId).get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
                         Boolean notificationsEnabled = documentSnapshot.getBoolean("notificationsEnabled");
 
                         if (notificationsEnabled != null && !notificationsEnabled) {
-                            // User has disabled notifications
                             Log.d(TAG, "Notifications disabled for user: " + userId);
 
-                            // Still log for admin audit (user opted out)
                             logNotification(null, "System", userId,
                                     documentSnapshot.getString("name"),
                                     eventId, eventName, type, title, message, "blocked_user_preference");
 
                             if (callback != null) {
-                                callback.onSuccess(); // Don't treat as failure
+                                callback.onSuccess();
                             }
                             return;
                         }
                     }
 
-                    // User has notifications enabled, proceed
                     createAndSendNotification(userId, eventId, eventName, type, title, message, callback);
                 })
                 .addOnFailureListener(e -> {
-                    // If we can't check preference, send anyway (fail-open)
                     Log.w(TAG, "Could not check notification preference, sending anyway", e);
                     createAndSendNotification(userId, eventId, eventName, type, title, message, callback);
                 });
     }
 
-    /**
-     * ✨ Internal method to create and send notification
-     * Original notification creation logic moved here
-     */
     private void createAndSendNotification(String userId, String eventId, String eventName,
                                            String type, String title, String message,
                                            NotificationCallback callback) {
-        // Create notification object
         Notification notification = new Notification(userId, eventId, eventName, type, title, message);
 
-        // Generate notification ID
         String notificationId = db.collection(COLLECTION_NOTIFICATIONS).document().getId();
         notification.setNotificationId(notificationId);
 
-        // Save to Firestore
         db.collection(COLLECTION_NOTIFICATIONS)
                 .document(notificationId)
                 .set(notification)
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "Notification sent to user: " + userId);
 
-                    // ✨ NEW: Log notification for admin audit
                     logNotificationAfterSend(notificationId, userId, eventId, eventName,
                             type, title, message, "sent");
+
+                    sendFCMPushNotification(userId, title, message, eventId, eventName);
 
                     if (callback != null) {
                         callback.onSuccess();
@@ -115,7 +86,6 @@ public class NotificationService {
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Failed to send notification", e);
 
-                    // ✨ NEW: Log failed notification attempt
                     logNotification(null, "System", userId, null,
                             eventId, eventName, type, title, message, "failed");
 
@@ -125,14 +95,73 @@ public class NotificationService {
                 });
     }
 
+    private void sendFCMPushNotification(String userId, String title, String message,
+                                         String eventId, String eventName) {
+
+        db.collection("users").document(userId).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        String fcmToken = documentSnapshot.getString("fcmToken");
+
+                        if (fcmToken != null && !fcmToken.isEmpty()) {
+                            Log.d(TAG, "📱 FCM token found, calling Cloud Function...");
+                            Log.d(TAG, "🔍 Token length: " + fcmToken.length());
+
+                            callCloudFunctionToSendFCM(fcmToken, title, message, eventId);
+
+                        } else {
+                            Log.w(TAG, "No FCM token for user: " + userId);
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to get FCM token for user", e);
+                });
+    }
+
     /**
-     * ✨ NEW: Log notification after successful send (with recipient details)
+     * ✨ CRITICAL FIX: Ensure all values are explicitly converted to String
      */
+    private void callCloudFunctionToSendFCM(String token, String title, String message, String eventId) {
+        Log.d(TAG, "🔍 callCloudFunctionToSendFCM called");
+        Log.d(TAG, "   token: " + (token != null ? token.substring(0, Math.min(20, token.length())) + "..." : "NULL"));
+        Log.d(TAG, "   token length: " + (token != null ? token.length() : 0));
+        Log.d(TAG, "   title: " + title);
+        Log.d(TAG, "   message: " + message);
+        Log.d(TAG, "   eventId: " + eventId);
+
+        FirebaseFunctions functions = FirebaseFunctions.getInstance();
+
+        // ✨ CRITICAL FIX: Use String.valueOf() to ensure proper serialization
+        Map<String, Object> data = new HashMap<>();
+        data.put("token", String.valueOf(token));  // ← Force string conversion
+        data.put("title", String.valueOf(title));  // ← Force string conversion
+        data.put("message", String.valueOf(message));  // ← Force string conversion
+        data.put("eventId", eventId != null ? String.valueOf(eventId) : "");  // ← Force string conversion
+
+        Log.d(TAG, "🔍 Calling function with data size: " + data.size());
+
+        functions
+                .getHttpsCallable("sendFCMNotification")
+                .call(data)
+                .addOnSuccessListener(result -> {
+                    Log.d(TAG, "✅ Cloud Function called successfully!");
+                    Log.d(TAG, "📱 Push notification sent!");
+                    Log.d(TAG, "✅ Result: " + result.getData());
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "❌ Cloud Function call failed", e);
+                    Log.e(TAG, "Error details: " + e.getMessage());
+                    if (e.getCause() != null) {
+                        Log.e(TAG, "Cause: " + e.getCause().getMessage());
+                    }
+                });
+    }
+
     private void logNotificationAfterSend(String notificationId, String recipientId,
                                           String eventId, String eventName,
                                           String type, String title, String message,
                                           String status) {
-        // Fetch recipient details for complete log
         db.collection("users").document(recipientId).get()
                 .addOnSuccessListener(userDoc -> {
                     String recipientName = userDoc.exists() ? userDoc.getString("name") : "Unknown User";
@@ -141,26 +170,11 @@ public class NotificationService {
                             eventId, eventName, type, title, message, status, notificationId);
                 })
                 .addOnFailureListener(e -> {
-                    // Log anyway with unknown recipient
                     logNotification(null, "System", recipientId, "Unknown User",
                             eventId, eventName, type, title, message, status, notificationId);
                 });
     }
 
-    /**
-     * ✨ NEW: Log notification for admin audit trail
-     *
-     * @param senderId ID of sender (null for system notifications)
-     * @param senderName Name of sender
-     * @param recipientId ID of recipient user
-     * @param recipientName Name of recipient
-     * @param eventId Related event ID
-     * @param eventName Event name
-     * @param type Notification type
-     * @param title Notification title
-     * @param message Notification message
-     * @param status Status: "sent", "failed", "blocked_user_preference"
-     */
     private void logNotification(String senderId, String senderName,
                                  String recipientId, String recipientName,
                                  String eventId, String eventName,
@@ -170,9 +184,6 @@ public class NotificationService {
                 eventId, eventName, type, title, message, status, null);
     }
 
-    /**
-     * ✨ NEW: Log notification for admin audit trail (with notification ID)
-     */
     private void logNotification(String senderId, String senderName,
                                  String recipientId, String recipientName,
                                  String eventId, String eventName,
@@ -183,7 +194,7 @@ public class NotificationService {
 
         NotificationLog log = new NotificationLog(
                 logId,
-                notificationId,  // Can be null for failed/blocked notifications
+                notificationId,
                 senderId != null ? senderId : "system",
                 senderName != null ? senderName : "System",
                 recipientId,
@@ -208,17 +219,6 @@ public class NotificationService {
                 });
     }
 
-    /**
-     * Send notifications to multiple users
-     *
-     * @param userIds List of recipient user IDs
-     * @param eventId Related event ID
-     * @param eventName Event name for display
-     * @param type Notification type
-     * @param title Notification title
-     * @param message Notification message
-     * @param callback Batch operation callback
-     */
     public void sendBulkNotifications(List<String> userIds, String eventId, String eventName,
                                       String type, String title, String message,
                                       BulkNotificationCallback callback) {
@@ -253,12 +253,6 @@ public class NotificationService {
         }
     }
 
-    /**
-     * Fetch all notifications for a user
-     *
-     * @param userId User ID
-     * @param callback Callback with list of notifications
-     */
     public void getUserNotifications(String userId, NotificationListCallback callback) {
         db.collection(COLLECTION_NOTIFICATIONS)
                 .whereEqualTo("userId", userId)
@@ -286,12 +280,6 @@ public class NotificationService {
                 });
     }
 
-    /**
-     * Get count of unread notifications for a user
-     *
-     * @param userId User ID
-     * @param callback Callback with unread count
-     */
     public void getUnreadCount(String userId, UnreadCountCallback callback) {
         db.collection(COLLECTION_NOTIFICATIONS)
                 .whereEqualTo("userId", userId)
@@ -313,12 +301,6 @@ public class NotificationService {
                 });
     }
 
-    /**
-     * Mark a notification as read
-     *
-     * @param notificationId Notification ID
-     * @param callback Success/failure callback
-     */
     public void markAsRead(String notificationId, NotificationCallback callback) {
         db.collection(COLLECTION_NOTIFICATIONS)
                 .document(notificationId)
@@ -337,12 +319,6 @@ public class NotificationService {
                 });
     }
 
-    /**
-     * Mark all notifications as read for a user
-     *
-     * @param userId User ID
-     * @param callback Success/failure callback
-     */
     public void markAllAsRead(String userId, NotificationCallback callback) {
         db.collection(COLLECTION_NOTIFICATIONS)
                 .whereEqualTo("userId", userId)
@@ -374,12 +350,6 @@ public class NotificationService {
                 });
     }
 
-    /**
-     * Delete a notification
-     *
-     * @param notificationId Notification ID
-     * @param callback Success/failure callback
-     */
     public void deleteNotification(String notificationId, NotificationCallback callback) {
         db.collection(COLLECTION_NOTIFICATIONS)
                 .document(notificationId)
@@ -398,12 +368,6 @@ public class NotificationService {
                 });
     }
 
-    /**
-     * Delete all notifications for a user
-     *
-     * @param userId User ID
-     * @param callback Success/failure callback
-     */
     public void deleteAllNotifications(String userId, NotificationCallback callback) {
         db.collection(COLLECTION_NOTIFICATIONS)
                 .whereEqualTo("userId", userId)
