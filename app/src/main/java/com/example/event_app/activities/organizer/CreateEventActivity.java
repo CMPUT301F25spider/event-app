@@ -40,6 +40,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -262,7 +263,7 @@ public class CreateEventActivity extends AppCompatActivity {
 
         // Build preview message
         StringBuilder preview = new StringBuilder();
-        preview.append("ðŸ“‹ Event Preview\n\n");
+        preview.append("📋 Event Preview\n\n");
 
         preview.append("Name: ").append(name.isEmpty() ? "Not set" : name).append("\n\n");
         preview.append("Description: ").append(description.isEmpty() ? "Not set" : description).append("\n\n");
@@ -282,8 +283,8 @@ public class CreateEventActivity extends AppCompatActivity {
             preview.append("Date: Not set\n\n");
         }
 
-        preview.append("Poster: ").append(posterUri != null ? "Selected âœ“" : "Not selected").append("\n\n");
-        preview.append("Geolocation: ").append(geolocationEnabled ? "Enabled âœ“" : "Disabled").append("\n");
+        preview.append("Poster: ").append(posterUri != null ? "Selected" : "Not selected").append("\n\n");
+        preview.append("Geolocation: ").append(geolocationEnabled ? "Enabled" : "Disabled").append("\n");
 
         new AlertDialog.Builder(this)
                 .setTitle("Event Preview")
@@ -407,20 +408,58 @@ public class CreateEventActivity extends AppCompatActivity {
 
     /**
      * Save event to Firestore and generate QR code
+     * ✨ UPDATED: Automatically add "organizer" role when user creates first event
      */
     private void saveEventToFirestore(String eventId, Event event) {
+        String userId = mAuth.getCurrentUser().getUid();
+
         db.collection("events").document(eventId)
                 .set(event)
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "âœ… Event created successfully");
+                    Log.d(TAG, "✅ Event created successfully");
+
+                    // ✨ NEW: Add "organizer" role to user if they don't have it
+                    addOrganizerRoleToUser(userId);
 
                     // Generate and upload QR code
                     generateAndUploadQRCode(eventId);
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "âŒ Error creating event", e);
+                    Log.e(TAG, "❌ Error creating event", e);
                     hideLoading();
                     Toast.makeText(this, "Failed to create event", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    /**
+     * ✨ NEW: Add "organizer" role to user when they create their first event
+     */
+    private void addOrganizerRoleToUser(String userId) {
+        db.collection("users").document(userId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        List<String> roles = (List<String>) documentSnapshot.get("roles");
+
+                        // Check if user already has organizer role
+                        if (roles != null && roles.contains("organizer")) {
+                            Log.d(TAG, "User already has organizer role");
+                            return;
+                        }
+
+                        // Add organizer role
+                        db.collection("users").document(userId)
+                                .update("roles", com.google.firebase.firestore.FieldValue.arrayUnion("organizer"))
+                                .addOnSuccessListener(aVoid -> {
+                                    Log.d(TAG, "✅ Added organizer role to user");
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e(TAG, "❌ Failed to add organizer role", e);
+                                });
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "❌ Error checking user roles", e);
                 });
     }
 
@@ -455,12 +494,12 @@ public class CreateEventActivity extends AppCompatActivity {
 
             qrRef.putBytes(data)
                     .addOnSuccessListener(taskSnapshot -> {
-                        Log.d(TAG, "âœ… QR code uploaded");
+                        Log.d(TAG, "QR code uploaded");
                         hideLoading();
                         showSuccessAndNavigate();
                     })
                     .addOnFailureListener(e -> {
-                        Log.e(TAG, "âŒ Error uploading QR code", e);
+                        Log.e(TAG, "Error uploading QR code", e);
                         hideLoading();
                         // Still show success even if QR upload fails
                         showSuccessAndNavigate();
@@ -474,7 +513,7 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     private void showSuccessAndNavigate() {
-        Toast.makeText(this, "Event created successfully! ðŸŽ‰", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "Event created successfully!", Toast.LENGTH_LONG).show();
 
         // Go back to main activity
         Intent intent = new Intent(this, MainActivity.class);

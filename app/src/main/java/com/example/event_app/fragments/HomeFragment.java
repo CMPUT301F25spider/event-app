@@ -37,6 +37,7 @@ import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.chip.Chip;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.journeyapps.barcodescanner.ScanContract;
@@ -46,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+
 
 /**
  * HomeFragment - Discovery and Quick Actions
@@ -90,6 +92,9 @@ public class HomeFragment extends Fragment {
 
     // Notification service
     private NotificationService notificationService;
+
+    // ✨ Real-time badge listener
+    private ListenerRegistration badgeListener;
 
     // Permission launcher for camera
     private final ActivityResultLauncher<String> requestPermissionLauncher =
@@ -276,7 +281,7 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * ✨ Update notification badge - Shows count like real apps!
+     * ✨ UPDATED: Real-time notification badge - Updates instantly like Instagram!
      */
     private void updateNotificationBadge() {
         if (mAuth.getCurrentUser() == null) {
@@ -286,28 +291,40 @@ public class HomeFragment extends Fragment {
 
         String userId = mAuth.getCurrentUser().getUid();
 
-        notificationService.getUnreadCount(userId, new NotificationService.UnreadCountCallback() {
-            @Override
-            public void onSuccess(int count) {
-                if (getActivity() == null) return;
+        // Remove old listener if exists
+        if (badgeListener != null) {
+            badgeListener.remove();
+        }
 
-                getActivity().runOnUiThread(() -> {
-                    if (count > 0) {
-                        showBadge(count);
-                    } else {
+        // Set up real-time listener
+        badgeListener = db.collection("notifications")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("read", false)
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null) {
+                        Log.e(TAG, "Error listening to notifications", error);
                         hideBadge();
+                        return;
+                    }
+
+                    if (snapshots == null) {
+                        hideBadge();
+                        return;
+                    }
+
+                    int unreadCount = snapshots.size();
+                    Log.d(TAG, "📬 Real-time badge update: " + unreadCount + " unread");
+
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            if (unreadCount > 0) {
+                                showBadge(unreadCount);
+                            } else {
+                                hideBadge();
+                            }
+                        });
                     }
                 });
-            }
-
-            @Override
-            public void onFailure(String error) {
-                Log.e(TAG, "Failed to get unread count: " + error);
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> hideBadge());
-                }
-            }
-        });
     }
 
     /**
@@ -530,7 +547,18 @@ public class HomeFragment extends Fragment {
         loadPopularEvents();
         loadFavoriteEvents();  // ✨ NEW: Load favorites
 
-        // ✨ Refresh badge when returning to home
+        // ✨ Refresh badge when returning to home (listener handles real-time updates)
         updateNotificationBadge();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+
+        // ✨ Clean up real-time listener
+        if (badgeListener != null) {
+            badgeListener.remove();
+            badgeListener = null;
+        }
     }
 }

@@ -280,17 +280,20 @@ public class AdminBrowseUsersActivity extends AppCompatActivity {
 
     /**
      * Show confirmation before removing organizer role
+     * ✨ UPDATED: Now warns that events will be deleted too
      */
     private void showRemoveOrganizerConfirmation(User user) {
         new AlertDialog.Builder(this)
-                .setTitle("Remove Organizer Role")
+                .setTitle("Remove Organizer & Delete Events")
                 .setMessage("Remove organizer privileges from \"" + user.getName() + "\"?\n\n" +
-                        "They will:\n" +
-                        "• Lose ability to create events\n" +
-                        "• Keep their account as entrant\n" +
-                        "• Their existing events will remain\n\n" +
-                        "This action can be reversed later if needed.")
-                .setPositiveButton("Remove Organizer", (dialog, which) -> {
+                        "⚠️ THIS WILL:\n" +
+                        "• Remove organizer role\n" +
+                        "• DELETE ALL their events\n" +
+                        "• Remove events from all entrants\n" +
+                        "• Keep their account as entrant\n\n" +
+                        "This action CANNOT be undone!\n\n" +
+                        "Use this for policy violations only.")
+                .setPositiveButton("Remove & Delete All", (dialog, which) -> {
                     removeOrganizerRole(user);
                 })
                 .setNegativeButton("Cancel", null)
@@ -299,25 +302,93 @@ public class AdminBrowseUsersActivity extends AppCompatActivity {
     }
 
     /**
-     * Remove organizer role from user
+     * Remove organizer role from user AND delete all their events
+     * US 03.07.01: Remove organizers violating policy
      */
     private void removeOrganizerRole(User user) {
-        Log.d(TAG, "Removing organizer role from: " + user.getUserId());
+        Log.d(TAG, "Removing organizer role and deleting events for: " + user.getUserId());
 
+        // Show progress
+        Toast.makeText(this, "Removing organizer privileges and deleting events...",
+                Toast.LENGTH_SHORT).show();
+
+        // Step 1: Get all events by this organizer
+        db.collection("events")
+                .whereEqualTo("organizerId", user.getUserId())
+                .get()
+                .addOnSuccessListener(eventsSnapshot -> {
+                    Log.d(TAG, "Found " + eventsSnapshot.size() + " events to delete");
+
+                    // Step 2: Delete all their events
+                    if (!eventsSnapshot.isEmpty()) {
+                        deleteOrganizerEvents(eventsSnapshot, user);
+                    } else {
+                        // No events to delete, just remove role
+                        removeOrganizerRoleOnly(user);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error loading organizer events", e);
+                    Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    /**
+     * Delete all events created by the organizer
+     */
+    private void deleteOrganizerEvents(
+            com.google.firebase.firestore.QuerySnapshot eventsSnapshot,
+            User user) {
+
+        int totalEvents = eventsSnapshot.size();
+        int[] deletedCount = {0};
+
+        for (com.google.firebase.firestore.QueryDocumentSnapshot eventDoc : eventsSnapshot) {
+            String eventId = eventDoc.getId();
+
+            // Delete event
+            db.collection("events").document(eventId)
+                    .delete()
+                    .addOnSuccessListener(aVoid -> {
+                        deletedCount[0]++;
+                        Log.d(TAG, "Deleted event: " + eventId);
+
+                        // If all events deleted, remove organizer role
+                        if (deletedCount[0] == totalEvents) {
+                            removeOrganizerRoleOnly(user);
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Failed to delete event: " + eventId, e);
+                        deletedCount[0]++;
+
+                        // Continue even if some deletions fail
+                        if (deletedCount[0] == totalEvents) {
+                            removeOrganizerRoleOnly(user);
+                        }
+                    });
+        }
+    }
+
+    /**
+     * Remove organizer role from user (after events are deleted)
+     */
+    private void removeOrganizerRoleOnly(User user) {
         db.collection("users")
                 .document(user.getUserId())
-                .update("roles", FieldValue.arrayRemove("organizer"))
+                .update("roles", com.google.firebase.firestore.FieldValue.arrayRemove("organizer"))
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Organizer role removed successfully");
-                    Toast.makeText(this, "Organizer role removed from " + user.getName(),
-                            Toast.LENGTH_SHORT).show();
+                    Log.d(TAG, "✅ Organizer role removed successfully");
+                    Toast.makeText(this,
+                            "Removed organizer role and deleted all events for " + user.getName(),
+                            Toast.LENGTH_LONG).show();
 
                     // Reload users to update UI
                     loadUsers();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error removing organizer role", e);
-                    Toast.makeText(this, "Error: " + e.getMessage(),
+                    Log.e(TAG, "❌ Error removing organizer role", e);
+                    Toast.makeText(this, "Error removing role: " + e.getMessage(),
                             Toast.LENGTH_SHORT).show();
                 });
     }
