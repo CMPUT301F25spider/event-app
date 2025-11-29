@@ -328,7 +328,7 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * ✨ Show badge with count (like Instagram, Facebook, etc.)
+     * Show badge with count (like Instagram, Facebook, etc.)
      */
     private void showBadge(int count) {
         if (tvNotificationBadge != null) {
