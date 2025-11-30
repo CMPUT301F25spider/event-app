@@ -88,9 +88,6 @@ import com.google.android.material.button.MaterialButton;
  * US 02.07.01-03: Send notifications
  */
 public class OrganizerEventDetailsActivity extends AppCompatActivity {
-
-    private static final String TAG = "OrganizerEventDetails";
-
     // UI Elements
     private Toolbar toolbar;
     private TextView tvEventName, tvCapacity;
@@ -98,7 +95,7 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     private MaterialButton btnRunLottery, btnViewEntrants, btnViewMap, btnGenerateQR;
     private MaterialButton btnSendNotification, btnExportCSV, btnUpdatePoster, btnCancelEvent;
     private MaterialButton btnSendReminder; // Button for event reminders
-    private MaterialButton btnDrawReplacement; // ✨ NEW: Replacement lottery button
+    private MaterialButton btnDrawReplacement; //Replacement lottery button
     private View loadingView;
 
     // Data
@@ -108,7 +105,9 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     private String eventId;
     private Event event;
 
-    // ✨ Real-time listener for event updates
+    private static final String TAG = "OrganizerEventDetails";
+
+    // Real-time listener for event updates
     private com.google.firebase.firestore.ListenerRegistration eventListener;
 
     // Image picker
@@ -263,7 +262,7 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
             eventListener.remove();
         }
 
-        // ✨ Real-time listener - Updates automatically when event changes!
+        //Real-time listener - Updates automatically when event changes!
         eventListener = db.collection("events").document(eventId)
                 .addSnapshotListener((document, error) -> {
                     if (error != null) {
@@ -294,8 +293,6 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
      * US 02.02.02: Show map of entrant locations
      */
     private void showEntrantMap() {
-        Log.d(TAG, "🗺️ View Map clicked");
-
         // Check if event is loaded
         if (event == null) {
             Toast.makeText(this, "Please wait for event to load...", Toast.LENGTH_SHORT).show();
@@ -313,9 +310,6 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
             Toast.makeText(this, "No entrant locations available yet. Entrants need to join first!", Toast.LENGTH_LONG).show();
             return;
         }
-
-        Log.d(TAG, "✅ Launching map with " + event.getEntrantLocations().size() + " locations");
-
         // Launch map activity
         Intent intent = new Intent(this, ViewEntrantMapActivity.class);
         intent.putExtra("EVENT_ID", eventId);
@@ -323,7 +317,7 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * ✨ UPDATED: Show QR code with Share and Save options
+     *Show QR code with Share and Save options
      */
     private void showQRCode() {
         try {
@@ -371,13 +365,12 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
             dialog.show();
 
         } catch (WriterException e) {
-            Log.e(TAG, "Error generating QR code", e);
             Toast.makeText(this, "Failed to generate QR code", Toast.LENGTH_SHORT).show();
         }
     }
 
     /**
-     * ✨ NEW: Save QR code to device gallery
+     * Save QR code to device gallery
      */
     private void saveQrCodeToGallery(Bitmap qrBitmap) {
         try {
@@ -396,7 +389,7 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
                     if (outputStream != null) {
                         qrBitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
                         outputStream.close();
-                        Toast.makeText(this, "✅ QR code saved to gallery!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "QR code saved to gallery!", Toast.LENGTH_SHORT).show();
                     }
                 }
             } else {
@@ -418,16 +411,16 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
                 mediaScanIntent.setData(Uri.fromFile(file));
                 sendBroadcast(mediaScanIntent);
 
-                Toast.makeText(this, "✅ QR code saved to gallery!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "QR code saved to gallery!", Toast.LENGTH_SHORT).show();
             }
         } catch (IOException e) {
             Log.e(TAG, "Error saving QR code", e);
-            Toast.makeText(this, "❌ Failed to save QR code", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Failed to save QR code", Toast.LENGTH_SHORT).show();
         }
     }
 
     /**
-     * ✨ NEW: Share QR code via other apps
+     *Share QR code via other apps
      */
     private void shareQrCode(Bitmap qrBitmap) {
         try {
@@ -460,16 +453,15 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
             startActivity(Intent.createChooser(shareIntent, "Share QR Code"));
 
         } catch (IOException e) {
-            Log.e(TAG, "Error sharing QR code", e);
             Toast.makeText(this, "Failed to share QR code", Toast.LENGTH_SHORT).show();
         }
     }
 
     /**
-     * ✨ UPDATED: Check if lottery already run
+     * Check if lottery already run
      */
     private void showLotteryDialog() {
-        // ✨ NEW: Prevent running lottery twice
+        // Prevent running lottery twice
         if (event.isLotteryRun()) {
             Toast.makeText(this, "Lottery already run! Use 'Draw Replacement' instead.",
                     Toast.LENGTH_SHORT).show();
@@ -505,7 +497,7 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * ✨ UPDATED: Run lottery with notSelectedList
+     *Run lottery with notSelectedList
      */
     private void runLottery(int numberOfWinners) {
         btnRunLottery.setEnabled(false);
@@ -516,7 +508,7 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
         // Select winners
         List<String> winners = waitingList.subList(0, Math.min(numberOfWinners, waitingList.size()));
 
-        // ✨ NEW: Get non-winners (replacement pool)
+        // Get non-winners (replacement pool)
         List<String> notSelected = new ArrayList<>(waitingList);
         notSelected.removeAll(winners);
 
@@ -559,7 +551,7 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * ✨ NEW: Show dialog to draw replacement
+     * Show dialog to draw replacement
      */
     private void showDrawReplacementDialog() {
         int poolSize = event.getNotSelectedList() != null ? event.getNotSelectedList().size() : 0;
@@ -588,7 +580,7 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * ✨ NEW: Draw one replacement from the pool
+     * Draw one replacement from the pool
      * US 02.05.03: Draw replacement applicant from pooling system
      */
     private void drawReplacement() {
@@ -649,7 +641,7 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * ✨ NEW: Send notifications to lottery winners and non-winners
+     * Send notifications to lottery winners and non-winners
      */
     private void sendLotteryNotifications(List<String> winners, List<String> notSelected) {
         String eventName = event.getName();
@@ -805,10 +797,7 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
             writer.close();
 
             Toast.makeText(this, "Exported " + users.size() + " entrants to Downloads", Toast.LENGTH_LONG).show();
-            Log.d(TAG, "✅ CSV exported: " + csvFile.getAbsolutePath());
-
         } catch (Exception e) {
-            Log.e(TAG, "Error creating CSV", e);
             Toast.makeText(this, "Failed to export CSV", Toast.LENGTH_SHORT).show();
         }
 
@@ -888,7 +877,7 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * ✨ UPDATED: Send custom message with actual notifications
+     * Send custom message with actual notifications
      */
     private void sendMessageToEntrants(String message, String group) {
         List<String> userIds = new ArrayList<>();
@@ -910,7 +899,7 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
             return;
         }
 
-        // ✨ Send notifications
+        // Send notifications
         notificationService.sendBulkNotifications(
                 userIds,
                 eventId,
@@ -930,7 +919,7 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * ✨ NEW: Send event reminders to all attending users
+     * Send event reminders to all attending users
      */
     private void sendEventReminders() {
         String eventName = event.getName();
@@ -968,7 +957,7 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * ✨ UPDATED: Cancel event and notify all entrants
+     * Cancel event and notify all entrants
      */
     private void cancelEvent() {
         btnCancelEvent.setEnabled(false);
@@ -976,7 +965,7 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
         db.collection("events").document(eventId)
                 .update(
                         "status", "cancelled",
-                        "cancelledAt", System.currentTimeMillis()  // ✨ Track when
+                        "cancelledAt", System.currentTimeMillis()
                 )
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "✅ Event cancelled");
@@ -997,7 +986,7 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * ✨ NEW: Notify all entrants that event is cancelled
+     * Notify all entrants that event is cancelled
      */
     private void notifyEntrantsOfCancellation() {
         List<String> allEntrants = new ArrayList<>();
@@ -1057,8 +1046,6 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
         // ✨ Clean up real-time listener to prevent memory leaks
         if (eventListener != null) {
             eventListener.remove();
-            eventListener = null;
-            Log.d(TAG, "✅ Event listener cleaned up");
-        }
+            eventListener = null;}
     }
 }

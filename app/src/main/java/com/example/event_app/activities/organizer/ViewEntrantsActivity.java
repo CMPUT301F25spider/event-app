@@ -30,7 +30,7 @@ import java.util.Map;
 /**
  * ViewEntrantsActivity - View all entrants in different states
  *
- * ✨ UPDATED: Shows entrants in FIVE tabs:
+ * Shows entrants in FIVE tabs:
  * - Waiting List (people who joined)
  * - Selected (people who won lottery, awaiting response)
  * - Attending (people who accepted - FINAL LIST)
@@ -158,14 +158,13 @@ public class ViewEntrantsActivity extends AppCompatActivity {
                     hideLoading();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading event", e);
                     Toast.makeText(this, "Error loading event", Toast.LENGTH_SHORT).show();
                     hideLoading();
                 });
     }
 
     /**
-     * ✨ UPDATED: Display entrants with "log" case added
+     * Display entrants with "log" case added
      */
     private void displayEntrants() {
         if (event == null) return;
@@ -215,7 +214,7 @@ public class ViewEntrantsActivity extends AppCompatActivity {
     }
 
     /**
-     * ✨ UPDATED: Get friendly display name for tab
+     *  Get friendly display name for tab
      */
     private String getTabDisplayName(String tab) {
         switch (tab) {
@@ -229,7 +228,7 @@ public class ViewEntrantsActivity extends AppCompatActivity {
     }
 
     /**
-     * ✨ NEW: Display replacement log
+     *  Display replacement log
      */
     private void displayReplacementLog() {
         if (event == null || event.getReplacementLog() == null || event.getReplacementLog().isEmpty()) {

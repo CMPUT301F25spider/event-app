@@ -8,7 +8,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -53,9 +52,6 @@ import java.util.Locale;
  * US 02.04.01: Upload event poster
  */
 public class CreateEventActivity extends AppCompatActivity {
-
-    private static final String TAG = "CreateEventActivity";
-
     // UI Elements
     private TextInputEditText editEventName, editDescription, editLocation, editCapacity;
     private MaterialButton btnSelectPoster, btnSelectEventDate, btnSelectRegStart, btnSelectRegEnd;
@@ -200,22 +196,39 @@ public class CreateEventActivity extends AppCompatActivity {
     private void selectEventDate() {
         Calendar calendar = Calendar.getInstance();
 
-        new DatePickerDialog(this, (view, year, month, day) -> {
+        // 1. Initialize DatePickerDialog
+        DatePickerDialog datePickerDialog = new DatePickerDialog(this, (view, year, month, day) -> {
             calendar.set(Calendar.YEAR, year);
             calendar.set(Calendar.MONTH, month);
             calendar.set(Calendar.DAY_OF_MONTH, day);
 
-            // Now pick time
+            // 2. Now pick time
             new TimePickerDialog(this, (timeView, hour, minute) -> {
                 calendar.set(Calendar.HOUR_OF_DAY, hour);
                 calendar.set(Calendar.MINUTE, minute);
+
+                // Final validation: Ensure the final combined time is not in the past.
+                // This is needed because the TimePicker doesn't know about the DatePicker's minimum time.
+                if (calendar.getTime().before(new Date())) {
+                    Toast.makeText(this, "The event time cannot be in the past.", Toast.LENGTH_LONG).show();
+                    eventDate = null;
+                    btnSelectEventDate.setText("Select Event Date"); // Reset button text
+                    return;
+                }
+
                 eventDate = calendar.getTime();
 
                 SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy 'at' h:mm a", Locale.getDefault());
                 btnSelectEventDate.setText(sdf.format(eventDate));
             }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), false).show();
 
-        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
+        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+
+        // 3. Set Minimum Date Constraint on DatePicker
+        // We set the minimum date to be the current time (Calendar.getInstance().getTimeInMillis())
+        datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000); // Subtract 1 second for tolerance
+
+        datePickerDialog.show();
     }
 
     /**
@@ -224,32 +237,83 @@ public class CreateEventActivity extends AppCompatActivity {
     private void selectRegistrationStart() {
         Calendar calendar = Calendar.getInstance();
 
-        new DatePickerDialog(this, (view, year, month, day) -> {
+        DatePickerDialog datePickerDialog = new DatePickerDialog(this, (view, year, month, day) -> {
             calendar.set(Calendar.YEAR, year);
             calendar.set(Calendar.MONTH, month);
             calendar.set(Calendar.DAY_OF_MONTH, day);
+
+            // Clear time components for pure date comparison
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            calendar.set(Calendar.MILLISECOND, 0);
+
             regStartDate = calendar.getTime();
 
             SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
             btnSelectRegStart.setText(sdf.format(regStartDate));
-        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
+
+            // This ensures the end date isn't suddenly before the new start date.
+            checkEndDateValidity();
+
+        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+
+        // Set Minimum Date Constraint on DatePicker
+        datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
+
+        datePickerDialog.show();
     }
 
     /**
      * US 02.01.04: Set registration end date
      */
     private void selectRegistrationEnd() {
+        if (regStartDate == null) {
+            Toast.makeText(this, "Please set the Registration Start Date first.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
         Calendar calendar = Calendar.getInstance();
 
-        new DatePickerDialog(this, (view, year, month, day) -> {
+        // Set the calendar to the current start date for initialization
+        calendar.setTime(regStartDate);
+
+        DatePickerDialog datePickerDialog = new DatePickerDialog(this, (view, year, month, day) -> {
             calendar.set(Calendar.YEAR, year);
             calendar.set(Calendar.MONTH, month);
             calendar.set(Calendar.DAY_OF_MONTH, day);
+
+            // Clear time components for pure date comparison
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            calendar.set(Calendar.MILLISECOND, 0);
+
             regEndDate = calendar.getTime();
+
+            if (regEndDate.before(regStartDate)) {
+                Toast.makeText(this, "Registration End Date must be after the Start Date.", Toast.LENGTH_LONG).show();
+                regEndDate = null;
+                btnSelectRegEnd.setText("Select Registration End"); // Reset button text
+                return;
+            }
 
             SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
             btnSelectRegEnd.setText(sdf.format(regEndDate));
-        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
+
+        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+
+        // Set Minimum Date Constraint on DatePicker to the Registration Start Date
+        datePickerDialog.getDatePicker().setMinDate(regStartDate.getTime());
+
+        datePickerDialog.show();
+    }
+    private void checkEndDateValidity() {
+        if (regStartDate != null && regEndDate != null && regEndDate.before(regStartDate)) {
+            regEndDate = null;
+            btnSelectRegEnd.setText("Select Registration End");
+            Toast.makeText(this, "The Registration End Date was reset because it now occurs before the new Start Date.", Toast.LENGTH_LONG).show();
+        }
     }
 
     /**
@@ -263,7 +327,7 @@ public class CreateEventActivity extends AppCompatActivity {
 
         // Build preview message
         StringBuilder preview = new StringBuilder();
-        preview.append("📋 Event Preview\n\n");
+        preview.append("Event Preview\n\n");
 
         preview.append("Name: ").append(name.isEmpty() ? "Not set" : name).append("\n\n");
         preview.append("Description: ").append(description.isEmpty() ? "Not set" : description).append("\n\n");
@@ -400,7 +464,6 @@ public class CreateEventActivity extends AppCompatActivity {
                     });
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error uploading poster", e);
                     Toast.makeText(this, "Failed to upload poster, creating event without it", Toast.LENGTH_SHORT).show();
                     saveEventToFirestore(eventId, event);
                 });
@@ -408,7 +471,7 @@ public class CreateEventActivity extends AppCompatActivity {
 
     /**
      * Save event to Firestore and generate QR code
-     * ✨ UPDATED: Automatically add "organizer" role when user creates first event
+     * Automatically add "organizer" role when user creates first event
      */
     private void saveEventToFirestore(String eventId, Event event) {
         String userId = mAuth.getCurrentUser().getUid();
@@ -416,23 +479,20 @@ public class CreateEventActivity extends AppCompatActivity {
         db.collection("events").document(eventId)
                 .set(event)
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "✅ Event created successfully");
-
-                    // ✨ NEW: Add "organizer" role to user if they don't have it
+                    // Add "organizer" role to user if they don't have it
                     addOrganizerRoleToUser(userId);
 
                     // Generate and upload QR code
                     generateAndUploadQRCode(eventId);
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "❌ Error creating event", e);
                     hideLoading();
                     Toast.makeText(this, "Failed to create event", Toast.LENGTH_SHORT).show();
                 });
     }
 
     /**
-     * ✨ NEW: Add "organizer" role to user when they create their first event
+     * Add "organizer" role to user when they create their first event
      */
     private void addOrganizerRoleToUser(String userId) {
         db.collection("users").document(userId)
@@ -443,7 +503,6 @@ public class CreateEventActivity extends AppCompatActivity {
 
                         // Check if user already has organizer role
                         if (roles != null && roles.contains("organizer")) {
-                            Log.d(TAG, "User already has organizer role");
                             return;
                         }
 
@@ -451,15 +510,12 @@ public class CreateEventActivity extends AppCompatActivity {
                         db.collection("users").document(userId)
                                 .update("roles", com.google.firebase.firestore.FieldValue.arrayUnion("organizer"))
                                 .addOnSuccessListener(aVoid -> {
-                                    Log.d(TAG, "✅ Added organizer role to user");
                                 })
                                 .addOnFailureListener(e -> {
-                                    Log.e(TAG, "❌ Failed to add organizer role", e);
                                 });
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "❌ Error checking user roles", e);
                 });
     }
 
@@ -494,19 +550,16 @@ public class CreateEventActivity extends AppCompatActivity {
 
             qrRef.putBytes(data)
                     .addOnSuccessListener(taskSnapshot -> {
-                        Log.d(TAG, "QR code uploaded");
                         hideLoading();
                         showSuccessAndNavigate();
                     })
                     .addOnFailureListener(e -> {
-                        Log.e(TAG, "Error uploading QR code", e);
                         hideLoading();
                         // Still show success even if QR upload fails
                         showSuccessAndNavigate();
                     });
 
         } catch (WriterException e) {
-            Log.e(TAG, "Error generating QR code", e);
             hideLoading();
             showSuccessAndNavigate();
         }

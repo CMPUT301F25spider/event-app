@@ -123,11 +123,9 @@ public class OrganizerEventsActivity extends AppCompatActivity {
                     } else {
                         showEvents(events);
                     }
-
                     Log.d(TAG, "Loaded " + events.size() + " events");
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading events", e);
                     showError("Failed to load events. Please try again.");
                 });
     }

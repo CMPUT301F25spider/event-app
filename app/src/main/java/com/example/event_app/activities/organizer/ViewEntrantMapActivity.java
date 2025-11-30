@@ -142,7 +142,6 @@ public class ViewEntrantMapActivity extends AppCompatActivity implements OnMapRe
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading event", e);
                     Toast.makeText(this, "Error loading event data", Toast.LENGTH_SHORT).show();
                     finish();
                 });
@@ -162,9 +161,7 @@ public class ViewEntrantMapActivity extends AppCompatActivity implements OnMapRe
 
         Map<String, Map<String, Double>> locations = event.getEntrantLocations();
         if (locations == null || locations.isEmpty()) {
-            Log.d(TAG, "No location data available");
             Toast.makeText(this, "No entrant locations to display", Toast.LENGTH_LONG).show();
-            // Still allow viewing the map, just without markers
             return;
         }
 
@@ -185,9 +182,6 @@ public class ViewEntrantMapActivity extends AppCompatActivity implements OnMapRe
                 }
             }
         }
-
-        Log.d(TAG, "Processed " + validLocations + " valid entrant locations out of " + locations.size());
-
         // Update map if ready
         if (mMap != null) {
             displayLocationsOnMap();
