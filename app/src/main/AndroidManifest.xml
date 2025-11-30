@@ -4,100 +4,85 @@
 
     <!-- Internet permission for Firebase -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
 
     <application
-        android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_luckyspotx2"
-        android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_luckyspotx2_round"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.Event_App">
+        android:theme="@style/Theme.LuckySpot">
 
-        <!-- Splash Screen Activity -->
+        <!-- Google Maps API Key -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDahuyC2u9sFDwPBSs7R0YV1CRgEy-lo4k" />
+
+        <service
+            android:name=".services.MyFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!-- Splash Activity - LAUNCHER (Entry Point) -->
         <activity
-            android:name=".SplashActivity"
+            android:name=".activities.entrant.SplashActivity"
             android:exported="true"
-            android:theme="@style/SplashTheme">
+            android:theme="@style/Theme.LuckySpot.Splash"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- Profile Setup Activity -->
+        <!-- Shared Activities -->
         <activity
-            android:name=".ProfileSetupActivity"
-            android:exported="false" />
+            android:name=".activities.shared.ProfileSetupActivity"
+            android:screenOrientation="portrait"/>
 
-        <!-- Main Activity (Entrant Home) -->
+        <!-- Entrant Activities -->
+        <activity android:name=".activities.entrant.MainActivity" />
+        <activity android:name=".activities.entrant.EventDetailsActivity" />
+        <activity android:name=".activities.entrant.BrowseEventsActivity" />
+        <activity android:name=".activities.entrant.SettingsActivity" />
+        <activity android:name=".activities.entrant.MyEventsActivity" />
+
+        <!-- Organizer Activities -->
+        <activity android:name=".activities.organizer.OrganizerEventDetailsActivity" />
+        <activity android:name=".activities.organizer.CreateEventActivity" />
+        <activity android:name=".activities.organizer.OrganizerEventsActivity" />
+        <activity android:name=".activities.organizer.ViewEntrantsActivity" />
+
+
+        <!-- Admin Activities -->
+        <activity android:name=".activities.admin.AdminHomeActivity" />
+        <activity android:name=".activities.admin.AdminBrowseEventsActivity" />
+        <activity android:name=".activities.admin.AdminBrowseUsersActivity" />
+        <activity android:name=".activities.admin.AdminBrowseImagesActivity" />
+        <activity android:name=".activities.admin.AdminEventDetailsActivity" />
+        <activity android:name=".activities.admin.AdminGeolocationAuditActivity" />
+        <activity android:name=".activities.admin.AdminNotificationLogsActivity" />
+        <activity android:name=".activities.admin.AdminNotificationTemplatesActivity" />
+
         <activity
-            android:name=".MainActivity"
-            android:exported="false" />
-
-        <!-- Entrant Browse Events Activity -->
-        <activity
-            android:name=".EntrantBrowseEventsActivity"
-            android:exported="false" />
-
-        <!-- Entrant Settings Activity -->
-        <activity
-            android:name=".SettingsActivity"
-            android:exported="false" />
-
-        <!-- Organizer Home Activity -->
-
-        <!-- Admin Home Activity -->
-        <activity
-            android:name=".admin.AdminHomeActivity"
-            android:exported="false" />
-
-        <!-- Organizer: Selected/Confirmed lists + cancel -->
-        <activity
-            android:name=".organizer.OrganizerEntrantsListActivity"
-            android:exported="false" />
-
-        <!-- Browse Events Activity -->
-        <activity
-            android:name=".admin.AdminBrowseEventsActivity"
+            android:name=".activities.entrant.NotificationsActivity"
             android:exported="false"
-            android:parentActivityName=".admin.AdminHomeActivity" />
+            android:screenOrientation="portrait"/>
 
-        <!-- Browse Users Activity -->
         <activity
-            android:name=".admin.AdminBrowseUsersActivity"
+            android:name=".activities.organizer.ViewEntrantMapActivity"
             android:exported="false"
-            android:parentActivityName=".admin.AdminHomeActivity" />
+            android:theme="@style/Theme.LuckySpot" />
 
-        <!-- Browse Images Activity -->
-        <activity
-            android:name=".admin.AdminBrowseImagesActivity"
-            android:exported="false"
-            android:parentActivityName=".admin.AdminHomeActivity" />
-
-        <!-- EventDetailsActivity -->
-        <activity
-            android:name=".EventDetailsActivity"
-            android:exported="false" />
-        <!-- Event Creation Activity -->
-        <activity android:name=".OrganizerCreateEventActivity" />
-        <activity android:name=".organizer.CreateEventActivity" />
-
-        <!-- Admin Event Details Activity -->
-        <activity
-            android:name=".admin.AdminEventDetailsActivity"
-            android:exported="false"
-            android:parentActivityName=".admin.AdminBrowseEventsActivity" />
-        <activity
-            android:name=".organizer.EventEntrantsActivityGskakar"
-            android:exported="false"
-            android:label="Event Entrants" />
-
-        <!-- FileProvider for sharing CSV files -->
+        <!-- FileProvider for sharing files -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -109,5 +94,4 @@
         </provider>
 
     </application>
-
 </manifest>
