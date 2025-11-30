@@ -34,8 +34,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     private static final String TAG = "FCMService";
     private static final String CHANNEL_ID = "event_notifications";
-    private static final String PREFS_NAME = "fcm_prefs";         // New constant for prefs name
-    private static final String KEY_CACHED_TOKEN = "cached_fcm_token"; // New constant for token key
+    private static final String PREFS_NAME = "fcm_prefs";
+    private static final String KEY_CACHED_TOKEN = "cached_fcm_token";
 
     /**
      * Called when a new FCM token is generated
@@ -44,9 +44,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     @Override
     public void onNewToken(@NonNull String token) {
         super.onNewToken(token);
-        Log.d(TAG, "New FCM Token: " + token);
-
-        // 💡 CRITICAL FIX: Attempt to save token AND cache it locally.
+        //Attempt to save token AND cache it locally.
         saveFCMTokenToFirestore(token);
         cacheFCMToken(token);
     }
@@ -58,11 +56,9 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
 
-        Log.d(TAG, "Message received from: " + remoteMessage.getFrom());
 
         // Check if message contains data payload
         if (remoteMessage.getData().size() > 0) {
-            Log.d(TAG, "Message data: " + remoteMessage.getData());
 
             Map<String, String> data = remoteMessage.getData();
             String title = data.get("title");
@@ -75,7 +71,6 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         // Check if message contains notification payload
         if (remoteMessage.getNotification() != null) {
-            Log.d(TAG, "Message notification: " + remoteMessage.getNotification().getBody());
 
             String title = remoteMessage.getNotification().getTitle();
             String message = remoteMessage.getNotification().getBody();
@@ -117,7 +112,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     }
 
     /**
-     * 💡 NEW METHOD: Saves the token to SharedPreferences for persistence
+     * Saves the token to SharedPreferences for persistence
      * until the user logs in. Use null to clear the cache.
      */
     private void cacheFCMToken(String token) {
@@ -135,21 +130,19 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     }
 
     /**
-     * 💡 NEW PUBLIC METHOD: Call this from your login/on start activity
+     * Call this from your login/on start activity
      * to check if a token was generated while the user was logged out.
      */
     public static void checkAndSaveCachedToken(Context context) {
         FirebaseAuth auth = FirebaseAuth.getInstance();
         if (auth.getCurrentUser() == null) {
-            return; // Only proceed if a user is logged in
+            return;
         }
 
         SharedPreferences sharedPref = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         String cachedToken = sharedPref.getString(KEY_CACHED_TOKEN, null);
 
         if (cachedToken != null) {
-            Log.d(TAG, "Cached token found on login. Attempting save to Firestore.");
-
             // Note: Since this is a static method, we need to manually create
             // the logic for saving the token without relying on the service instance.
             String userId = auth.getCurrentUser().getUid();

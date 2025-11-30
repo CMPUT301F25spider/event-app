@@ -144,7 +144,7 @@ public class NotificationService {
                 })
                 .addOnFailureListener(e -> {
                     // Keep detailed error logging
-                    Log.e(TAG, "❌ Cloud Function call failed", e);
+                    Log.e(TAG, "Cloud Function call failed", e);
                 });
     }
 
@@ -202,12 +202,10 @@ public class NotificationService {
                 .document(logId)
                 .set(log)
                 .addOnSuccessListener(aVoid -> {
-                    // KEEP: This is a critical audit confirmation log
-                    Log.i(TAG, "✅ Notification logged for audit: " + logId + " (Status: " + status + ")");
+                    Log.i(TAG, "Notification logged for audit: " + logId + " (Status: " + status + ")");
                 })
                 .addOnFailureListener(e -> {
-                    // KEEP: This is a critical audit failure log
-                    Log.e(TAG, "❌ Error logging notification for audit", e);
+                    Log.e(TAG, "Error logging notification for audit", e);
                 });
     }
 
