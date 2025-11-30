@@ -3,10 +3,8 @@ package com.example.event_app.activities.admin;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -29,7 +27,6 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
@@ -38,9 +35,6 @@ import java.util.Locale;
  * US 03.08.01: Review logs of all notifications sent by organizers
  */
 public class AdminNotificationLogsActivity extends AppCompatActivity {
-
-    private static final String TAG = "NotificationLogs";
-
     private EditText etSearch;
     private Spinner spinnerFilter;
     private RecyclerView recyclerViewLogs;
@@ -144,7 +138,6 @@ public class AdminNotificationLogsActivity extends AppCompatActivity {
     }
 
     private void applyFilter(String filter) {
-        Log.d(TAG, "Applying filter: " + filter);
         currentFilter = filter;
         loadNotificationLogs();
     }
@@ -161,7 +154,6 @@ public class AdminNotificationLogsActivity extends AppCompatActivity {
     }
 
     private void loadNotificationLogs() {
-        Log.d(TAG, "Loading notification logs with filter: " + currentFilter);
         progressBar.setVisibility(View.VISIBLE);
 
         Query query = db.collection("notification_logs")
@@ -190,21 +182,16 @@ public class AdminNotificationLogsActivity extends AppCompatActivity {
 
                         // Apply organizer filter if selected
                         if (currentFilter.equals("Organizer Only")) {
-                            // Only add if sender is organizer (you may need to check roles)
-                            // For now, we'll add all and let it pass
                             logList.add(log);
                         } else {
                             logList.add(log);
                         }
                     }
 
-                    Log.d(TAG, "Loaded " + logList.size() + " notification logs");
-
                     progressBar.setVisibility(View.GONE);
                     updateUI();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading notification logs", e);
                     progressBar.setVisibility(View.GONE);
                     Toast.makeText(this, "Error loading logs: " + e.getMessage(),
                             Toast.LENGTH_SHORT).show();

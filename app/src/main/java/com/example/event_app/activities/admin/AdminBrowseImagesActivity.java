@@ -1,7 +1,6 @@
 package com.example.event_app.activities.admin;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -28,18 +27,12 @@ import java.util.List;
  * AdminBrowseImagesActivity - Admin can view and delete uploaded images
  * US 03.06.01: As an administrator, I want to browse images uploaded by users
  * US 03.03.01: As an administrator, I want to remove uploaded images
- *
- * UPDATED: Simplified UI - just shows images with delete button
  */
 public class AdminBrowseImagesActivity extends AppCompatActivity {
-
-    private static final String TAG = "BrowseImagesActivity";
-
     private RecyclerView recyclerViewImages;
     private LinearLayout emptyStateLayout;
     private ProgressBar progressBar;
     private ImageAdapter imageAdapter;
-
     private FirebaseFirestore db;
     private FirebaseStorage storage;
     private List<ImageData> imageList;
@@ -49,23 +42,17 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_browse_images);
         new AccessibilityHelper(this).applyAccessibilitySettings(this);
-
         // Set up back button
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
-
         // Initialize Firebase
         db = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
-
         // Initialize list
         imageList = new ArrayList<>();
-
         // Initialize views
         initViews();
-
         // Set up RecyclerView
         setupRecyclerView();
-
         // Load images from Firebase Storage
         loadImagesFromStorage();
     }
@@ -109,10 +96,8 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
      * Load images directly from Firebase Storage folders
      */
     private void loadImagesFromStorage() {
-        Log.d(TAG, "Loading images from Firebase Storage...");
         progressBar.setVisibility(View.VISIBLE);
         imageList.clear();
-
         // Load from event_posters folder
         loadFromStorageFolder("event_posters", "event_poster");
     }
@@ -125,8 +110,6 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
 
         folderRef.listAll()
                 .addOnSuccessListener(listResult -> {
-                    Log.d(TAG, "Found " + listResult.getItems().size() + " items in " + folderPath);
-
                     for (StorageReference item : listResult.getItems()) {
                         // Get download URL for each image
                         item.getDownloadUrl().addOnSuccessListener(uri -> {
@@ -143,21 +126,16 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
 
                             // Store the storage reference path for deletion
                             imageData.setStoragePath(folderPath + "/" + fileName);
-
                             imageList.add(imageData);
-                            Log.d(TAG, "Added image: " + fileName);
-
                             // Update UI
                             updateUI();
                         }).addOnFailureListener(e -> {
-                            Log.e(TAG, "Error getting download URL for " + item.getName(), e);
                         });
                     }
 
                     progressBar.setVisibility(View.GONE);
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error listing files in " + folderPath, e);
                     progressBar.setVisibility(View.GONE);
                     updateUI();
                 });
@@ -167,22 +145,18 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
      */
     private void showImageDetails(ImageData imageData) {
         progressBar.setVisibility(View.VISIBLE);
-
         // Determine what this image is for
         String imageUrl = imageData.getImageUrl();
-
         // Check if it's an event poster
         db.collection("events")
                 .whereEqualTo("posterUrl", imageUrl)
                 .get()
                 .addOnSuccessListener(eventSnapshots -> {
                     if (!eventSnapshots.isEmpty()) {
-                        // Found the event
                         QueryDocumentSnapshot eventDoc = (QueryDocumentSnapshot) eventSnapshots.getDocuments().get(0);
                         String eventName = eventDoc.getString("name");
                         String organizerId = eventDoc.getString("organizerId");
                         String organizerName = eventDoc.getString("organizerName");
-
                         showImageDetailsDialog(
                                 "Event Poster",
                                 eventName,
@@ -272,7 +246,6 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
 
                 // Update adapter
                 imageAdapter.setImages(new ArrayList<>(imageList));
-                Log.d(TAG, "Displaying " + imageList.size() + " images");
             }
         });
     }
@@ -298,29 +271,19 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
      * US 03.03.01: Remove images
      */
     private void deleteImage(ImageData imageData) {
-        Log.d(TAG, "Deleting image: " + imageData.getStoragePath());
-
         progressBar.setVisibility(View.VISIBLE);
-
         // Delete from Firebase Storage using the storage path
         StorageReference imageRef = storage.getReference().child(imageData.getStoragePath());
 
         imageRef.delete()
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Image deleted from Storage");
-
-                    // Also try to remove the reference from Firestore (events/users collection)
                     removeImageReferences(imageData);
-
                     progressBar.setVisibility(View.GONE);
                     Toast.makeText(this, "Image deleted successfully", Toast.LENGTH_SHORT).show();
-
-                    // Remove from list and update UI
                     imageList.remove(imageData);
                     updateUI();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error deleting image from Storage", e);
                     progressBar.setVisibility(View.GONE);
                     Toast.makeText(this, "Failed to delete image: " + e.getMessage(),
                             Toast.LENGTH_SHORT).show();
@@ -341,11 +304,9 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
                     .addOnSuccessListener(queryDocumentSnapshots -> {
                         for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                             document.getReference().update("posterUrl", null);
-                            Log.d(TAG, "Removed poster reference from event: " + document.getId());
                         }
                     })
                     .addOnFailureListener(e -> {
-                        Log.e(TAG, "Error removing event poster reference", e);
                     });
         }
 
@@ -357,11 +318,9 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
                     .addOnSuccessListener(queryDocumentSnapshots -> {
                         for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                             document.getReference().update("profileImageUrl", null);
-                            Log.d(TAG, "Removed profile picture reference from user: " + document.getId());
                         }
                     })
                     .addOnFailureListener(e -> {
-                        Log.e(TAG, "Error removing profile picture reference", e);
                     });
         }
     }

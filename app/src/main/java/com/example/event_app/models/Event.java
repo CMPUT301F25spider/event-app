@@ -7,15 +7,22 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Event Model - Updated with Replacement Draw System
- * Represents an event in the LuckySpot system
+ * Represents an event stored in the Firestore {@code events} collection.
  *
- * NEW FIELDS for Replacement Draw:
- * - notSelectedList: Users who lost the lottery (replacement pool)
- * - replacementLog: Track replacement history
- * - lotteryRun: Has the lottery been run yet?
- * - lotteryDate: When was the lottery run?
- * - archived: Is this event past/archived?
+ * <p>This model is used by entrants, organizers, and admins throughout the
+ * LuckySpot system. It includes all key metadata such as event information,
+ * registration window, participant lists, capacity tracking, and the full
+ * lottery and replacement-draw system.
+ *
+ * <p><b>Replacement-draw related fields:</b>
+ * <ul>
+ *     <li>{@code notSelectedList}: users who did not initially win the lottery
+ *         and form the replacement pool</li>
+ *     <li>{@code replacementLog}: records of replacements performed</li>
+ *     <li>{@code lotteryRun}: indicates whether the lottery has been executed</li>
+ *     <li>{@code lotteryDate}: timestamp of when the lottery was run</li>
+ *     <li>{@code archived}: marks the event as past/closed for interaction</li>
+ * </ul>
  */
 public class Event {
 
@@ -65,10 +72,19 @@ public class Event {
     private int totalCancelled;
     private int totalAttending;
 
-    // Empty constructor required for Firebase
+    /**
+     * Empty constructor required for Firestore deserialization.
+     */
     public Event() {}
 
-    // Constructor for creating new events
+    /**
+     * Creates a new event with the minimum required information.
+     *
+     * @param eventId     optional event identifier stored inside the document
+     * @param name        name of the event shown to users
+     * @param description short textual description of the event
+     * @param organizerId unique identifier of the organizer who created the event
+     */
     public Event(String eventId, String name, String description, String organizerId) {
         this.eventId = eventId;
         this.name = name;
@@ -157,7 +173,10 @@ public class Event {
     // --- Logic Methods ---
 
     /**
-     * Get cancellation rate
+     * Calculates the cancellation rate for the event as a percentage.
+     * If no users have been selected, this returns {@code 0.0}.
+     *
+     * @return cancellation rate between 0.0 and 100.0
      */
     public double getCancellationRate() {
         if (totalSelected == 0) return 0.0;
@@ -165,14 +184,19 @@ public class Event {
     }
 
     /**
-     * Check if cancellation rate is high
+     * Determines whether the cancellation rate is considered high.
+     *
+     * @return {@code true} if cancellation rate exceeds 30%, otherwise {@code false}
      */
     public boolean hasHighCancellationRate() {
         return getCancellationRate() > 30.0;
     }
 
     /**
-     * ✨ NEW: Get number of spots still available
+     * Computes the number of available spots remaining in the event.
+     * If capacity is not set, the event is treated as having unlimited spots.
+     *
+     * @return remaining number of spots, or {@link Integer#MAX_VALUE} if unlimited
      */
     public int getSpotsRemaining() {
         if (capacity == null) return Integer.MAX_VALUE;
@@ -181,7 +205,9 @@ public class Event {
     }
 
     /**
-     * ✨ NEW: Check if capacity is full
+     * Checks whether the event is currently at or above its capacity.
+     *
+     * @return {@code true} if attending users >= capacity, otherwise {@code false}
      */
     public boolean isCapacityFull() {
         if (capacity == null) return false;
@@ -190,14 +216,19 @@ public class Event {
     }
 
     /**
-     * ✨ NEW: Check if replacement pool is available
+     * Checks whether the replacement pool contains any users.
+     *
+     * @return {@code true} if {@code notSelectedList} is non-empty
      */
     public boolean hasReplacementPool() {
         return notSelectedList != null && !notSelectedList.isEmpty();
     }
 
     /**
-     * ✨ NEW: Check if event is in the past
+     * Determines whether the event date is before the current time.
+     * Falls back to the server timestamp {@code date} if {@code eventDate} is null.
+     *
+     * @return {@code true} if the event has already occurred, otherwise {@code false}
      */
     public boolean isPast() {
         if (eventDate == null && date == null) return false;

@@ -2,7 +2,6 @@ package com.example.event_app.activities.admin;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -47,10 +46,6 @@ import java.util.List;
  * UPDATED: Added geolocation audit, notification logs, and notification templates buttons
  */
 public class AdminHomeActivity extends AppCompatActivity {
-
-    private static final String TAG = "AdminHomeActivity";
-
-    // UI Components - Statistics
     private TextView tvEventsCount, tvUsersCount, tvOrganizersCount, tvActiveCount;
 
     // UI Components - Cards
@@ -73,7 +68,6 @@ public class AdminHomeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_admin_home);
         new AccessibilityHelper(this).applyAccessibilitySettings(this);
 
-        Log.d(TAG, "AdminHomeActivity created");
 
         // Initialize Firebase
         mAuth = FirebaseAuth.getInstance();
@@ -131,21 +125,18 @@ public class AdminHomeActivity extends AppCompatActivity {
     private void setupButtonListeners() {
         // Browse Events Card
         cardBrowseEvents.setOnClickListener(v -> {
-            Log.d(TAG, "Browse Events clicked");
             Intent intent = new Intent(this, AdminBrowseEventsActivity.class);
             startActivity(intent);
         });
 
         // Browse Users Card
         cardBrowseUsers.setOnClickListener(v -> {
-            Log.d(TAG, "Browse Users clicked");
             Intent intent = new Intent(this, AdminBrowseUsersActivity.class);
             startActivity(intent);
         });
 
         // Browse Images Card
         cardBrowseImages.setOnClickListener(v -> {
-            Log.d(TAG, "Browse Images clicked");
             Intent intent = new Intent(this, AdminBrowseImagesActivity.class);
             startActivity(intent);
         });
@@ -153,7 +144,6 @@ public class AdminHomeActivity extends AppCompatActivity {
         // Generate Reports Button
         if (btnGenerateReports != null) {
             btnGenerateReports.setOnClickListener(v -> {
-                Log.d(TAG, "Generate Reports clicked");
                 generateAndExportReport();
             });
         }
@@ -161,45 +151,32 @@ public class AdminHomeActivity extends AppCompatActivity {
         // ✨ Geolocation Audit Button
         if (btnGeolocationAudit != null) {
             btnGeolocationAudit.setOnClickListener(v -> {
-                Log.d(TAG, "Geolocation Audit clicked");
                 startActivity(new Intent(this, AdminGeolocationAuditActivity.class));
             });
-        } else {
-            Log.e(TAG, "❌ btnGeolocationAudit is null - check XML layout!");
         }
 
         // ✨ Notification Logs Button
         if (btnNotificationLogs != null) {
             btnNotificationLogs.setOnClickListener(v -> {
-                Log.d(TAG, "Notification Logs clicked");
                 startActivity(new Intent(this, AdminNotificationLogsActivity.class));
             });
-        } else {
-            Log.e(TAG, "❌ btnNotificationLogs is null - check XML layout!");
         }
 
-        // ✨ NEW: Notification Templates Button
         if (btnNotificationTemplates != null) {
             btnNotificationTemplates.setOnClickListener(v -> {
-                Log.d(TAG, "Notification Templates clicked");
                 startActivity(new Intent(this, AdminNotificationTemplatesActivity.class));
             });
-        } else {
-            Log.e(TAG, "❌ btnNotificationTemplates is null - check XML layout!");
         }
 
         // Flagged Items Button
         if (btnFlaggedItems != null) {
             btnFlaggedItems.setOnClickListener(v -> {
-                Log.d(TAG, "Flagged Items clicked");
                 Toast.makeText(this, "Showing flagged events", Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(this, AdminBrowseEventsActivity.class);
                 intent.putExtra("showFlaggedOnly", true);
                 startActivity(intent);
             });
         }
-
-        // ✨ Switch to User Mode Button
         if (btnSwitchToUserMode != null) {
             btnSwitchToUserMode.setOnClickListener(v -> showRoleSwitchDialog());
         }
@@ -226,10 +203,7 @@ public class AdminHomeActivity extends AppCompatActivity {
                         if (currentUser == null || !currentUser.isAdmin()) {
                             // Not an admin - deny access
                             Toast.makeText(this, "⛔ Admin access required", Toast.LENGTH_LONG).show();
-                            Log.w(TAG, "Non-admin user attempted to access admin panel");
                             finish();
-                        } else {
-                            Log.d(TAG, "✅ Admin access verified for user: " + userId);
                         }
                     } else {
                         Toast.makeText(this, "User not found", Toast.LENGTH_SHORT).show();
@@ -237,7 +211,6 @@ public class AdminHomeActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error checking admin access", e);
                     Toast.makeText(this, "Error verifying access", Toast.LENGTH_SHORT).show();
                     finish();
                 });
@@ -247,19 +220,15 @@ public class AdminHomeActivity extends AppCompatActivity {
      * Load all platform statistics from Firebase
      */
     private void loadStatistics() {
-        Log.d(TAG, "Loading platform statistics...");
-
         // Load Events Count
         db.collection("events")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     int count = queryDocumentSnapshots.size();
                     tvEventsCount.setText(String.valueOf(count));
-                    Log.d(TAG, "Events count: " + count);
                 })
                 .addOnFailureListener(e -> {
                     tvEventsCount.setText("0");
-                    Log.e(TAG, "Error loading events count", e);
                 });
 
         // Load Users Count
@@ -268,11 +237,9 @@ public class AdminHomeActivity extends AppCompatActivity {
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     int count = queryDocumentSnapshots.size();
                     tvUsersCount.setText(String.valueOf(count));
-                    Log.d(TAG, "Users count: " + count);
                 })
                 .addOnFailureListener(e -> {
                     tvUsersCount.setText("0");
-                    Log.e(TAG, "Error loading users count", e);
                 });
 
         // Load Organizers Count
@@ -282,11 +249,9 @@ public class AdminHomeActivity extends AppCompatActivity {
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     int count = queryDocumentSnapshots.size();
                     tvOrganizersCount.setText(String.valueOf(count));
-                    Log.d(TAG, "Organizers count: " + count);
                 })
                 .addOnFailureListener(e -> {
                     tvOrganizersCount.setText("0");
-                    Log.e(TAG, "Error loading organizers count", e);
                 });
 
         // Load Active Events Count
@@ -296,11 +261,9 @@ public class AdminHomeActivity extends AppCompatActivity {
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     int count = queryDocumentSnapshots.size();
                     tvActiveCount.setText(String.valueOf(count));
-                    Log.d(TAG, "Active events count: " + count);
                 })
                 .addOnFailureListener(e -> {
                     tvActiveCount.setText("0");
-                    Log.e(TAG, "Error loading active events count", e);
                 });
     }
 
@@ -308,8 +271,6 @@ public class AdminHomeActivity extends AppCompatActivity {
      * Load and display flagged events (high cancellation rate)
      */
     private void loadFlaggedEvents() {
-        Log.d(TAG, "Loading flagged events...");
-
         db.collection("events")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
@@ -326,9 +287,6 @@ public class AdminHomeActivity extends AppCompatActivity {
                     if (btnFlaggedItems != null) {
                         btnFlaggedItems.setText("View Flagged (" + flaggedCount + ")");
                     }
-
-                    Log.d(TAG, "Found " + flaggedCount + " flagged events");
-
                     // Show/hide flagged events section
                     if (flaggedCount > 0 && layoutFlaggedSection != null) {
                         layoutFlaggedSection.setVisibility(View.VISIBLE);
@@ -337,7 +295,6 @@ public class AdminHomeActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading flagged events", e);
                     if (btnFlaggedItems != null) {
                         btnFlaggedItems.setText("View Flagged (0)");
                     }
@@ -350,8 +307,6 @@ public class AdminHomeActivity extends AppCompatActivity {
      */
     private void generateAndExportReport() {
         Toast.makeText(this, "Generating report...", Toast.LENGTH_SHORT).show();
-        Log.d(TAG, "Starting report generation...");
-
         // Fetch all events
         db.collection("events")
                 .get()
@@ -361,8 +316,6 @@ public class AdminHomeActivity extends AppCompatActivity {
                         events.add(doc.toObject(Event.class));
                     }
 
-                    Log.d(TAG, "Loaded " + events.size() + " events for report");
-
                     // Fetch all users
                     db.collection("users")
                             .get()
@@ -371,57 +324,45 @@ public class AdminHomeActivity extends AppCompatActivity {
                                 for (QueryDocumentSnapshot doc : userSnapshots) {
                                     users.add(doc.toObject(User.class));
                                 }
-
-                                Log.d(TAG, "Loaded " + users.size() + " users for report");
-
                                 // Export report
                                 ReportExporter.exportPlatformReport(this, events, users);
-                                Toast.makeText(this, "✅ Report generated!", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(this, "Report generated!", Toast.LENGTH_SHORT).show();
                             })
                             .addOnFailureListener(e -> {
-                                Log.e(TAG, "Error loading users for report", e);
                                 Toast.makeText(this, "Error loading users: " + e.getMessage(),
                                         Toast.LENGTH_SHORT).show();
                             });
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading events for report", e);
                     Toast.makeText(this, "Error loading events: " + e.getMessage(),
                             Toast.LENGTH_SHORT).show();
                 });
     }
 
     /**
-     * ✨ Show dialog to switch between admin and user views
+     * Show dialog to switch between admin and user views
      */
     private void showRoleSwitchDialog() {
         if (currentUser == null) return;
-
         // Build role options
         StringBuilder roleMessage = new StringBuilder();
         roleMessage.append("You have multiple roles. Switch to:\n\n");
-
         boolean hasOtherRoles = false;
-
         if (currentUser.isEntrant()) {
-            roleMessage.append("📱 Entrant View - Join events, manage waiting lists\n\n");
+            roleMessage.append("Entrant View - Join events, manage waiting lists\n\n");
             hasOtherRoles = true;
         }
-
         if (currentUser.isOrganizer()) {
-            roleMessage.append("🎯 Organizer View - Create and manage events\n\n");
+            roleMessage.append("Organizer View - Create and manage events\n\n");
             hasOtherRoles = true;
         }
-
         if (!hasOtherRoles) {
             Toast.makeText(this, "You only have admin role", Toast.LENGTH_SHORT).show();
             return;
         }
-
         roleMessage.append("You can return to Admin Panel anytime from the menu.");
-
         new AlertDialog.Builder(this)
-                .setTitle("🔄 Switch View")
+                .setTitle("Switch View")
                 .setMessage(roleMessage.toString())
                 .setPositiveButton("Switch to User Mode", (dialog, which) -> switchToUserMode())
                 .setNegativeButton("Stay in Admin", null)
@@ -429,32 +370,22 @@ public class AdminHomeActivity extends AppCompatActivity {
     }
 
     /**
-     * ✨ Switch to entrant/organizer view (MainActivity)
+     *Switch to entrant/organizer view (MainActivity)
      */
     private void switchToUserMode() {
-        Log.d(TAG, "Switching from Admin to User mode");
-
-        // Go back to MainActivity (normal user interface)
         Intent intent = new Intent(this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
         finish();
-
-        Toast.makeText(this, "👤 Switched to User mode", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Switched to User mode", Toast.LENGTH_SHORT).show();
     }
-
     /**
      * Reload statistics when activity resumes
      */
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d(TAG, "Activity resumed, reloading statistics");
-
-        // Re-verify admin access
         checkAdminAccess();
-
-        // Reload data
         loadStatistics();
         loadFlaggedEvents();
     }

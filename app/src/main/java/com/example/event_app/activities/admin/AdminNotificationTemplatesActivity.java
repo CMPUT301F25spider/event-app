@@ -3,7 +3,6 @@ package com.example.event_app.activities.admin;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -34,9 +33,6 @@ import java.util.List;
  * Allows admins to create, edit, and manage notification templates used across the app
  */
 public class AdminNotificationTemplatesActivity extends AppCompatActivity {
-
-    private static final String TAG = "NotificationTemplates";
-
     private EditText etSearch;
     private RecyclerView recyclerViewTemplates;
     private LinearLayout emptyStateLayout;
@@ -137,9 +133,7 @@ public class AdminNotificationTemplatesActivity extends AppCompatActivity {
     }
 
     private void loadTemplates() {
-        Log.d(TAG, "Loading notification templates...");
         progressBar.setVisibility(View.VISIBLE);
-
         db.collection("notification_templates")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
@@ -149,14 +143,10 @@ public class AdminNotificationTemplatesActivity extends AppCompatActivity {
                         NotificationTemplate template = document.toObject(NotificationTemplate.class);
                         templateList.add(template);
                     }
-
-                    Log.d(TAG, "Loaded " + templateList.size() + " templates");
-
                     progressBar.setVisibility(View.GONE);
                     updateUI();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading templates", e);
                     progressBar.setVisibility(View.GONE);
                     Toast.makeText(this, "Error loading templates: " + e.getMessage(),
                             Toast.LENGTH_SHORT).show();
@@ -265,12 +255,10 @@ public class AdminNotificationTemplatesActivity extends AppCompatActivity {
                 .document(templateId)
                 .set(template)
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Template created successfully");
                     Toast.makeText(this, "Template created!", Toast.LENGTH_SHORT).show();
                     loadTemplates();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error creating template", e);
                     Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
@@ -286,12 +274,10 @@ public class AdminNotificationTemplatesActivity extends AppCompatActivity {
                         "updatedAt", new Date()
                 )
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Template updated successfully");
                     Toast.makeText(this, "Template updated!", Toast.LENGTH_SHORT).show();
                     loadTemplates();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error updating template", e);
                     Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
@@ -303,14 +289,12 @@ public class AdminNotificationTemplatesActivity extends AppCompatActivity {
                 .document(template.getTemplateId())
                 .update("isActive", newStatus, "updatedAt", new Date())
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Template status toggled");
                     Toast.makeText(this,
                             newStatus ? "Template activated" : "Template deactivated",
                             Toast.LENGTH_SHORT).show();
                     loadTemplates();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error toggling template", e);
                     Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
@@ -331,12 +315,10 @@ public class AdminNotificationTemplatesActivity extends AppCompatActivity {
                 .document(template.getTemplateId())
                 .delete()
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Template deleted");
                     Toast.makeText(this, "Template deleted", Toast.LENGTH_SHORT).show();
                     loadTemplates();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error deleting template", e);
                     Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }

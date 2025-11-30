@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -41,9 +40,6 @@ import java.util.List;
  * - Display: event name, organizer, date, status, entrant count
  */
 public class AdminBrowseEventsActivity extends AppCompatActivity {
-
-    private static final String TAG = "AdminBrowseEvents";
-
     // Sort options
     private enum SortOption {
         NAME_ASC("Name (A-Z)"),
@@ -71,12 +67,8 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
     private TextView tvResultsCount;
     private TextInputEditText searchEvents;
     private ChipGroup chipGroupStatus;
-    private Chip chipAll, chipActive, chipInactive, chipCompleted, chipCancelled, chipFlagged;  // ✅ ADDED
+    private Chip chipAll, chipActive, chipInactive, chipCompleted, chipCancelled, chipFlagged;
     private Button btnSort;
-
-
-
-
     private AdminEventAdapter eventAdapter;
 
     // Firebase
@@ -102,31 +94,21 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
             getSupportActionBar().setTitle("Browse Events");
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
-
-        Log.d(TAG, "AdminBrowseEventsActivity created");
-
         // Initialize Firebase
         db = FirebaseFirestore.getInstance();
-
         // Initialize views
         initViews();
-
         // Set up RecyclerView
         setupRecyclerView();
-
         // Set up search
         setupSearch();
-
         // Set up filters
         setupFilters();
-
         // Set up sort
         setupSort();
-
         // Load events
         loadEvents();
     }
-
     /**
      * Initialize views
      */
@@ -145,17 +127,9 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
         chipCancelled = findViewById(R.id.chipCancelled);
         chipFlagged = findViewById(R.id.chipFlagged);
     }
-
-    /**
-     * Set up RecyclerView with AdminEventAdapter
-     */
-    /**
-     * Set up RecyclerView with AdminEventAdapter
-     */
     private void setupRecyclerView() {
         // Create admin adapter
         eventAdapter = new AdminEventAdapter();
-
         // Set click listener
         eventAdapter.setOnEventClickListener(event -> {
             // Open event details activity
@@ -163,7 +137,6 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
             intent.putExtra(AdminEventDetailsActivity.EXTRA_EVENT_ID, event.getEventId());
             startActivity(intent);
         });
-
         // Set layout manager and adapter
         recyclerViewEvents.setLayoutManager(new LinearLayoutManager(this));
         recyclerViewEvents.setAdapter(eventAdapter);
@@ -174,7 +147,6 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
      */
     private void setupSearch() {
         if (searchEvents == null) {
-            Log.w(TAG, "Search box not found in layout");
             return;
         }
 
@@ -198,7 +170,6 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
      */
     private void setupFilters() {
         if (chipGroupStatus == null) {
-            Log.w(TAG, "Chip group not found in layout");
             return;
         }
 
@@ -222,8 +193,6 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
             } else if (checkedId == R.id.chipFlagged) {
                 currentStatusFilter = "flagged";
             }
-
-            Log.d(TAG, "Status filter changed to: " + currentStatusFilter);
             applyFiltersAndSort();
         });
     }
@@ -233,7 +202,6 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
      */
     private void setupSort() {
         if (btnSort == null) {
-            Log.w(TAG, "Sort button not found in layout");
             return;
         }
 
@@ -256,7 +224,6 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
                 .setTitle("Sort Events")
                 .setSingleChoiceItems(sortOptions, currentIndex, (dialog, which) -> {
                     currentSort = SortOption.values()[which];
-                    Log.d(TAG, "Sort changed to: " + currentSort.getDisplayName());
                     applyFiltersAndSort();
                     dialog.dismiss();
                 })
@@ -268,8 +235,6 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
      * Load all events from Firebase
      */
     private void loadEvents() {
-        Log.d(TAG, "Loading events from Firebase...");
-
         db.collection("events")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
@@ -280,12 +245,9 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
                         event.setEventId(document.getId());
                         allEvents.add(event);
                     }
-
-                    Log.d(TAG, "Loaded " + allEvents.size() + " events");
                     applyFiltersAndSort();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading events", e);
                     Toast.makeText(this, "Error loading events: " + e.getMessage(),
                             Toast.LENGTH_SHORT).show();
                     updateUI(true);
@@ -314,10 +276,6 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
 
         // Step 2: Apply sort
         sortEvents(filteredEvents);
-
-        Log.d(TAG, "Filtered to " + filteredEvents.size() + " events " +
-                "(search: '" + searchQuery + "', status: " + currentStatusFilter +
-                ", sort: " + currentSort.getDisplayName() + ")");
 
         updateUI(false);
     }
@@ -453,7 +411,6 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d(TAG, "Activity resumed, reloading events");
         loadEvents();
     }
 }

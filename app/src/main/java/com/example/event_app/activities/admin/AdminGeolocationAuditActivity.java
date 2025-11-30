@@ -3,9 +3,7 @@ package com.example.event_app.activities.admin;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -27,7 +25,6 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -36,16 +33,11 @@ import java.util.Locale;
  * For privacy compliance monitoring
  */
 public class AdminGeolocationAuditActivity extends AppCompatActivity {
-
-    private static final String TAG = "GeolocationAudit";
-
     private EditText etSearch;
     private RecyclerView recyclerViewAudits;
     private LinearLayout emptyStateLayout;
     private ProgressBar progressBar;
     private TextView tvTotalRecords;
-    private Button btnClearOldRecords;
-
     private GeolocationAuditAdapter auditAdapter;
     private FirebaseFirestore db;
     private List<GeolocationAudit> auditList;
@@ -55,28 +47,21 @@ public class AdminGeolocationAuditActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_geolocation_audit);
         new AccessibilityHelper(this).applyAccessibilitySettings(this);
-
         // Set up action bar
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle("Geolocation Audit");
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
-
         // Initialize Firebase
         db = FirebaseFirestore.getInstance();
-
         // Initialize list
         auditList = new ArrayList<>();
-
         // Initialize views
         initViews();
-
         // Set up search
         setupSearch();
-
         // Set up RecyclerView
         setupRecyclerView();
-
 
         // Load audit records
         loadAuditRecords();
@@ -89,7 +74,6 @@ public class AdminGeolocationAuditActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
         tvTotalRecords = findViewById(R.id.tvTotalRecords);
     }
-
     private void setupSearch() {
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override
@@ -117,9 +101,7 @@ public class AdminGeolocationAuditActivity extends AppCompatActivity {
     }
 
     private void loadAuditRecords() {
-        Log.d(TAG, "Loading geolocation audit records...");
         progressBar.setVisibility(View.VISIBLE);
-
         db.collection("geolocation_audits")
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .limit(500)  // Limit to last 500 records for performance
@@ -131,14 +113,10 @@ public class AdminGeolocationAuditActivity extends AppCompatActivity {
                         GeolocationAudit audit = document.toObject(GeolocationAudit.class);
                         auditList.add(audit);
                     }
-
-                    Log.d(TAG, "Loaded " + auditList.size() + " audit records");
-
                     progressBar.setVisibility(View.GONE);
                     updateUI();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading audit records", e);
                     progressBar.setVisibility(View.GONE);
                     Toast.makeText(this, "Error loading records: " + e.getMessage(),
                             Toast.LENGTH_SHORT).show();
@@ -182,10 +160,9 @@ public class AdminGeolocationAuditActivity extends AppCompatActivity {
     }
 
     /**
-     * ✨ NEW: Open location on Google Maps
+     * NEW: Open location on Google Maps
      */
     private void openLocationOnMap(GeolocationAudit audit) {
-        // Get latitude and longitude
         double latitude = audit.getLatitude();
         double longitude = audit.getLongitude();
 

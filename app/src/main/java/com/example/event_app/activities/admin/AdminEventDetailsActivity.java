@@ -1,7 +1,6 @@
 package com.example.event_app.activities.admin;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -29,8 +28,6 @@ import java.util.Locale;
  * US 03.04.01: Browse events (detailed view)
  */
 public class AdminEventDetailsActivity extends AppCompatActivity {
-
-    private static final String TAG = "AdminEventDetails";
     public static final String EXTRA_EVENT_ID = "event_id";
 
     // Views
@@ -78,15 +75,10 @@ public class AdminEventDetailsActivity extends AppCompatActivity {
             finish();
             return;
         }
-
-        Log.d(TAG, "Opening details for event: " + eventId);
-
         // Initialize views
         initViews();
-
         // Set up delete button
         setupDeleteButton();
-
         // Load event data
         loadEventDetails();
     }
@@ -122,8 +114,6 @@ public class AdminEventDetailsActivity extends AppCompatActivity {
      * Load event details from Firebase
      */
     private void loadEventDetails() {
-        Log.d(TAG, "Loading event details from Firebase...");
-
         db.collection("events")
                 .document(eventId)
                 .get()
@@ -144,7 +134,6 @@ public class AdminEventDetailsActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading event", e);
                     Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     finish();
                 });
@@ -264,8 +253,6 @@ public class AdminEventDetailsActivity extends AppCompatActivity {
      * Delete event from Firebase
      */
     private void deleteEvent() {
-        Log.d(TAG, "Deleting event: " + eventId);
-
         // Show loading
         btnDeleteEvent.setEnabled(false);
         btnDeleteEvent.setText("Deleting...");
@@ -274,17 +261,14 @@ public class AdminEventDetailsActivity extends AppCompatActivity {
                 .document(eventId)
                 .delete()
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Event deleted successfully");
                     Toast.makeText(this, "Event deleted", Toast.LENGTH_SHORT).show();
 
                     // Return to previous screen
                     finish();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error deleting event", e);
                     Toast.makeText(this, "Error deleting event: " + e.getMessage(),
                             Toast.LENGTH_SHORT).show();
-
                     // Re-enable button
                     btnDeleteEvent.setEnabled(true);
                     btnDeleteEvent.setText("Delete Event");
