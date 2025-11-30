@@ -153,17 +153,6 @@
                         android:textSize="20sp"
                         android:fontFamily="sans-serif-medium"/>
 
-                    <TextView
-                        android:id="@+id/btnSeeAllFavorites"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="See All →"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:textSize="14sp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:background="?attr/selectableItemBackground"
-                        android:padding="8dp"/>
 
                 </LinearLayout>
 
