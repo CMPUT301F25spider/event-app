@@ -76,7 +76,7 @@ public class BrowseEventsTabFragment extends Fragment {
     private List<String> customCategories = new ArrayList<>(); // User-added categories
     private List<Chip> customCategoryChips = new ArrayList<>(); // Dynamically created chips
 
-    // ✨ Real-time listener for all events
+    //Real-time listener for all events
     private com.google.firebase.firestore.ListenerRegistration eventsListener;
 
     // Sort options
@@ -265,31 +265,29 @@ public class BrowseEventsTabFragment extends Fragment {
             chip.setText(category);
             chip.setCheckable(true);
             chip.setClickable(true);
-            
+
             // Add click listener
             chip.setOnClickListener(v -> {
                 currentCategoryFilter = category;
                 applyFiltersAndSort();
             });
-            
+
             chipGroupFilters.addView(chip);
             customCategoryChips.add(chip);
         }
     }
 
     /**
-     * ✨ UPDATED: Real-time updates for all active events
+     *  Real-time updates for all active events
      * Events appear/update instantly across all users!
      */
     private void loadAllEvents() {
         showLoading();
-
-        // Remove old listener if exists
         if (eventsListener != null) {
             eventsListener.remove();
         }
 
-        // ✨ Real-time listener - Updates automatically when events are created/modified!
+        //Real-time listener - Updates automatically when events are created/modified!
         eventsListener = db.collection("events")
                 .whereEqualTo("status", "active")
                 .orderBy("createdAt", Query.Direction.DESCENDING)
@@ -541,11 +539,10 @@ public class BrowseEventsTabFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
 
-        // ✨ Clean up real-time listener to prevent memory leaks
+        //Clean up real-time listener to prevent memory leaks
         if (eventsListener != null) {
             eventsListener.remove();
             eventsListener = null;
-            Log.d(TAG, "✅ Events listener cleaned up");
         }
     }
 }

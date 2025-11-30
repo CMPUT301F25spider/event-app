@@ -66,14 +66,11 @@ public class HomeFragment extends Fragment {
     // UI Components
     private MaterialCardView cardScanQr;
     private ImageButton btnSearch, btnNotifications;
-    private TextView tvNotificationBadge; // ✨ Badge showing count
+    private TextView tvNotificationBadge; // Badge showing count
     private RecyclerView rvHappeningSoon, rvPopular;
     private LinearLayout emptyHappeningSoon, emptyPopular;
     private MaterialButton btnMyEvents, btnCreateEvent;
     private ProgressBar progressBar;
-
-    // ✨ NEW: Favorites
-    private TextView btnSeeAllFavorites;
     private RecyclerView rvFavorites;
     private LinearLayout emptyFavorites, sectionFavorites;
     private HorizontalEventAdapter favoritesAdapter;
@@ -90,7 +87,7 @@ public class HomeFragment extends Fragment {
     // Notification service
     private NotificationService notificationService;
 
-    // ✨ Real-time listeners
+    // Real-time listeners
     private ListenerRegistration badgeListener;
     private ListenerRegistration favoritesListener;
     private ListenerRegistration happeningSoonListener;
@@ -148,7 +145,7 @@ public class HomeFragment extends Fragment {
         // Load events
         loadHappeningSoonEvents();
         loadPopularEvents();
-        loadFavoriteEvents();  // ✨ NEW: Load favorites
+        loadFavoriteEvents();  //Load favorites
 
         // Update notification badge
         updateNotificationBadge();
@@ -158,7 +155,7 @@ public class HomeFragment extends Fragment {
         cardScanQr = view.findViewById(R.id.cardScanQr);
         btnSearch = view.findViewById(R.id.btnSearch);
         btnNotifications = view.findViewById(R.id.btnNotifications);
-        tvNotificationBadge = view.findViewById(R.id.tvNotificationBadge); // ✨ Badge
+        tvNotificationBadge = view.findViewById(R.id.tvNotificationBadge); //Badge
 
         rvHappeningSoon = view.findViewById(R.id.rvHappeningSoon);
         rvPopular = view.findViewById(R.id.rvPopular);
@@ -167,9 +164,6 @@ public class HomeFragment extends Fragment {
         btnMyEvents = view.findViewById(R.id.btnMyEvents);
         btnCreateEvent = view.findViewById(R.id.btnCreateEvent);
         progressBar = view.findViewById(R.id.progressBar);
-
-        // ✨ NEW: Favorites section
-        btnSeeAllFavorites = view.findViewById(R.id.btnSeeAllFavorites);
         rvFavorites = view.findViewById(R.id.rvFavorites);
         emptyFavorites = view.findViewById(R.id.emptyFavorites);
         sectionFavorites = view.findViewById(R.id.sectionFavorites);
@@ -188,7 +182,7 @@ public class HomeFragment extends Fragment {
         rvPopular.setLayoutManager(layoutManager2);
         rvPopular.setAdapter(popularAdapter);
 
-        // ✨ NEW: Favorites adapter
+        //Favorites adapter
         favoritesAdapter = new HorizontalEventAdapter(requireContext());
         LinearLayoutManager layoutManager3 = new LinearLayoutManager(requireContext(),
                 LinearLayoutManager.HORIZONTAL, false);
@@ -211,17 +205,6 @@ public class HomeFragment extends Fragment {
         });
 
 
-
-        // ✨ NEW: See All Favorites
-        if (btnSeeAllFavorites != null) {
-            btnSeeAllFavorites.setOnClickListener(v -> {
-                // You can create a separate FavoritesActivity or just filter in BrowseEventsActivity
-                Intent intent = new Intent(requireContext(), BrowseEventsActivity.class);
-                intent.putExtra("SHOW_FAVORITES", true);
-                startActivity(intent);
-            });
-        }
-
         btnMyEvents.setOnClickListener(v -> {
             Intent intent = new Intent(requireContext(), MyEventsActivity.class);
             startActivity(intent);
@@ -234,7 +217,7 @@ public class HomeFragment extends Fragment {
 
     }
     /**
-     * ✨ UPDATED: Real-time notification badge - Updates instantly like Instagram!
+     *Real-time notification badge - Updates instantly like Instagram!
      */
     private void updateNotificationBadge() {
         if (mAuth.getCurrentUser() == null) {
@@ -255,7 +238,6 @@ public class HomeFragment extends Fragment {
                 .whereEqualTo("read", false)
                 .addSnapshotListener((snapshots, error) -> {
                     if (error != null) {
-                        Log.e(TAG, "Error listening to notifications", error);
                         hideBadge();
                         return;
                     }
@@ -266,8 +248,6 @@ public class HomeFragment extends Fragment {
                     }
 
                     int unreadCount = snapshots.size();
-                    Log.d(TAG, "📬 Real-time badge update: " + unreadCount + " unread");
-
                     if (getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
                             if (unreadCount > 0) {
@@ -281,7 +261,7 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * ✨ Show badge with count (like Instagram, Facebook, etc.)
+     * Show badge with count (like Instagram, Facebook, etc.)
      */
     private void showBadge(int count) {
         if (tvNotificationBadge != null) {
@@ -289,18 +269,15 @@ public class HomeFragment extends Fragment {
             String displayText = count > 9 ? "9+" : String.valueOf(count);
             tvNotificationBadge.setText(displayText);
             tvNotificationBadge.setVisibility(View.VISIBLE);
-
-            Log.d(TAG, "Badge shown: " + count + " notifications");
         }
     }
 
     /**
-     * ✨ Hide badge when no notifications
+     * Hide badge when no notifications
      */
     private void hideBadge() {
         if (tvNotificationBadge != null) {
             tvNotificationBadge.setVisibility(View.GONE);
-            Log.d(TAG, "Badge hidden: 0 notifications");
         }
     }
 
@@ -321,23 +298,20 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * ✨ UPDATED: Real-time updates for happening soon events
+     * Real-time updates for happening soon events
      * New events appear instantly without refresh!
      */
     private void loadHappeningSoonEvents() {
-        Log.d(TAG, "Setting up real-time listener for happening soon events...");
-
         Calendar calendar = Calendar.getInstance();
         Date today = calendar.getTime();
         calendar.add(Calendar.DAY_OF_YEAR, 7);
         Date weekFromNow = calendar.getTime();
 
-        // Remove old listener if exists
         if (happeningSoonListener != null) {
             happeningSoonListener.remove();
         }
 
-        // ✨ Real-time listener - Updates automatically!
+        // Real-time listener - Updates automatically!
         happeningSoonListener = db.collection("events")
                 .whereEqualTo("status", "active")
                 .whereGreaterThanOrEqualTo("eventDate", today)
@@ -346,7 +320,6 @@ public class HomeFragment extends Fragment {
                 .limit(10)
                 .addSnapshotListener((queryDocumentSnapshots, error) -> {
                     if (error != null) {
-                        Log.e(TAG, "Error listening to happening soon events", error);
                         showEmptyState(rvHappeningSoon, emptyHappeningSoon);
                         return;
                     }
@@ -363,8 +336,6 @@ public class HomeFragment extends Fragment {
                         events.add(event);
                     }
 
-                    Log.d(TAG, "⚡ Real-time update: " + events.size() + " happening soon events");
-
                     if (events.isEmpty()) {
                         showEmptyState(rvHappeningSoon, emptyHappeningSoon);
                     } else {
@@ -375,25 +346,22 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * ✨ UPDATED: Real-time updates for popular events
+     * Real-time updates for popular events
      * Events update automatically as waiting lists grow!
      */
     private void loadPopularEvents() {
-        Log.d(TAG, "Setting up real-time listener for popular events...");
 
-        // Remove old listener if exists
         if (popularListener != null) {
             popularListener.remove();
         }
 
-        // ✨ Real-time listener - Updates automatically!
+        // Real-time listener - Updates automatically!
         popularListener = db.collection("events")
                 .whereEqualTo("status", "active")
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .limit(10)
                 .addSnapshotListener((queryDocumentSnapshots, error) -> {
                     if (error != null) {
-                        Log.e(TAG, "Error listening to popular events", error);
                         showEmptyState(rvPopular, emptyPopular);
                         return;
                     }
@@ -417,7 +385,6 @@ public class HomeFragment extends Fragment {
                         return Integer.compare(size2, size1);
                     });
 
-                    Log.d(TAG, "⚡ Real-time update: " + events.size() + " popular events");
 
                     if (events.isEmpty()) {
                         showEmptyState(rvPopular, emptyPopular);
@@ -429,7 +396,7 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * ✨ UPDATED: Load user's favorite events with REAL-TIME updates
+     * Load user's favorite events with REAL-TIME updates
      */
     private void loadFavoriteEvents() {
         if (mAuth.getCurrentUser() == null) {
@@ -438,18 +405,16 @@ public class HomeFragment extends Fragment {
         }
 
         String userId = mAuth.getCurrentUser().getUid();
-        Log.d(TAG, "Setting up real-time favorites listener for user: " + userId);
 
-        // ✨ Remove old listener if exists
+        // Remove old listener if exists
         if (favoritesListener != null) {
             favoritesListener.remove();
         }
 
-        // ✨ Set up real-time listener (like Instagram!)
+        //  Set up real-time listener (like Instagram!)
         favoritesListener = db.collection("users").document(userId)
                 .addSnapshotListener((snapshot, error) -> {
                     if (error != null) {
-                        Log.e(TAG, "Error listening to favorites", error);
                         hideFavoritesSection();
                         return;
                     }
@@ -463,12 +428,10 @@ public class HomeFragment extends Fragment {
                     List<String> favoriteIds = (List<String>) snapshot.get("favoriteEvents");
 
                     if (favoriteIds == null || favoriteIds.isEmpty()) {
-                        Log.d(TAG, "No favorite events");
                         hideFavoritesSection();
                         return;
                     }
 
-                    Log.d(TAG, "📬 Real-time favorites update: " + favoriteIds.size() + " favorites");
 
                     // Firestore whereIn has a limit of 10 items
                     if (favoriteIds.size() > 10) {
@@ -487,7 +450,6 @@ public class HomeFragment extends Fragment {
                                     events.add(event);
                                 }
 
-                                Log.d(TAG, "✨ Instantly updated: " + events.size() + " favorite events");
 
                                 if (events.isEmpty()) {
                                     hideFavoritesSection();
@@ -497,14 +459,13 @@ public class HomeFragment extends Fragment {
                                 }
                             })
                             .addOnFailureListener(e -> {
-                                Log.e(TAG, "Error loading favorites", e);
                                 hideFavoritesSection();
                             });
                 });
     }
 
     /**
-     * ✨ NEW: Show favorites section
+     * Show favorites section
      */
     private void showFavoritesSection() {
         if (sectionFavorites != null) {
@@ -519,7 +480,7 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * ✨ NEW: Hide favorites section
+     * Hide favorites section
      */
     private void hideFavoritesSection() {
         if (sectionFavorites != null) {
@@ -541,7 +502,7 @@ public class HomeFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
 
-        // ✨ Clean up ALL real-time listeners to prevent memory leaks
+        // Clean up ALL real-time listeners to prevent memory leaks
         if (badgeListener != null) {
             badgeListener.remove();
             badgeListener = null;
@@ -562,6 +523,6 @@ public class HomeFragment extends Fragment {
             popularListener = null;
         }
 
-        Log.d(TAG, "✅ All real-time listeners cleaned up");
+        Log.d(TAG, " All real-time listeners cleaned up");
     }
 }

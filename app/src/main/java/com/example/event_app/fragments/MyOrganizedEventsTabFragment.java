@@ -37,9 +37,6 @@ import java.util.List;
  * - Navigate to event details for management
  */
 public class MyOrganizedEventsTabFragment extends Fragment {
-
-    private static final String TAG = "MyOrganizedEventsTab";
-
     // UI Components
     private RecyclerView rvMyEvents;
     private ProgressBar progressBar;
@@ -53,7 +50,7 @@ public class MyOrganizedEventsTabFragment extends Fragment {
     private FirebaseAuth mAuth;
     private List<Event> myEvents;
 
-    // ✨ Real-time listener for organizer's events
+    // Real-time listener for organizer's events
     private com.google.firebase.firestore.ListenerRegistration eventsListener;
 
     @Nullable
@@ -107,12 +104,11 @@ public class MyOrganizedEventsTabFragment extends Fragment {
     }
 
     /**
-     * ✨ UPDATED: Real-time updates for organizer's events
+     * Real-time updates for organizer's events
      * New events appear instantly when created!
      */
     private void loadMyOrganizedEvents() {
         if (mAuth.getCurrentUser() == null) {
-            Log.e(TAG, "No user is currently signed in");
             showEmpty("Please sign in to view your events");
             return;
         }
@@ -120,18 +116,16 @@ public class MyOrganizedEventsTabFragment extends Fragment {
         String userId = mAuth.getCurrentUser().getUid();
         showLoading();
 
-        // Remove old listener if exists
         if (eventsListener != null) {
             eventsListener.remove();
         }
 
-        // ✨ Real-time listener - Updates automatically when events are created/modified!
+        // Real-time listener - Updates automatically when events are created/modified!
         eventsListener = db.collection("events")
                 .whereEqualTo("organizerId", userId)
                 .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
                 .addSnapshotListener((queryDocumentSnapshots, error) -> {
                     if (error != null) {
-                        Log.e(TAG, "Error listening to organized events", error);
                         showEmpty("Failed to load events. Please try again.");
                         return;
                     }
@@ -147,8 +141,6 @@ public class MyOrganizedEventsTabFragment extends Fragment {
                         event.setId(doc.getId());
                         myEvents.add(event);
                     }
-
-                    Log.d(TAG, "⚡ Real-time update: " + myEvents.size() + " organized events");
 
                     if (myEvents.isEmpty()) {
                         showEmpty("You haven't organized any events yet");
@@ -182,11 +174,10 @@ public class MyOrganizedEventsTabFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
 
-        // ✨ Clean up real-time listener to prevent memory leaks
+        // Clean up real-time listener to prevent memory leaks
         if (eventsListener != null) {
             eventsListener.remove();
             eventsListener = null;
-            Log.d(TAG, "✅ Events listener cleaned up");
         }
     }
 }

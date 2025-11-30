@@ -284,7 +284,6 @@ public class ProfileFragment extends Fragment {
     private void loadUserProfile() {
         // Check if user is signed in
         if (mAuth.getCurrentUser() == null) {
-            Log.e(TAG, "No user is currently signed in");
             return;
         }
 
@@ -303,12 +302,10 @@ public class ProfileFragment extends Fragment {
                             loadEventStats(userId);
                         }
                     } else {
-                        Log.d(TAG, "No such user document!");
                         hideLoading();
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading profile", e);
                     Toast.makeText(requireContext(), "Error loading profile", Toast.LENGTH_SHORT).show();
                     hideLoading();
                 });
@@ -332,8 +329,6 @@ public class ProfileFragment extends Fragment {
      * Load event statistics for this user
      */
     private void loadEventStats(String userId) {
-        Log.d(TAG, "Loading event stats for user: " + userId);
-
         // Load all active events
         db.collection("events")
                 .whereEqualTo("status", "active")
@@ -361,15 +356,11 @@ public class ProfileFragment extends Fragment {
                             attendingCount++;
                         }
                     }
-
-                    Log.d(TAG, "Stats - Waiting: " + waitingCount + ", Selected: " + selectedCount + ", Attending: " + attendingCount);
-
                     // Update UI
                     displayStats();
                     hideLoading();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading event stats", e);
                     hideLoading();
                 });
     }
@@ -442,7 +433,7 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * NEW: Update notification preference
+     * Update notification preference
      */
     private void updateNotificationPreference(boolean enabled) {
         if (mAuth.getCurrentUser() == null) return;
@@ -451,19 +442,17 @@ public class ProfileFragment extends Fragment {
         db.collection("users").document(userId)
                 .update("notificationsEnabled", enabled)
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Notification preference updated: " + enabled);
                     Toast.makeText(requireContext(),
                             enabled ? "Notifications enabled" : "Notifications disabled",
                             Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error updating notification preference", e);
                     switchNotifications.setChecked(!enabled);
                 });
     }
 
     /**
-     * NEW: Hidden admin unlock - tap version 3 times rapidly
+     * Hidden admin unlock - tap version 3 times rapidly
      */
     private void handleVersionTap() {
         long currentTime = System.currentTimeMillis();
@@ -485,14 +474,14 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * NEW: Show admin code entry dialog
+     * Show admin code entry dialog
      */
     private void showAdminCodeDialog() {
         View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_admin_code, null);
         EditText etAdminCode = dialogView.findViewById(R.id.etAdminCode);
 
         new AlertDialog.Builder(requireContext())
-                .setTitle("🔐 Enter Admin Code")
+                .setTitle("Enter Admin Code")
                 .setView(dialogView)
                 .setPositiveButton("Unlock", (dialog, which) -> {
                     String enteredCode = etAdminCode.getText().toString().trim();
@@ -503,18 +492,18 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * NEW: Verify admin code and grant access
+     * Verify admin code and grant access
      */
     private void verifyAdminCode(String enteredCode) {
         if (enteredCode.equals(ADMIN_SECRET_CODE)) {
             grantAdminAccess();
         } else {
-            Toast.makeText(requireContext(), "❌ Invalid admin code", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "Invalid admin code", Toast.LENGTH_SHORT).show();
         }
     }
 
     /**
-     * NEW: Grant admin access to current user
+     * Grant admin access to current user
      */
     private void grantAdminAccess() {
         if (currentUser == null || mAuth.getCurrentUser() == null) return;
@@ -528,15 +517,14 @@ public class ProfileFragment extends Fragment {
         db.collection("users").document(userId)
                 .set(currentUser)
                 .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(requireContext(), "🎉 Admin access granted!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(requireContext(), "Admin access granted!", Toast.LENGTH_LONG).show();
                     updateAdminUI();
 
-                    // ✨ NEW: Navigate to AdminHomeActivity
+                    //Navigate to AdminHomeActivity
                     Intent intent = new Intent(requireContext(), AdminHomeActivity.class);
                     startActivity(intent);
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "❌ Failed to grant admin access", e);
                     Toast.makeText(requireContext(), "Error granting admin access", Toast.LENGTH_SHORT).show();
                     btnUnlockAdmin.setEnabled(true);
                 });
@@ -549,11 +537,11 @@ public class ProfileFragment extends Fragment {
         if (currentUser == null) return;
 
         if (currentUser.isAdmin()) {
-            tvAdminStatus.setText("✅ Admin privileges active");
+            tvAdminStatus.setText("Admin privileges active");
             tvAdminStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
             btnUnlockAdmin.setVisibility(View.GONE);
         } else {
-            tvAdminStatus.setText("🔒 Admin access locked");
+            tvAdminStatus.setText("Admin access locked");
             tvAdminStatus.setTextColor(getResources().getColor(android.R.color.darker_gray));
             btnUnlockAdmin.setVisibility(View.VISIBLE);
         }
