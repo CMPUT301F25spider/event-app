@@ -1,1 +1,0 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"com.example.event_app"},{"l":"com.example.event_app.adapters"},{"l":"com.example.event_app.admin"},{"l":"com.example.event_app.domain"},{"l":"com.example.event_app.models"},{"l":"com.example.event_app.organizer"},{"l":"com.example.event_app.utils"}];updateSearchResults();

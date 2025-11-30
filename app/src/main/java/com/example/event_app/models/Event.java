@@ -7,15 +7,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Event Model - Updated with Replacement Draw System
- * Represents an event in the LuckySpot system
+ * Represents an event within the LuckySpot system. This model stores all event-related
+ * information used by entrants, organizers, and administrators, including registration
+ * lists, lottery selections, geolocation data, capacity tracking, and replacement-draw
+ * history.
  *
- * for Replacement Draw:
- * - notSelectedList: Users who lost the lottery (replacement pool)
- * - replacementLog: Track replacement history
- * - lotteryRun: Has the lottery been run yet?
- * - lotteryDate: When was the lottery run?
- * - archived: Is this event past/archived?
+ * <p>The event life cycle includes: waiting list registration, lottery selection,
+ * invitation response (accept/decline), replacement draws, capacity verification, and
+ * archival once the event date has passed. The model also supports tracking of
+ * geolocation audits and various participant groups.</p>
  */
 public class Event {
 
@@ -68,7 +68,15 @@ public class Event {
     // Empty constructor required for Firebase
     public Event() {}
 
-    // Constructor for creating new events
+    /**
+     * Creates a new event with the basic identifying information. Additional fields
+     * such as capacity, category, registration window, and poster URL may be set later.
+     *
+     * @param eventId     optional event identifier stored in the document
+     * @param name        name of the event shown to users
+     * @param description brief text describing the event
+     * @param organizerId Firestore ID of the organizer who created the event
+     */
     public Event(String eventId, String name, String description, String organizerId) {
         this.eventId = eventId;
         this.name = name;
@@ -134,7 +142,7 @@ public class Event {
     public void setNotSelectedList(List<String> notSelectedList) { this.notSelectedList = notSelectedList; }
     public void setReplacementLog(List<Map<String, Object>> replacementLog) {
         this.replacementLog = replacementLog;
-    }  // ✨ NEW
+    }
     public void setDate(Date date) { this.date = date; }
     public void setRegistrationStartDate(Date registrationStartDate) { this.registrationStartDate = registrationStartDate; }
     public void setRegistrationEndDate(Date registrationEndDate) { this.registrationEndDate = registrationEndDate; }
@@ -157,7 +165,10 @@ public class Event {
     // --- Logic Methods ---
 
     /**
-     * Get cancellation rate
+     * Computes the cancellation rate as a percentage of users who were selected
+     * but later declined or cancelled. If no users were selected, this returns 0.0.
+     *
+     * @return cancellation rate between 0.0 and 100.0
      */
     public double getCancellationRate() {
         if (totalSelected == 0) return 0.0;
@@ -165,14 +176,21 @@ public class Event {
     }
 
     /**
-     * Check if cancellation rate is high
+     * Determines whether the cancellation rate exceeds the threshold considered
+     * "high" for analytics or administrative review.
+     *
+     * @return true if the cancellation rate is greater than 30%, otherwise false
      */
     public boolean hasHighCancellationRate() {
         return getCancellationRate() > 30.0;
     }
 
     /**
-     * Get number of spots still available
+     * Calculates the number of remaining available spots based on capacity and
+     * the number of users who have accepted their invitation. If no capacity is
+     * defined, the event is treated as having unlimited space.
+     *
+     * @return number of remaining spots, or Integer.MAX_VALUE if unlimited
      */
     public int getSpotsRemaining() {
         if (capacity == null) return Integer.MAX_VALUE;
@@ -181,7 +199,10 @@ public class Event {
     }
 
     /**
-     * Check if capacity is full
+     * Checks whether the current number of attending users has reached or exceeded
+     * the event's capacity.
+     *
+     * @return true if the event is full, otherwise false
      */
     public boolean isCapacityFull() {
         if (capacity == null) return false;
@@ -190,14 +211,20 @@ public class Event {
     }
 
     /**
-     *  Check if replacement pool is available
+     * Determines whether the event has a non-empty replacement pool consisting
+     * of users who did not win the initial lottery.
+     *
+     * @return true if the replacement pool contains at least one user
      */
     public boolean hasReplacementPool() {
         return notSelectedList != null && !notSelectedList.isEmpty();
     }
 
     /**
-     *  Check if event is in the past
+     * Checks whether the event date (or server timestamp if event date is null)
+     * occurs before the current time, indicating that the event is in the past.
+     *
+     * @return true if the event date has passed, otherwise false
      */
     public boolean isPast() {
         if (eventDate == null && date == null) return false;
