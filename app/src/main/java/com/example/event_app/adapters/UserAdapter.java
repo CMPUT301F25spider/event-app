@@ -18,7 +18,7 @@ import java.util.Locale;
 
 /**
  * UserAdapter - Display users with search and event count
- * UPDATED: Added search functionality and events hosted count
+ * Added search functionality and events hosted count
  */
 public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder> {
 
@@ -60,7 +60,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     }
 
     /**
-     * NEW: Filter users by search query
+     * Filter users by search query
      */
     public void filter(String query) {
         usersFiltered.clear();
@@ -192,7 +192,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     }
 
     /**
-     * NEW: Callback for events count
+     * Callback for events count
      */
     public interface EventsCountCallback {
         void onCountLoaded(int count);

@@ -253,10 +253,10 @@ public class MyEventsAdapter extends RecyclerView.Adapter<MyEventsAdapter.EventV
                     .update(
                             "signedUpUsers", event.getSignedUpUsers(),
                             "selectedList", event.getSelectedList(),
-                            "waitingList", event.getWaitingList()  // ✅ Also update waiting list
+                            "waitingList", event.getWaitingList()  //update waiting list
                     )
                     .addOnSuccessListener(aVoid -> {
-                        Log.d(TAG, "✅ User accepted invitation");
+                        Log.d(TAG, "User accepted invitation");
                         Toast.makeText(context, "You're attending! 🎉", Toast.LENGTH_LONG).show();
 
                         // Remove this event from the list (will reload)
@@ -267,7 +267,7 @@ public class MyEventsAdapter extends RecyclerView.Adapter<MyEventsAdapter.EventV
                         }
                     })
                     .addOnFailureListener(e -> {
-                        Log.e(TAG, "❌ Error accepting invitation", e);
+                        Log.e(TAG, "Error accepting invitation", e);
                         Toast.makeText(context, "Failed to accept. Try again.", Toast.LENGTH_SHORT).show();
                         btnAccept.setEnabled(true);
                         btnDecline.setEnabled(true);
@@ -307,7 +307,7 @@ public class MyEventsAdapter extends RecyclerView.Adapter<MyEventsAdapter.EventV
             // Increment cancelled count
             int newCancelledCount = event.getTotalCancelled() + 1;
 
-            // ✅ US 01.05.01: Automatically draw replacement if spots available
+            // US 01.05.01: Automatically draw replacement if spots available
             // Use final variable for lambda
             final boolean[] drewReplacementArray = {false};
 
@@ -328,7 +328,7 @@ public class MyEventsAdapter extends RecyclerView.Adapter<MyEventsAdapter.EventV
                         String replacement = availableEntrants.get(0);
                         event.getSelectedList().add(replacement);
                         drewReplacementArray[0] = true;
-                        Log.d(TAG, "✅ Drew replacement entrant: " + replacement);
+                        Log.d(TAG, "Drew replacement entrant: " + replacement);
                     }
                 }
             }
@@ -345,7 +345,7 @@ public class MyEventsAdapter extends RecyclerView.Adapter<MyEventsAdapter.EventV
                             "totalCancelled", newCancelledCount
                     )
                     .addOnSuccessListener(aVoid -> {
-                        Log.d(TAG, "✅ User declined invitation");
+                        Log.d(TAG, "User declined invitation");
                         String message = drewReplacement ?
                                 "Invitation declined. Another entrant was selected!" :
                                 "Invitation declined";
@@ -359,7 +359,7 @@ public class MyEventsAdapter extends RecyclerView.Adapter<MyEventsAdapter.EventV
                         }
                     })
                     .addOnFailureListener(e -> {
-                        Log.e(TAG, "❌ Error declining invitation", e);
+                        Log.e(TAG, "Error declining invitation", e);
                         Toast.makeText(context, "Failed to decline. Try again.", Toast.LENGTH_SHORT).show();
                         btnAccept.setEnabled(true);
                         btnDecline.setEnabled(true);

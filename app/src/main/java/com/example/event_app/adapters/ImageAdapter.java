@@ -18,7 +18,7 @@ import java.util.List;
 
 /**
  * ImageAdapter - Display images in a grid with delete button
- * UPDATED: Shows actual images with delete button overlay (no text labels)
+ * Shows actual images with delete button overlay (no text labels)
  * Used in AdminBrowseImagesActivity
  */
 public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHolder> {

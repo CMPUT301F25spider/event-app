@@ -108,7 +108,7 @@ public class OrganizerEventsAdapter extends RecyclerView.Adapter<OrganizerEvents
                 ivPoster.setImageResource(R.drawable.ic_event_placeholder);
             }
 
-            // ✨ NEW: Show cancelled tag if event is cancelled
+            // Show cancelled tag if event is cancelled
             if ("cancelled".equals(event.getStatus())) {
                 tvCancelledTag.setVisibility(View.VISIBLE);
                 // Gray out the card

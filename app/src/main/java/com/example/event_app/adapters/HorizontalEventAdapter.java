@@ -29,7 +29,7 @@ import java.util.Locale;
  * HorizontalEventAdapter - Displays events in horizontal scrolling lists
  * Used in HomeFragment for "Happening Soon" and "Popular This Week" sections
  *
- * UPDATED: Added favorite heart button functionality
+ * Added favorite heart button functionality
  */
 public class HorizontalEventAdapter extends RecyclerView.Adapter<HorizontalEventAdapter.EventViewHolder> {
 
