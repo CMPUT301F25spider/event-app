@@ -196,7 +196,6 @@
                 android:fontFamily="sans-serif-medium"
                 android:layout_marginBottom="16dp"/>
 
-            <!-- ✨ NEW: Lottery Actions (2 buttons toggle visibility) -->
 
             <!-- Run Lottery Button (Shows BEFORE lottery) -->
             <com.google.android.material.button.MaterialButton
@@ -219,7 +218,7 @@
                 android:id="@+id/btnDrawReplacement"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
-                android:text="🔄 Draw Replacement"
+                android:text="Draw Replacement"
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="16sp"
                 android:textAllCaps="false"
