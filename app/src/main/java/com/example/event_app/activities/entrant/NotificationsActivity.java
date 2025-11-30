@@ -2,7 +2,6 @@ package com.example.event_app.activities.entrant;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -31,7 +30,7 @@ import java.util.List;
 /**
  * NotificationsActivity - View all notifications
  *
- * ✨ UPDATED: Added real-time Firestore listener for instant notification updates!
+ * Real-time Firestore listener for instant notification updates!
  *
  * Features:
  * - View all notifications (REAL-TIME updates! ⚡)
@@ -43,9 +42,6 @@ import java.util.List;
  * US 01.04.02: Receive notification when not chosen
  */
 public class NotificationsActivity extends AppCompatActivity {
-
-    private static final String TAG = "NotificationsActivity";
-
     // UI Components
     private RecyclerView rvNotifications;
     private ProgressBar progressBar;
@@ -60,7 +56,7 @@ public class NotificationsActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
 
-    // ✨ NEW: Firestore listener for real-time updates
+    //Firestore listener for real-time updates
     private ListenerRegistration notificationListener;
 
     @Override
@@ -80,7 +76,7 @@ public class NotificationsActivity extends AppCompatActivity {
         setupRecyclerView();
         setupListeners();
 
-        // ✨ NEW: Load notifications with real-time listener
+        // Load notifications with real-time listener
         startRealtimeNotificationListener();
     }
 
@@ -104,11 +100,9 @@ public class NotificationsActivity extends AppCompatActivity {
                 if (!notification.isRead()) {
                     markAsRead(notification);
                 }
-
                 // Navigate to event details
                 navigateToEvent(notification.getEventId());
             }
-
             @Override
             public void onDeleteClick(Notification notification) {
                 deleteNotification(notification);
@@ -125,7 +119,7 @@ public class NotificationsActivity extends AppCompatActivity {
     }
 
     /**
-     * ✨ NEW: Real-time Firestore listener for instant notification updates!
+     * Real-time Firestore listener for instant notification updates!
      * Notifications appear IMMEDIATELY when sent - no refresh needed!
      */
     private void startRealtimeNotificationListener() {
@@ -133,19 +127,17 @@ public class NotificationsActivity extends AppCompatActivity {
 
         showLoading();
 
-        // ✨ CRITICAL: addSnapshotListener() for real-time updates
+        // addSnapshotListener() for real-time updates
         notificationListener = db.collection("notifications")
                 .whereEqualTo("userId", userId)
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .addSnapshotListener((snapshots, error) -> {
                     if (error != null) {
-                        Log.e(TAG, "❌ Error listening to notifications", error);
                         showEmpty();
                         return;
                     }
 
                     if (snapshots == null || snapshots.isEmpty()) {
-                        Log.d(TAG, "No notifications");
                         notifications.clear();
                         showEmpty();
                         adapter.notifyDataSetChanged();
@@ -153,7 +145,7 @@ public class NotificationsActivity extends AppCompatActivity {
                         return;
                     }
 
-                    // ✨ Update list in real-time!
+                    //Update list in real-time!
                     notifications.clear();
 
                     for (QueryDocumentSnapshot doc : snapshots) {
@@ -161,9 +153,6 @@ public class NotificationsActivity extends AppCompatActivity {
                         notification.setNotificationId(doc.getId());
                         notifications.add(notification);
                     }
-
-                    Log.d(TAG, "✅ Loaded " + notifications.size() + " notifications (real-time)");
-
                     showNotifications();
                     adapter.notifyDataSetChanged();
                     updateButtonStates();
@@ -171,7 +160,7 @@ public class NotificationsActivity extends AppCompatActivity {
     }
 
     /**
-     * OLD: One-time load (not needed anymore, but keeping for reference)
+     * One-time load
      */
     private void loadNotifications() {
         showLoading();
@@ -196,7 +185,6 @@ public class NotificationsActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(String error) {
-                Log.e(TAG, "Failed to load notifications: " + error);
                 showEmpty();
             }
         });
@@ -213,9 +201,7 @@ public class NotificationsActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onFailure(String error) {
-                        Log.e(TAG, "Failed to mark as read: " + error);
-                    }
+                    public void onFailure(String error) {}
                 });
     }
 
@@ -234,9 +220,7 @@ public class NotificationsActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(String error) {
-                Log.e(TAG, "Failed to mark all as read: " + error);
-            }
+            public void onFailure(String error) {}
         });
     }
 
@@ -256,9 +240,7 @@ public class NotificationsActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onFailure(String error) {
-                        Log.e(TAG, "Failed to delete notification: " + error);
-                    }
+                    public void onFailure(String error) {}
                 });
     }
 
@@ -284,9 +266,7 @@ public class NotificationsActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(String error) {
-                Log.e(TAG, "Failed to clear all notifications: " + error);
-            }
+            public void onFailure(String error) {}
         });
     }
 
@@ -333,7 +313,7 @@ public class NotificationsActivity extends AppCompatActivity {
     }
 
     /**
-     * ✨ CRITICAL: Remove listener when activity is destroyed
+     * Remove listener when activity is destroyed
      * Prevents memory leaks and unnecessary battery drain!
      */
     @Override
@@ -343,17 +323,6 @@ public class NotificationsActivity extends AppCompatActivity {
         // Remove listener to prevent memory leaks
         if (notificationListener != null) {
             notificationListener.remove();
-            Log.d(TAG, "🔌 Real-time listener removed");
         }
     }
-
-    /**
-     * ✨ REMOVED: onResume() reload
-     * Not needed anymore because real-time listener handles updates automatically!
-     */
-    // @Override
-    // protected void onResume() {
-    //     super.onResume();
-    //     loadNotifications();  // ← No longer needed!
-    // }
 }

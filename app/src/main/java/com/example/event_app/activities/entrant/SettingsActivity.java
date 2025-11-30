@@ -30,25 +30,17 @@ import com.google.firebase.firestore.FirebaseFirestore;
  * - US 01.02.02: Update profile information
  * - US 01.02.04: Delete profile
  * - US 01.04.03: Opt out of notifications
- * - US [NEW]: Accessibility options (large text, high contrast)
- * - Admin code unlock (secret: CMPUT301Lucky_Spot)
+ * - US 01.08.01 Accessibility options (large text, high contrast)
+ * - Admin code unlock (secret: 1234)
  */
 public class SettingsActivity extends AppCompatActivity {
-
-    private static final String TAG = "SettingsActivity";
-    private static final String ADMIN_SECRET_CODE = "1234"; // ✨ Secret code
-
+    private static final String ADMIN_SECRET_CODE = "1234"; //Secret code
     // UI Elements - Profile
     private TextInputEditText editName, editEmail, editPhone;
     private MaterialButton btnSave, btnBecomeOrganizer, btnDeleteAccount;
     private View loadingView, contentView;
-
     // UI Elements - Admin
     private MaterialButton btnUnlockAdmin;
-
-
-
-
     // Firebase
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -62,7 +54,6 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
-
 
         // Initialize Firebase
         mAuth = FirebaseAuth.getInstance();
@@ -122,7 +113,6 @@ public class SettingsActivity extends AppCompatActivity {
                     showContent();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading profile", e);
                     Toast.makeText(this, "Error loading profile", Toast.LENGTH_SHORT).show();
                     showContent();
                 });
@@ -167,7 +157,6 @@ public class SettingsActivity extends AppCompatActivity {
                     btnSave.setEnabled(true);
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error updating profile", e);
                     Toast.makeText(this, "Failed to update profile", Toast.LENGTH_SHORT).show();
                     btnSave.setEnabled(true);
                 });
@@ -202,8 +191,6 @@ public class SettingsActivity extends AppCompatActivity {
 
         return true;
     }
-
-
     /**
      * US 01.02.04: Delete profile
      */
@@ -228,19 +215,16 @@ public class SettingsActivity extends AppCompatActivity {
                     mAuth.getCurrentUser().delete()
                             .addOnSuccessListener(unused -> {
                                 Toast.makeText(this, "Account deleted", Toast.LENGTH_SHORT).show();
-
                                 // Sign out and go back to splash
                                 mAuth.signOut();
                                 finish();
                             })
                             .addOnFailureListener(e -> {
-                                Log.e(TAG, "Error deleting auth account", e);
                                 Toast.makeText(this, "Account partially deleted. Please contact support.", Toast.LENGTH_LONG).show();
                                 finish();
                             });
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error deleting user document", e);
                     Toast.makeText(this, "Failed to delete account", Toast.LENGTH_SHORT).show();
                     btnDeleteAccount.setEnabled(true);
                 });

@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.widget.TextView;
@@ -23,15 +22,12 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 
 /**
- * SplashActivity - Uber-Inspired Minimal Launch Screen
+ * SplashActivity
  * Shows "LuckySpot" text on black background with fade-in animation
  */
 @SuppressLint("CustomSplashScreen")
 public class SplashActivity extends AppCompatActivity {
-
-    private static final String TAG = "SplashActivity";
     private static final int SPLASH_DURATION = 1500; // 1.5 seconds
-
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private String deviceId;
@@ -53,8 +49,6 @@ public class SplashActivity extends AppCompatActivity {
 
         // Get unique device ID
         deviceId = getUniqueDeviceId();
-        Log.d(TAG, "Device ID: " + deviceId);
-
         // Authenticate after splash duration
         new Handler(Looper.getMainLooper()).postDelayed(
                 this::authenticateUser,
@@ -101,11 +95,9 @@ public class SplashActivity extends AppCompatActivity {
     private void signInAnonymously() {
         mAuth.signInAnonymously()
                 .addOnSuccessListener(authResult -> {
-                    Log.d(TAG, "✅ Anonymous sign-in successful");
                     checkUserProfile();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "❌ Sign-in failed", e);
                     navigateToProfileSetup();
                 });
     }
@@ -124,7 +116,6 @@ public class SplashActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error checking profile", e);
                     navigateToProfileSetup();
                 });
     }

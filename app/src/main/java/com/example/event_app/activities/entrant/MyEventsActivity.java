@@ -35,9 +35,6 @@ import java.util.List;
  * - Events they declined
  */
 public class MyEventsActivity extends AppCompatActivity {
-
-    private static final String TAG = "MyEventsActivity";
-
     // UI Elements
     private RecyclerView rvEvents;
     private ProgressBar progressBar;
@@ -145,7 +142,7 @@ public class MyEventsActivity extends AppCompatActivity {
                         Event event = document.toObject(Event.class);
                         event.setId(document.getId());
 
-                        // ✅ Check if user is involved in this event (any list)
+                        // Check if user is involved in this event (any list)
                         boolean isInWaitingList = event.getWaitingList() != null &&
                                 event.getWaitingList().contains(userId);
                         boolean isSelected = event.getSelectedList() != null &&
@@ -170,16 +167,14 @@ public class MyEventsActivity extends AppCompatActivity {
                         showEvents(myEvents);
                     }
 
-                    Log.d(TAG, "Loaded " + myEvents.size() + " events for user");
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading events", e);
                     showError("Failed to load events. Please try again.");
                 });
     }
 
     /**
-     * ✅ Determine user's status for this event (checks all lists!)
+     * Determine user's status for this event (checks all lists!)
      */
     private String getEventStatus(Event event) {
         boolean isInWaitingList = event.getWaitingList() != null &&

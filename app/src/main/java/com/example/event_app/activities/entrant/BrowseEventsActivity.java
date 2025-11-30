@@ -1,7 +1,6 @@
 package com.example.event_app.activities.entrant;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -29,17 +28,12 @@ import java.util.List;
  * US 01.05.04: See waiting list count for each event
  */
 public class BrowseEventsActivity extends AppCompatActivity {
-
-    private static final String TAG = "BrowseEventsActivity";
-
     // UI Elements
     private RecyclerView rvEvents;
     private ProgressBar progressBar;
     private TextView tvEmptyState, tvErrorState;
     private MaterialButton btnRetry;
     private View emptyView, errorView;
-
-    // Data
     private EventAdapter adapter;
     private FirebaseFirestore db;
 
@@ -105,11 +99,8 @@ public class BrowseEventsActivity extends AppCompatActivity {
                     } else {
                         showEvents(events);
                     }
-
-                    Log.d(TAG, "Loaded " + events.size() + " events");
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading events", e);
                     showError("Failed to load events. Please try again.");
                 });
     }

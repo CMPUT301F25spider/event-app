@@ -57,10 +57,6 @@ import java.util.Map;
  * UPDATED: Added geolocation audit logging for privacy compliance
  */
 public class EventDetailsActivity extends AppCompatActivity {
-
-    private static final String TAG = "EventDetailsActivity";
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
-
     // UI Elements
     private ImageView ivPoster;
     private TextView tvEventName, tvDescription, tvOrganizer, tvLocation;
@@ -68,7 +64,7 @@ public class EventDetailsActivity extends AppCompatActivity {
     private MaterialButton btnJoinWaitingList, btnLeaveWaitingList;
     private MaterialButton btnAcceptInvitation, btnDeclineInvitation;
     private MaterialCardView cardLocation, cardInvitation;
-    // ✨ NEW: Lottery info card
+    //  Lottery info card
     private MaterialCardView cardLotteryInfo;
     private View loadingView, contentView, errorView;
 
@@ -78,7 +74,7 @@ public class EventDetailsActivity extends AppCompatActivity {
     private NotificationService notificationService;
     private FusedLocationProviderClient fusedLocationClient;
 
-    // ✨ Real-time listener for event updates
+    //  Real-time listener for event updates
     private com.google.firebase.firestore.ListenerRegistration eventListener;
 
     // Data
@@ -87,6 +83,9 @@ public class EventDetailsActivity extends AppCompatActivity {
     private boolean isOnWaitingList = false;
     private boolean isSelected = false;
     private boolean hasAccepted = false;
+
+    private static final String TAG = "EventDetailsActivity";
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,16 +100,13 @@ public class EventDetailsActivity extends AppCompatActivity {
             finish();
             return;
         }
-
         // Initialize Firebase
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
         notificationService = new NotificationService();
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-
         // Initialize views
         initViews();
-
         // Load event data
         loadEventDetails();
     }
@@ -138,7 +134,7 @@ public class EventDetailsActivity extends AppCompatActivity {
         btnDeclineInvitation = findViewById(R.id.btnDeclineInvitation);
         cardInvitation = findViewById(R.id.cardInvitation);
 
-        // ✨ NEW: Lottery info card
+        // Lottery info card
         cardLotteryInfo = findViewById(R.id.cardLotteryInfo);
 
         // Button listeners
@@ -158,14 +154,14 @@ public class EventDetailsActivity extends AppCompatActivity {
         // Location card click listener
         cardLocation.setOnClickListener(v -> openLocationInMaps());
 
-        // ✨ NEW: Lottery info card listener
+        // Lottery info card listener
         if (cardLotteryInfo != null) {
             cardLotteryInfo.setOnClickListener(v -> showLotteryInfoDialog());
         }
     }
 
     /**
-     * ✨ UPDATED: Real-time event details - Updates automatically!
+     * Real-time event details - Updates automatically!
      * If organizer changes event info, entrants see it instantly
      */
     private void loadEventDetails() {
@@ -176,11 +172,10 @@ public class EventDetailsActivity extends AppCompatActivity {
             eventListener.remove();
         }
 
-        // ✨ Real-time listener - Updates automatically when event changes!
+        // Real-time listener - Updates automatically when event changes!
         eventListener = db.collection("events").document(eventId)
                 .addSnapshotListener((document, error) -> {
                     if (error != null) {
-                        Log.e(TAG, "Error listening to event", error);
                         showError("Failed to load event");
                         return;
                     }
@@ -196,8 +191,6 @@ public class EventDetailsActivity extends AppCompatActivity {
                         checkIfOrganizer();
                         displayEventDetails();
                         checkUserStatus();
-
-                        Log.d(TAG, "⚡ Real-time update: Event details refreshed");
                     }
                 });
     }
@@ -248,7 +241,7 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * ✨ FIX #4: Check if current user is organizer and auto-redirect
+     * Check if current user is organizer and auto-redirect
      * Organizers shouldn't see the entrant view - redirect to management
      */
     private void checkIfOrganizer() {
@@ -261,8 +254,6 @@ public class EventDetailsActivity extends AppCompatActivity {
 
         if (currentUserId.equals(organizerId)) {
             // User IS the organizer - redirect to management view
-            Log.d(TAG, "✅ User is organizer - redirecting to OrganizerEventDetailsActivity");
-
             Intent intent = new Intent(this, com.example.event_app.activities.organizer.OrganizerEventDetailsActivity.class);
             intent.putExtra("EVENT_ID", eventId);
             startActivity(intent);
@@ -291,14 +282,13 @@ public class EventDetailsActivity extends AppCompatActivity {
                 startActivity(browserIntent);
             }
         } catch (Exception e) {
-            Log.e(TAG, "Error opening maps", e);
             Toast.makeText(this, "Could not open maps", Toast.LENGTH_SHORT).show();
         }
     }
 
     /**
      * Check user's status: waiting list, selected, or accepted
-     * UPDATED: Added data integrity validation to prevent users in multiple lists
+     * Added data integrity validation to prevent users in multiple lists
      */
     private void checkUserStatus() {
         if (mAuth.getCurrentUser() == null) {
@@ -308,7 +298,6 @@ public class EventDetailsActivity extends AppCompatActivity {
             updateButtonState();
             return;
         }
-
         String userId = mAuth.getCurrentUser().getUid();
 
         isOnWaitingList = event.getWaitingList() != null && event.getWaitingList().contains(userId);
@@ -353,13 +342,9 @@ public class EventDetailsActivity extends AppCompatActivity {
         }
 
         if (listCount > 1) {
-            // DATA CORRUPTION DETECTED
-            Log.e(TAG, "DATA INTEGRITY ERROR: User " + userId + " is in " + listCount + " lists: " + listsFound);
             Toast.makeText(this,
-                "Warning: Your registration status appears in multiple lists. Please contact support.",
-                Toast.LENGTH_LONG).show();
-
-            // Attempt to fix by prioritizing the most advanced state
+                    "Warning: Your registration status appears in multiple lists. Please contact support.",
+                    Toast.LENGTH_LONG).show();
             fixUserListCorruption(userId);
         } else if (listCount == 0) {
             Log.d(TAG, "User not in any event lists - can join waiting list");
@@ -373,43 +358,34 @@ public class EventDetailsActivity extends AppCompatActivity {
      * Priority: signed up > selected > waiting list > declined
      */
     private void fixUserListCorruption(String userId) {
-        Log.w(TAG, "Attempting to fix data corruption for user " + userId);
-
         Map<String, Object> updates = new HashMap<>();
 
         // Priority order: If accepted, remove from all other lists
         if (hasAccepted) {
-            Log.d(TAG, "Fixing: Keeping user in signedUpUsers, removing from others");
             updates.put("waitingList", FieldValue.arrayRemove(userId));
             updates.put("selectedList", FieldValue.arrayRemove(userId));
             updates.put("declinedUsers", FieldValue.arrayRemove(userId));
         }
         // If selected but not accepted, remove from waiting list
         else if (isSelected) {
-            Log.d(TAG, "Fixing: Keeping user in selectedList, removing from others");
             updates.put("waitingList", FieldValue.arrayRemove(userId));
             updates.put("declinedUsers", FieldValue.arrayRemove(userId));
         }
         // If on waiting list, remove from selected/declined
         else if (isOnWaitingList) {
-            Log.d(TAG, "Fixing: Keeping user in waitingList, removing from others");
             updates.put("selectedList", FieldValue.arrayRemove(userId));
             updates.put("declinedUsers", FieldValue.arrayRemove(userId));
         }
-
-        // Apply fixes to Firebase
         if (!updates.isEmpty()) {
             db.collection("events").document(eventId)
-                .update(updates)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Data corruption fixed successfully");
-                    Toast.makeText(this, "Registration status corrected", Toast.LENGTH_SHORT).show();
-                    loadEventDetails(); // Reload to reflect fixes
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Failed to fix data corruption", e);
-                    Toast.makeText(this, "Could not fix registration status. Please contact support.", Toast.LENGTH_LONG).show();
-                });
+                    .update(updates)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(this, "Registration status corrected", Toast.LENGTH_SHORT).show();
+                        loadEventDetails();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Could not fix registration status. Please contact support.", Toast.LENGTH_LONG).show();
+                    });
         }
     }
 
@@ -427,7 +403,7 @@ public class EventDetailsActivity extends AppCompatActivity {
         if (hasAccepted) {
             // User has accepted - show status
             if (tvInvitationStatus != null) {
-                tvInvitationStatus.setText("✅ You're registered for this event!");
+                tvInvitationStatus.setText("You're registered for this event!");
                 tvInvitationStatus.setVisibility(View.VISIBLE);
             }
         } else if (isSelected) {
@@ -436,7 +412,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                 cardInvitation.setVisibility(View.VISIBLE);
             }
             if (tvInvitationStatus != null) {
-                tvInvitationStatus.setText("🎉 You've been selected! Accept or decline your invitation:");
+                tvInvitationStatus.setText("You've been selected! Accept or decline your invitation:");
                 tvInvitationStatus.setVisibility(View.VISIBLE);
             }
             if (btnAcceptInvitation != null) btnAcceptInvitation.setVisibility(View.VISIBLE);
@@ -465,11 +441,9 @@ public class EventDetailsActivity extends AppCompatActivity {
 
         // Check if event requires geolocation
         if (event.isGeolocationEnabled()) {
-            Log.d(TAG, "📍 Geolocation required - checking permissions");
             checkLocationPermissionAndJoin(userId);
         } else {
             // Just join without location
-            Log.d(TAG, "No geolocation required - joining directly");
             addToWaitingList(userId, null);
         }
     }
@@ -481,11 +455,9 @@ public class EventDetailsActivity extends AppCompatActivity {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             // Permission granted - get location
-            Log.d(TAG, "✅ Location permission granted");
             getCurrentLocationAndJoin(userId);
         } else {
             // Need to request permission
-            Log.d(TAG, "⚠️ Requesting location permission");
             ActivityCompat.requestPermissions(
                     this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
@@ -507,11 +479,9 @@ public class EventDetailsActivity extends AppCompatActivity {
 
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission granted - get location
-                Log.d(TAG, "✅ User granted location permission");
                 getCurrentLocationAndJoin(userId);
             } else {
                 // Permission denied - ask if they want to join without location
-                Log.w(TAG, "⚠️ User denied location permission");
                 showLocationDeniedDialog(userId);
             }
         }
@@ -560,15 +530,12 @@ public class EventDetailsActivity extends AppCompatActivity {
                         })
                 .addOnSuccessListener(location -> {
                     if (location != null) {
-                        Log.d(TAG, "✅ Got location: " + location.getLatitude() + ", " + location.getLongitude());
                         addToWaitingList(userId, location);
                     } else {
-                        Log.w(TAG, "⚠️ Location is null - trying last known location");
                         getLastKnownLocationAndJoin(userId);
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "❌ Failed to get current location", e);
                     getLastKnownLocationAndJoin(userId);
                 });
     }
@@ -586,23 +553,21 @@ public class EventDetailsActivity extends AppCompatActivity {
         fusedLocationClient.getLastLocation()
                 .addOnSuccessListener(location -> {
                     if (location != null) {
-                        Log.d(TAG, "✅ Got last known location: " + location.getLatitude() + ", " + location.getLongitude());
                         addToWaitingList(userId, location);
                     } else {
-                        Log.w(TAG, "⚠️ No location available - joining without location");
                         Toast.makeText(this, "Couldn't get location, joining without it", Toast.LENGTH_SHORT).show();
                         addToWaitingList(userId, null);
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "❌ Failed to get last known location", e);
+                    Toast.makeText(this, "Couldn't get location, joining without it", Toast.LENGTH_SHORT).show();
                     addToWaitingList(userId, null);
                 });
     }
 
     /**
      * Add user to waiting list with optional location
-     * UPDATED: Now logs geolocation access for privacy compliance audit
+     * Now logs geolocation access for privacy compliance audit
      */
     private void addToWaitingList(String userId, Location location) {
         Map<String, Object> updates = new HashMap<>();
@@ -616,26 +581,20 @@ public class EventDetailsActivity extends AppCompatActivity {
 
             String locationPath = "entrantLocations." + userId;
             updates.put(locationPath, locationData);
-
-            Log.d(TAG, "📍 Saving location for user: " + userId +
-                    " at (" + location.getLatitude() + ", " + location.getLongitude() + ")");
         }
 
         // Update Firebase
         db.collection("events").document(eventId)
                 .update(updates)
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "✅ Successfully joined waiting list" +
-                            (location != null ? " with location" : ""));
                     Toast.makeText(this,
                             "Joined waiting list!" + (location != null ? " 📍" : ""),
                             Toast.LENGTH_SHORT).show();
 
-                    // NEW: Log geolocation access for audit (if location was captured)
+                    //Log geolocation access for audit (if location was captured)
                     if (location != null && event.isGeolocationEnabled()) {
                         logGeolocationAccess(userId, location);
                     }
-
                     // Send notification
                     notificationService.sendNotification(
                             userId,
@@ -650,14 +609,13 @@ public class EventDetailsActivity extends AppCompatActivity {
                     loadEventDetails();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "❌ Error joining waiting list", e);
                     Toast.makeText(this, "Failed to join waiting list", Toast.LENGTH_SHORT).show();
                     btnJoinWaitingList.setEnabled(true);
                 });
     }
 
     /**
-     * NEW: Log geolocation access for privacy compliance audit
+     * Log geolocation access for privacy compliance audit
      * Records when and where a user's location was captured for event registration
      */
     private void logGeolocationAccess(String userId, Location location) {
@@ -687,10 +645,8 @@ public class EventDetailsActivity extends AppCompatActivity {
                 .document(auditId)
                 .set(audit)
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "📋 Geolocation access logged for audit (Privacy Compliance)");
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "❌ Error logging geolocation audit", e);
                     // Don't show error to user - this is background logging
                 });
     }
@@ -707,12 +663,10 @@ public class EventDetailsActivity extends AppCompatActivity {
         db.collection("events").document(eventId)
                 .update("waitingList", FieldValue.arrayRemove(userId))
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Left waiting list");
                     Toast.makeText(this, "Left waiting list", Toast.LENGTH_SHORT).show();
                     loadEventDetails();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error leaving waiting list", e);
                     Toast.makeText(this, "Failed to leave waiting list", Toast.LENGTH_SHORT).show();
                     btnLeaveWaitingList.setEnabled(true);
                 });
@@ -751,7 +705,6 @@ public class EventDetailsActivity extends AppCompatActivity {
                         "signedUpUsers", FieldValue.arrayUnion(userId)
                 )
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Invitation accepted");
                     Toast.makeText(this, "Registration confirmed!", Toast.LENGTH_SHORT).show();
 
                     notificationService.sendNotification(
@@ -759,7 +712,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                             eventId,
                             event.getName(),
                             Notification.TYPE_INVITATION_SENT,
-                            "✅ Registration Confirmed",
+                            "Registration Confirmed",
                             "You're all set for " + event.getName() + "! We're looking forward to seeing you!",
                             null
                     );
@@ -767,7 +720,6 @@ public class EventDetailsActivity extends AppCompatActivity {
                     loadEventDetails();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error accepting invitation", e);
                     Toast.makeText(this, "Failed to accept invitation", Toast.LENGTH_SHORT).show();
                     if (btnAcceptInvitation != null) btnAcceptInvitation.setEnabled(true);
                     if (btnDeclineInvitation != null) btnDeclineInvitation.setEnabled(true);
@@ -807,7 +759,6 @@ public class EventDetailsActivity extends AppCompatActivity {
                         "declinedUsers", FieldValue.arrayUnion(userId)
                 )
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Invitation declined");
                     Toast.makeText(this, "Invitation declined", Toast.LENGTH_SHORT).show();
 
                     notificationService.sendNotification(
@@ -823,7 +774,6 @@ public class EventDetailsActivity extends AppCompatActivity {
                     finish();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error declining invitation", e);
                     Toast.makeText(this, "Failed to decline invitation", Toast.LENGTH_SHORT).show();
                     if (btnAcceptInvitation != null) btnAcceptInvitation.setEnabled(true);
                     if (btnDeclineInvitation != null) btnDeclineInvitation.setEnabled(true);
@@ -831,7 +781,7 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * ✨ US 01.05.05: Show lottery selection criteria
+     * US 01.05.05: Show lottery selection criteria
      */
     private void showLotteryInfoDialog() {
         // Build the lottery info message
@@ -839,13 +789,13 @@ public class EventDetailsActivity extends AppCompatActivity {
 
         info.append("📋 How the Lottery Works\n\n");
 
-        info.append("🎲 Selection Process:\n");
+        info.append("Selection Process:\n");
         info.append("• All entrants have an equal chance\n");
         info.append("• Winners selected randomly after registration closes\n");
         info.append("• Fair and transparent process\n");
         info.append("• No first-come-first-served advantage\n\n");
 
-        info.append("📅 Timeline:\n");
+        info.append("Timeline:\n");
         if (event.getRegistrationEndDate() != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
             info.append("• Registration closes: ").append(sdf.format(event.getRegistrationEndDate())).append("\n");
@@ -875,7 +825,7 @@ public class EventDetailsActivity extends AppCompatActivity {
             info.append("• Capacity: Unlimited\n");
         }
 
-        info.append("\n💡 Equal opportunity for everyone!");
+        info.append("\n Equal opportunity for everyone!");
 
         // Show dialog
         new AlertDialog.Builder(this)
@@ -913,11 +863,10 @@ public class EventDetailsActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
-        // ✨ Clean up real-time listener to prevent memory leaks
+        //  Clean up real-time listener to prevent memory leaks
         if (eventListener != null) {
             eventListener.remove();
             eventListener = null;
-            Log.d(TAG, "✅ Event listener cleaned up");
         }
     }
 }
