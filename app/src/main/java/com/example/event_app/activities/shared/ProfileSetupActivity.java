@@ -70,10 +70,6 @@ public class ProfileSetupActivity extends AppCompatActivity {
             );
             Log.w(TAG, "Device ID not provided, using ANDROID_ID: " + deviceId);
         }
-
-        Log.d(TAG, "Device ID: " + deviceId);
-        Log.d(TAG, "User ID: " + userId);
-
         // Initialize views
         initViews();
 
@@ -176,14 +172,12 @@ public class ProfileSetupActivity extends AppCompatActivity {
         db.collection("users").document(userId)
                 .set(user)
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "✅ Profile created successfully");
                     Toast.makeText(this, "Welcome to LuckySpot!", Toast.LENGTH_SHORT).show();
 
                     // Navigate to MainActivity
                     navigateToHome();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "❌ Error creating profile", e);
                     Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     btnContinue.setEnabled(true);
                 });
