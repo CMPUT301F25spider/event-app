@@ -219,24 +219,47 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
      * • capacity is full, or
      * • the replacement pool is empty.
      */
+    /**
+     * Controls which lottery button is shown:
+     * • Before lottery → shows "Run Lottery"
+     * • After lottery → shows "Draw Replacement"
+     *
+     * Also disables the replacement button if:
+     * • all selected spots are filled (selected + attending = capacity), or
+     * • the replacement pool is empty.
+     *
+     * ✅ FIXED: Only allows replacement when someone declines or cancels
+     */
     private void updateLotteryButtonVisibility() {
         if (event.isLotteryRun()) {
-            // Lottery already run - show replacement button
             btnRunLottery.setVisibility(View.GONE);
             btnDrawReplacement.setVisibility(View.VISIBLE);
 
-            // Disable if capacity full or pool empty
-            boolean canDrawMore = !event.isCapacityFull() && event.hasReplacementPool();
+            int selectedCount = event.getSelectedList() != null ? event.getSelectedList().size() : 0;
+            int attendingCount = event.getSignedUpUsers() != null ? event.getSignedUpUsers().size() : 0;
+            int capacity = event.getCapacity() != null ? event.getCapacity().intValue() : 0;
+            int poolSize = event.getNotSelectedList() != null ? event.getNotSelectedList().size() : 0;
+
+            // Total slots taken = people selected + people attending
+            int totalSlotsTaken = selectedCount + attendingCount;
+
+            // Can draw more if:
+            // 1. Total slots taken < capacity (means someone declined)
+            // 2. Replacement pool is not empty
+            boolean canDrawMore = (totalSlotsTaken < capacity) && poolSize > 0;
+
             btnDrawReplacement.setEnabled(canDrawMore);
 
             if (!canDrawMore) {
-                if (event.isCapacityFull()) {
-                    btnDrawReplacement.setText("✅ Capacity Full");
-                } else if (!event.hasReplacementPool()) {
-                    btnDrawReplacement.setText("❌ Pool Empty");
+                if (totalSlotsTaken >= capacity) {
+                    btnDrawReplacement.setText("All Slots Filled");
+                } else if (poolSize == 0) {
+                    btnDrawReplacement.setText("Pool Empty");
                 }
             } else {
-                btnDrawReplacement.setText("🔄 Draw Replacement");
+                int slotsAvailable = capacity - totalSlotsTaken;
+                btnDrawReplacement.setText("Draw Replacement (" + slotsAvailable + " slot" +
+                        (slotsAvailable == 1 ? "" : "s") + ")");
             }
         } else {
             // Lottery not run yet - show run lottery button

@@ -48,12 +48,7 @@ import java.util.Map;
  *   <li>US 02.06.04 — View replacement draw log</li>
  * </ul>
  *
- * Architecture:
- * - Loads a full Event object from Firestore
- * - Dynamically filters entrant IDs based on selected tab
- * - Uses RecyclerView to display entrant details
- * - Displays replacement log using formatted TextViews
- * - Handles empty-state UI for all categories
+ * ✅ FIXED: No longer mixes log with waiting list, removed emojis from log
  */
 public class ViewEntrantsActivity extends AppCompatActivity {
 
@@ -107,8 +102,6 @@ public class ViewEntrantsActivity extends AppCompatActivity {
     /**
      * Initializes toolbar, RecyclerView container, tab layout,
      * loading view, and empty-state container.
-     *
-     * Also attaches a navigation click listener to the toolbar.
      */
     private void initViews() {
         toolbar = findViewById(R.id.toolbar);
@@ -124,11 +117,7 @@ public class ViewEntrantsActivity extends AppCompatActivity {
     }
 
     /**
-     * Configures the TabLayout with five tabs:
-     * Waiting, Selected, Attending, Declined, and Log.
-     *
-     * Handles tab selection events by updating the current tab state
-     * and refreshing the displayed entrants list.
+     * Configures the TabLayout with five tabs.
      */
     private void setupTabs() {
         tabLayout.addTab(tabLayout.newTab().setText("Waiting"));
@@ -159,8 +148,7 @@ public class ViewEntrantsActivity extends AppCompatActivity {
     }
 
     /**
-     * Sets up the RecyclerView and assigns the EntrantListAdapter
-     * that displays entrant profile information.
+     * Sets up RecyclerView with adapter.
      */
     private void setupRecyclerView() {
         adapter = new EntrantListAdapter(this, eventId);
@@ -169,15 +157,7 @@ public class ViewEntrantsActivity extends AppCompatActivity {
     }
 
     /**
-     * Loads the Event document from Firestore using the eventId.
-     *
-     * On success:
-     * - Converts Firestore data into an Event object
-     * - Triggers the initial display of entrants for the active tab
-     *
-     * On failure:
-     * - Shows an error toast
-     * - Stops the loading indicator
+     * Loads Event from Firestore.
      */
     private void loadEventDetails() {
         showLoading();
@@ -201,20 +181,7 @@ public class ViewEntrantsActivity extends AppCompatActivity {
     }
 
     /**
-     * Displays entrant IDs corresponding to the currently selected tab.
-     *
-     * Tabs behave as follows:
-     * <ul>
-     *     <li>"waiting" → event.getWaitingList()</li>
-     *     <li>"selected" → event.getSelectedList()</li>
-     *     <li>"attending" → event.getSignedUpUsers()</li>
-     *     <li>"declined" → event.getDeclinedUsers()</li>
-     *     <li>"log" → handled separately by displayReplacementLog()</li>
-     * </ul>
-     *
-     * Handles:
-     * - Empty lists with appropriate UI
-     * - Passing IDs to the adapter for detailed rendering
+     * ✅ FIXED: Displays entrants with proper emptyView clearing
      */
     private void displayEntrants() {
         if (event == null) return;
@@ -244,18 +211,30 @@ public class ViewEntrantsActivity extends AppCompatActivity {
                 break;
             case "log":
                 displayReplacementLog();
-                return;  // Special handling - don't show user list
+                return;  // Exit early for log tab
         }
+
+        // ✅ CRITICAL FIX: Clear emptyView before displaying user lists
+        emptyView.removeAllViews();
 
         // Update count
         int count = userIds.size();
         String tabName = getTabDisplayName(currentTab);
         tvListCount.setText(count + (count == 1 ? " entrant" : " entrants") + " in " + tabName);
 
-        // Show/hide empty view
+        // Show/hide views
         if (userIds.isEmpty()) {
             rvEntrants.setVisibility(View.GONE);
             emptyView.setVisibility(View.VISIBLE);
+
+            // Add empty message
+            TextView emptyText = new TextView(this);
+            emptyText.setText("No " + tabName.toLowerCase() + " yet");
+            emptyText.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+            emptyText.setPadding(32, 32, 32, 32);
+            emptyText.setTextSize(16);
+            emptyText.setTextColor(getResources().getColor(android.R.color.darker_gray));
+            emptyView.addView(emptyText);
         } else {
             rvEntrants.setVisibility(View.VISIBLE);
             emptyView.setVisibility(View.GONE);
@@ -264,11 +243,7 @@ public class ViewEntrantsActivity extends AppCompatActivity {
     }
 
     /**
-     * Converts an internal tab key (e.g., "waiting") into a
-     * user-friendly display label for UI purposes.
-     *
-     * @param tab internal tab identifier
-     * @return human-readable tab name (e.g., "Waiting List")
+     * Converts tab key to display name.
      */
     private String getTabDisplayName(String tab) {
         switch (tab) {
@@ -282,18 +257,7 @@ public class ViewEntrantsActivity extends AppCompatActivity {
     }
 
     /**
-     * Displays the replacement selection history for the event.
-     *
-     * Each log entry includes:
-     * - replacementUserId (shortened for readability)
-     * - timestamp (formatted)
-     * - optional "reason" string
-     *
-     * If the log is empty:
-     * - Shows informative empty-state text
-     * - Explains when entries will appear
-     *
-     * Uses a dynamic TextView appended to the emptyView container.
+     * ✅ FIXED: Displays replacement log WITHOUT emojis
      */
     private void displayReplacementLog() {
         if (event == null || event.getReplacementLog() == null || event.getReplacementLog().isEmpty()) {
@@ -305,12 +269,13 @@ public class ViewEntrantsActivity extends AppCompatActivity {
             // Clear previous content
             emptyView.removeAllViews();
 
-            // Create TextView for empty message
+            // Create empty message
             TextView emptyText = new TextView(this);
             emptyText.setText("No replacements have been drawn yet.\n\nWhen someone declines and you draw a replacement, it will show here.");
             emptyText.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
             emptyText.setPadding(32, 32, 32, 32);
             emptyText.setTextSize(16);
+            emptyText.setTextColor(getResources().getColor(android.R.color.darker_gray));
             emptyView.addView(emptyText);
             return;
         }
@@ -322,7 +287,7 @@ public class ViewEntrantsActivity extends AppCompatActivity {
         int count = event.getReplacementLog().size();
         tvListCount.setText(count + (count == 1 ? " replacement" : " replacements"));
 
-        // Build log display
+        // Build log display WITHOUT emojis
         StringBuilder logText = new StringBuilder();
         SimpleDateFormat sdf = new SimpleDateFormat("MMM dd 'at' h:mm a", Locale.getDefault());
 
@@ -340,12 +305,12 @@ public class ViewEntrantsActivity extends AppCompatActivity {
                 String dateStr = sdf.format(new Date(timestamp));
 
                 logText.append("━━━━━━━━━━━━━━━━━━━━━━\n");
-                logText.append("Replacement #").append(entryNum).append("\n\n");
-                logText.append("✅ User Selected\n");
-                logText.append("ID: ").append(replacementId.substring(0, Math.min(12, replacementId.length()))).append("...\n");
-                logText.append("⏰ Time: ").append(dateStr).append("\n");
+                logText.append("REPLACEMENT #").append(entryNum).append("\n\n");
+                logText.append("USER SELECTED\n");  // ✅ NO EMOJI
+                logText.append("User ID: ").append(replacementId.substring(0, Math.min(12, replacementId.length()))).append("...\n");
+                logText.append("Time: ").append(dateStr).append("\n");  // ✅ NO EMOJI
                 if (reason != null && !reason.isEmpty()) {
-                    logText.append("📝 Reason: ").append(reason).append("\n");
+                    logText.append("Reason: ").append(reason).append("\n");  // ✅ NO EMOJI
                 }
                 logText.append("\n");
                 entryNum--;
@@ -355,36 +320,27 @@ public class ViewEntrantsActivity extends AppCompatActivity {
         // Clear previous content
         emptyView.removeAllViews();
 
-        // Display in empty view as text
+        // Display log
         TextView logDisplay = new TextView(this);
         logDisplay.setPadding(32, 32, 32, 32);
         logDisplay.setTextSize(14);
+        logDisplay.setTextColor(getResources().getColor(android.R.color.black));
+        logDisplay.setLineSpacing(4, 1.0f);  // Better readability
         logDisplay.setText(logText.toString());
         emptyView.addView(logDisplay);
     }
 
-    /**
-     * Shows a loading overlay while event data is being retrieved.
-     */
     private void showLoading() {
         loadingView.setVisibility(View.VISIBLE);
     }
 
-    /**
-     * Hides the loading overlay once event data retrieval is complete.
-     */
     private void hideLoading() {
         loadingView.setVisibility(View.GONE);
     }
 
-    /**
-     * Refreshes event details whenever returning to this activity.
-     * Ensures lists and logs stay synchronized with Firestore.
-     */
     @Override
     protected void onResume() {
         super.onResume();
-        // Reload when returning to this screen
         if (event != null) {
             loadEventDetails();
         }
