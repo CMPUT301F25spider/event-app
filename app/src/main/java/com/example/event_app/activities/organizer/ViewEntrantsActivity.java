@@ -48,7 +48,7 @@ import java.util.Map;
  *   <li>US 02.06.04 — View replacement draw log</li>
  * </ul>
  *
- * ✅ FIXED: No longer mixes log with waiting list, removed emojis from log
+ *
  */
 public class ViewEntrantsActivity extends AppCompatActivity {
 
@@ -181,7 +181,7 @@ public class ViewEntrantsActivity extends AppCompatActivity {
     }
 
     /**
-     * ✅ FIXED: Displays entrants with proper emptyView clearing
+     * Displays entrants with proper emptyView clearing
      */
     private void displayEntrants() {
         if (event == null) return;
@@ -214,7 +214,6 @@ public class ViewEntrantsActivity extends AppCompatActivity {
                 return;  // Exit early for log tab
         }
 
-        // ✅ CRITICAL FIX: Clear emptyView before displaying user lists
         emptyView.removeAllViews();
 
         // Update count
@@ -257,7 +256,7 @@ public class ViewEntrantsActivity extends AppCompatActivity {
     }
 
     /**
-     * ✅ FIXED: Displays replacement log WITHOUT emojis
+     * Displays replacement log
      */
     private void displayReplacementLog() {
         if (event == null || event.getReplacementLog() == null || event.getReplacementLog().isEmpty()) {
@@ -306,11 +305,11 @@ public class ViewEntrantsActivity extends AppCompatActivity {
 
                 logText.append("━━━━━━━━━━━━━━━━━━━━━━\n");
                 logText.append("REPLACEMENT #").append(entryNum).append("\n\n");
-                logText.append("USER SELECTED\n");  // ✅ NO EMOJI
+                logText.append("USER SELECTED\n");
                 logText.append("User ID: ").append(replacementId.substring(0, Math.min(12, replacementId.length()))).append("...\n");
-                logText.append("Time: ").append(dateStr).append("\n");  // ✅ NO EMOJI
+                logText.append("Time: ").append(dateStr).append("\n");
                 if (reason != null && !reason.isEmpty()) {
-                    logText.append("Reason: ").append(reason).append("\n");  // ✅ NO EMOJI
+                    logText.append("Reason: ").append(reason).append("\n");
                 }
                 logText.append("\n");
                 entryNum--;

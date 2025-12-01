@@ -228,7 +228,7 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
      * • all selected spots are filled (selected + attending = capacity), or
      * • the replacement pool is empty.
      *
-     * ✅ FIXED: Only allows replacement when someone declines or cancels
+     *
      */
     private void updateLotteryButtonVisibility() {
         if (event.isLotteryRun()) {
