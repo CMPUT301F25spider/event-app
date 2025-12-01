@@ -50,14 +50,16 @@ import java.util.List;
 
 
 /**
- * HomeFragment - Discovery and Quick Actions
+ * HomeFragment - Main discovery and quick-actions dashboard.
  *
  * Features:
- * - Notification badge showing unread count (like real apps!)
- * - Scan QR code
- * - Browse events
- * - Category filtering
- * - ✨ Favorites section
+ * <ul>
+ *     <li>Real-time notification badge</li>
+ *     <li>QR scanner for event check-ins</li>
+ *     <li>Happening Soon, Popular, and Favorites event sections</li>
+ *     <li>Real-time Firestore listeners for all event rows</li>
+ *     <li>Shortcuts: My Events, Create Event, Browse Events</li>
+ * </ul>
  */
 public class HomeFragment extends Fragment {
 
@@ -115,6 +117,14 @@ public class HomeFragment extends Fragment {
                 }
             });
 
+    /**
+     * Inflates the layout for the HomeFragment.
+     *
+     * @param inflater the LayoutInflater used to inflate the view
+     * @param container optional parent view
+     * @param savedInstanceState previously saved state
+     * @return the inflated fragment view
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -122,6 +132,13 @@ public class HomeFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_home, container, false);
     }
 
+    /**
+     * Initializes Firebase, views, adapters, listeners,
+     * and triggers initial event + notification loading.
+     *
+     * @param view root fragment view
+     * @param savedInstanceState previously saved state
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -151,6 +168,11 @@ public class HomeFragment extends Fragment {
         updateNotificationBadge();
     }
 
+    /**
+     * Finds and initializes all UI components belonging to the Home screen.
+     *
+     * @param view the root fragment view containing UI elements
+     */
     private void initViews(View view) {
         cardScanQr = view.findViewById(R.id.cardScanQr);
         btnSearch = view.findViewById(R.id.btnSearch);
@@ -169,6 +191,15 @@ public class HomeFragment extends Fragment {
         sectionFavorites = view.findViewById(R.id.sectionFavorites);
     }
 
+    /**
+     * Sets up three horizontal RecyclerViews:
+     * <ul>
+     *     <li>Happening Soon</li>
+     *     <li>Popular Events</li>
+     *     <li>Favorites</li>
+     * </ul>
+     * Each list uses HorizontalEventAdapter.
+     */
     private void setupRecyclerViews() {
         happeningSoonAdapter = new HorizontalEventAdapter(requireContext());
         LinearLayoutManager layoutManager1 = new LinearLayoutManager(requireContext(),
@@ -190,6 +221,16 @@ public class HomeFragment extends Fragment {
         rvFavorites.setAdapter(favoritesAdapter);
     }
 
+    /**
+     * Attaches click listeners for:
+     * <ul>
+     *     <li>QR scanner</li>
+     *     <li>Search</li>
+     *     <li>Notifications</li>
+     *     <li>My Events</li>
+     *     <li>Create Event</li>
+     * </ul>
+     */
     private void setupListeners() {
         cardScanQr.setOnClickListener(v -> handleQrScan());
 
@@ -216,8 +257,11 @@ public class HomeFragment extends Fragment {
         });
 
     }
+
     /**
-     *Real-time notification badge - Updates instantly like Instagram!
+     * Adds a real-time Firestore listener that watches for unread
+     * notifications for this user. The badge updates instantly,
+     * similar to Instagram/WhatsApp.
      */
     private void updateNotificationBadge() {
         if (mAuth.getCurrentUser() == null) {
@@ -261,7 +305,10 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Show badge with count (like Instagram, Facebook, etc.)
+     * Displays the unread notification badge.
+     * If count > 9, shows "9+".
+     *
+     * @param count number of unread notifications
      */
     private void showBadge(int count) {
         if (tvNotificationBadge != null) {
@@ -273,7 +320,7 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Hide badge when no notifications
+     * Hides the notification badge UI element.
      */
     private void hideBadge() {
         if (tvNotificationBadge != null) {
@@ -281,6 +328,14 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    /**
+     * Handles QR scan flow:
+     * <ul>
+     *     <li>Checks camera permission</li>
+     *     <li>Requests permission if needed</li>
+     *     <li>Launches the scanner when granted</li>
+     * </ul>
+     */
     private void handleQrScan() {
         if (PermissionManager.isCameraPermissionGranted(requireActivity())) {
             launchQrScanner();
@@ -289,6 +344,10 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    /**
+     * Launches the JourneyApps QR scanner with customized options.
+     * When scanning succeeds, navigates directly to EventDetailsActivity.
+     */
     private void launchQrScanner() {
         ScanOptions options = new ScanOptions();
         options.setPrompt("Scan an event QR code");
@@ -298,8 +357,14 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Real-time updates for happening soon events
-     * New events appear instantly without refresh!
+     * Loads events occurring within the next 7 days.
+     * Uses a **real-time Firestore listener**, meaning:
+     * <ul>
+     *     <li>New events appear instantly</li>
+     *     <li>Date changes reflect immediately</li>
+     * </ul>
+     *
+     * Updates the "Happening Soon" RecyclerView.
      */
     private void loadHappeningSoonEvents() {
         Calendar calendar = Calendar.getInstance();
@@ -346,8 +411,12 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Real-time updates for popular events
-     * Events update automatically as waiting lists grow!
+     * Loads the latest events, sorted dynamically by waiting list size.
+     * Real-time listener ensures:
+     * <ul>
+     *     <li>Popularity updates instantly when lists grow</li>
+     *     <li>Users see changing trends without refreshing</li>
+     * </ul>
      */
     private void loadPopularEvents() {
 
@@ -396,7 +465,13 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Load user's favorite events with REAL-TIME updates
+     * Loads the user's favorite events using:
+     * <ul>
+     *     <li>A real-time listener on the user's document</li>
+     *     <li>A Firestore whereIn query to fetch event details</li>
+     * </ul>
+     *
+     * If the user has no favorites, hides the entire Favorites section.
      */
     private void loadFavoriteEvents() {
         if (mAuth.getCurrentUser() == null) {
@@ -465,7 +540,7 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Show favorites section
+     * Displays the Favorites section and associated RecyclerView.
      */
     private void showFavoritesSection() {
         if (sectionFavorites != null) {
@@ -480,7 +555,7 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Hide favorites section
+     * Hides the Favorites section, used when there are no favorites or the user is logged out.
      */
     private void hideFavoritesSection() {
         if (sectionFavorites != null) {
@@ -488,16 +563,36 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    /**
+     * Shows a RecyclerView and hides its empty-state placeholder layout.
+     *
+     * @param recyclerView list to show
+     * @param emptyView empty-state view to hide
+     */
     private void showEvents(RecyclerView recyclerView, LinearLayout emptyView) {
         recyclerView.setVisibility(View.VISIBLE);
         emptyView.setVisibility(View.GONE);
     }
 
+    /**
+     * Hides a RecyclerView and shows its empty-state placeholder layout.
+     *
+     * @param recyclerView list to hide
+     * @param emptyView empty-state view to show
+     */
     private void showEmptyState(RecyclerView recyclerView, LinearLayout emptyView) {
         recyclerView.setVisibility(View.GONE);
         emptyView.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Cleans up all Firestore snapshot listeners to prevent:
+     * <ul>
+     *     <li>memory leaks</li>
+     *     <li>duplicate listeners</li>
+     *     <li>UI updates after fragment destruction</li>
+     * </ul>
+     */
     @Override
     public void onDestroyView() {
         super.onDestroyView();
