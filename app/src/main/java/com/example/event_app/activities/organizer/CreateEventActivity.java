@@ -2,15 +2,26 @@ package com.example.event_app.activities.organizer;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
+
+import androidx.core.content.FileProvider;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -38,22 +49,28 @@ import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * CreateEventActivity — Allows organizers to create new events including:
- * • Selecting poster images (US 02.04.01)
- * • Setting event date and registration period (US 02.01.04)
- * • Enabling/disabling geolocation requirement (US 02.02.03)
- * • Setting capacity limits (US 02.03.01)
- * • Generating QR codes for created events (US 02.01.01)
+ * CreateEventActivity - Create new events with geolocation toggle
  *
- * Handles poster upload, Firestore event creation, organizer role assignment,
- * and Storage upload of QR codes and posters.
+ * US 02.01.01: Create event and generate QR code
+ * US 02.01.04: Set registration period
+ * US 02.02.03: Enable/disable geolocation
+ * US 02.03.01: Limit number of entrants
+ * US 02.04.01: Upload event poster
  */
 public class CreateEventActivity extends AppCompatActivity {
+
+    private static final String TAG = "CreateEventActivity";
+
     // UI Elements
     private TextInputEditText editEventName, editDescription, editLocation, editCapacity;
     private MaterialButton btnSelectPoster, btnSelectEventDate, btnSelectRegStart, btnSelectRegEnd;
@@ -71,7 +88,9 @@ public class CreateEventActivity extends AppCompatActivity {
     private Uri posterUri;
     private Date eventDate, regStartDate, regEndDate;
     private boolean geolocationEnabled = false;
-    private String selectedCategory = "Other"; // Default category
+    private String selectedCategory = "Food & Dining"; // Default category
+    private List<String> customCategories = new ArrayList<>(); // User-added categories
+    private Bitmap qrBitmap; // Store generated QR code bitmap
 
     // Image picker launcher
     private final ActivityResultLauncher<Intent> imagePickerLauncher =
@@ -95,12 +114,11 @@ public class CreateEventActivity extends AppCompatActivity {
 
         // Initialize views
         initViews();
+
+        // Load custom categories from Firestore
+        loadCustomCategories();
     }
 
-    /**
-     * Initializes all UI elements, sets up button listeners,
-     * and configures geolocation toggle behavior.
-     */
     private void initViews() {
         // Input fields
         editEventName = findViewById(R.id.editEventName);
@@ -142,18 +160,13 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * Opens the device gallery to allow the user to select an event poster image.
-     * US 02.04.01: Upload event poster.
+     * US 02.04.01: Upload event poster
      */
     private void selectPoster() {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         imagePickerLauncher.launch(intent);
     }
 
-    /**
-     * Displays the selected poster image in the preview ImageView.
-     * Updates the UI to indicate a poster has been chosen.
-     */
     private void displayPosterPreview() {
         emptyPosterView.setVisibility(View.GONE);
         ivPosterPreview.setVisibility(View.VISIBLE);
@@ -165,27 +178,58 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * Opens a dialog allowing the organizer to select a predefined event category.
-     * Updates the selectedCategory value and button text upon selection.
+     * Load custom categories from Firestore
+     */
+    private void loadCustomCategories() {
+        db.collection("categories")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    customCategories.clear();
+                    for (com.google.firebase.firestore.QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                        String categoryName = doc.getString("name");
+                        if (categoryName != null && !categoryName.trim().isEmpty()) {
+                            customCategories.add(categoryName.trim());
+                        }
+                    }
+                    // Sort alphabetically
+                    Collections.sort(customCategories);
+                    Log.d(TAG, "Loaded " + customCategories.size() + " custom categories");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error loading custom categories", e);
+                    // Continue with empty list if loading fails
+                });
+    }
+
+    /**
+     * Show category selection dialog with predefined and custom categories
      */
     private void showCategoryDialog() {
-        String[] categories = {
-                "Food & Dining",
-                "Sports & Fitness",
-                "Music & Entertainment",
-                "Education & Learning",
-                "Art & Culture",
-                "Technology",
-                "Health & Wellness",
-                "Business & Networking",
-                "Community & Social",
-                "Other"
-        };
+        // Predefined categories
+        List<String> predefinedCategories = new ArrayList<>();
+        predefinedCategories.add("Food & Dining");
+        predefinedCategories.add("Sports & Fitness");
+        predefinedCategories.add("Music & Entertainment");
+        predefinedCategories.add("Education & Learning");
+        predefinedCategories.add("Art & Culture");
+        predefinedCategories.add("Technology");
+        predefinedCategories.add("Health & Wellness");
+        predefinedCategories.add("Business & Networking");
+        predefinedCategories.add("Community & Social");
+
+        // Combine predefined and custom categories
+        List<String> allCategories = new ArrayList<>(predefinedCategories);
+        allCategories.addAll(customCategories);
+
+        // Add "Add New Category"
+        allCategories.add("+ Add New Category");
+
+        String[] categoriesArray = allCategories.toArray(new String[0]);
 
         // Find currently selected index
-        int selectedIndex = 9; // Default to "Other"
-        for (int i = 0; i < categories.length; i++) {
-            if (categories[i].equals(selectedCategory)) {
+        int selectedIndex = 0; // Default to first category
+        for (int i = 0; i < categoriesArray.length; i++) {
+            if (categoriesArray[i].equals(selectedCategory)) {
                 selectedIndex = i;
                 break;
             }
@@ -193,18 +237,117 @@ public class CreateEventActivity extends AppCompatActivity {
 
         new AlertDialog.Builder(this)
                 .setTitle("Select Event Category")
-                .setSingleChoiceItems(categories, selectedIndex, (dialog, which) -> {
-                    selectedCategory = categories[which];
-                    btnSelectCategory.setText(selectedCategory);
-                    dialog.dismiss();
+                .setSingleChoiceItems(categoriesArray, selectedIndex, (dialog, which) -> {
+                    String selected = categoriesArray[which];
+
+                    // Check if user wants to add a new category
+                    if (selected.equals("+ Add New Category")) {
+                        dialog.dismiss();
+                        showAddCategoryDialog();
+                    } else {
+                        selectedCategory = selected;
+                        btnSelectCategory.setText(selectedCategory);
+                        dialog.dismiss();
+                    }
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
     }
 
     /**
-     * Opens a dialog allowing the organizer to select a predefined event category.
-     * Updates the selectedCategory value and button text upon selection.
+     * Show dialog to add a new custom category
+     */
+    private void showAddCategoryDialog() {
+        EditText input = new EditText(this);
+        input.setHint("Enter category name");
+        input.setMaxLines(1);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Add New Category")
+                .setView(input)
+                .setPositiveButton("Add", (dialog, which) -> {
+                    String categoryName = input.getText().toString().trim();
+                    if (!TextUtils.isEmpty(categoryName)) {
+                        addCustomCategory(categoryName);
+                    } else {
+                        Toast.makeText(this, "Category name cannot be empty", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /**
+     * Add a new custom category to Firestore
+     */
+    private void addCustomCategory(String categoryName) {
+        // Check if category already exists
+        if (customCategories.contains(categoryName)) {
+            Toast.makeText(this, "Category already exists", Toast.LENGTH_SHORT).show();
+            selectedCategory = categoryName;
+            btnSelectCategory.setText(selectedCategory);
+            return;
+        }
+
+        // Check if it's a predefined category
+        List<String> predefinedCategories = new ArrayList<>();
+        predefinedCategories.add("Food & Dining");
+        predefinedCategories.add("Sports & Fitness");
+        predefinedCategories.add("Music & Entertainment");
+        predefinedCategories.add("Education & Learning");
+        predefinedCategories.add("Art & Culture");
+        predefinedCategories.add("Technology");
+        predefinedCategories.add("Health & Wellness");
+        predefinedCategories.add("Business & Networking");
+        predefinedCategories.add("Community & Social");
+
+        if (predefinedCategories.contains(categoryName)) {
+            Toast.makeText(this, "This is a predefined category", Toast.LENGTH_SHORT).show();
+            selectedCategory = categoryName;
+            btnSelectCategory.setText(selectedCategory);
+            return;
+        }
+
+        // Add to Firestore
+        Map<String, Object> categoryData = new HashMap<>();
+        categoryData.put("name", categoryName);
+        categoryData.put("createdAt", System.currentTimeMillis());
+
+        // Generate a safe document ID (remove special characters, keep only alphanumeric and underscores)
+        String docId = categoryName.toLowerCase()
+                .replaceAll("[^a-z0-9_]", "_")  // Replace non-alphanumeric with underscore
+                .replaceAll("_+", "_")          // Replace multiple underscores with single
+                .replaceAll("^_|_$", "");      // Remove leading/trailing underscores
+
+        // If docId is empty after cleaning, use a generated ID
+        if (docId.isEmpty()) {
+            docId = db.collection("categories").document().getId();
+        }
+
+        db.collection("categories")
+                .document(docId)
+                .set(categoryData)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Custom category added: " + categoryName);
+                    customCategories.add(categoryName);
+                    Collections.sort(customCategories);
+                    selectedCategory = categoryName;
+                    btnSelectCategory.setText(selectedCategory);
+                    Toast.makeText(this, "Category added successfully", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error adding custom category", e);
+                    String errorMsg = e.getMessage();
+                    if (errorMsg != null && errorMsg.contains("PERMISSION_DENIED")) {
+                        Toast.makeText(this, "Permission denied. Please check Firestore rules.", Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(this, "Failed to add category: " + (errorMsg != null ? errorMsg : "Unknown error"), Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
+    /**
+     * Select event date
      */
     private void selectEventDate() {
         Calendar calendar = Calendar.getInstance();
@@ -245,9 +388,7 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * Allows the user to pick the registration start date.
-     * US 02.01.04: Set registration period.
-     * Applies minimum date constraints to prevent past-date selection.
+     * US 02.01.04: Set registration start date
      */
     private void selectRegistrationStart() {
         Calendar calendar = Calendar.getInstance();
@@ -280,9 +421,7 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * Allows the user to pick the registration end date.
-     * Ensures that the end date is on or after the start date.
-     * US 02.01.04: Set registration period.
+     * US 02.01.04: Set registration end date
      */
     private void selectRegistrationEnd() {
         if (regStartDate == null) {
@@ -325,11 +464,6 @@ public class CreateEventActivity extends AppCompatActivity {
 
         datePickerDialog.show();
     }
-
-    /**
-     * Ensures registration end date is not before the start date.
-     * Resets invalid selections and warns the user if necessary.
-     */
     private void checkEndDateValidity() {
         if (regStartDate != null && regEndDate != null && regEndDate.before(regStartDate)) {
             regEndDate = null;
@@ -339,9 +473,7 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * Displays a formatted preview of the event details in an AlertDialog
-     * before final creation. Includes name, description, dates, category,
-     * capacity, poster status, and geolocation state.
+     * Show preview of how the event will look
      */
     private void showPreview() {
         String name = editEventName.getText().toString().trim();
@@ -383,14 +515,8 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * Validates inputs and constructs an Event object.
-     * Handles optional capacity parsing, geolocation setting,
-     * organizer name retrieval, and branching between:
-     * • Creating event with poster upload
-     * • Creating event without poster
-     *
-     * US 02.01.01: Create event
-     * US 02.02.03: Enable/disable geolocation
+     * US 02.01.01: Create event and generate QR code
+     * US 02.02.03: Enable/disable geolocations
      */
     private void createEvent() {
         // Get values
@@ -449,20 +575,13 @@ public class CreateEventActivity extends AppCompatActivity {
 
                     // Upload poster if selected
                     if (posterUri != null) {
-                        uploadPosterAndCreateEvent(eventId, event);
+                        uploadPosterAndCreateEvent(eventId, event, name);
                     } else {
-                        saveEventToFirestore(eventId, event);
+                        saveEventToFirestore(eventId, event, name);
                     }
                 });
     }
 
-    /**
-     * Validates the required fields for creating an event.
-     *
-     * @param name The event name.
-     * @param description The event description.
-     * @return true if all required fields are valid; false otherwise.
-     */
     private boolean validateInputs(String name, String description) {
         if (TextUtils.isEmpty(name)) {
             editEventName.setError("Event name is required");
@@ -485,14 +604,9 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * Uploads the event poster to Firebase Storage.
-     * On success → retrieves download URL and saves event to Firestore.
-     * On failure → proceeds without poster.
-     *
-     * @param eventId Unique ID of the event.
-     * @param event   Event object to be stored.
+     * Upload poster to Firebase Storage
      */
-    private void uploadPosterAndCreateEvent(String eventId, Event event) {
+    private void uploadPosterAndCreateEvent(String eventId, Event event, String eventName) {
         StorageReference posterRef = storage.getReference()
                 .child("event_posters")
                 .child(eventId + ".jpg");
@@ -502,25 +616,20 @@ public class CreateEventActivity extends AppCompatActivity {
                     // Get download URL
                     posterRef.getDownloadUrl().addOnSuccessListener(uri -> {
                         event.setPosterUrl(uri.toString());
-                        saveEventToFirestore(eventId, event);
+                        saveEventToFirestore(eventId, event, eventName);
                     });
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(this, "Failed to upload poster, creating event without it", Toast.LENGTH_SHORT).show();
-                    saveEventToFirestore(eventId, event);
+                    saveEventToFirestore(eventId, event, eventName);
                 });
     }
 
     /**
-     * Saves the event to Firestore.
-     * After saving:
-     * • Adds "organizer" role to the user if not already present.
-     * • Generates and uploads a QR code.
-     *
-     * @param eventId ID under which the event will be stored.
-     * @param event   Event data to save.
+     * Save event to Firestore and generate QR code
+     * Automatically add "organizer" role when user creates first event
      */
-    private void saveEventToFirestore(String eventId, Event event) {
+    private void saveEventToFirestore(String eventId, Event event, String eventName) {
         String userId = mAuth.getCurrentUser().getUid();
 
         db.collection("events").document(eventId)
@@ -530,7 +639,7 @@ public class CreateEventActivity extends AppCompatActivity {
                     addOrganizerRoleToUser(userId);
 
                     // Generate and upload QR code
-                    generateAndUploadQRCode(eventId);
+                    generateAndUploadQRCode(eventId, eventName);
                 })
                 .addOnFailureListener(e -> {
                     hideLoading();
@@ -539,10 +648,7 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * Adds the "organizer" role to the user in Firestore
-     * if they do not already possess it.
-     *
-     * @param userId Firebase Auth user ID.
+     * Add "organizer" role to user when they create their first event
      */
     private void addOrganizerRoleToUser(String userId) {
         db.collection("users").document(userId)
@@ -570,26 +676,13 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * Generates a QR code encoding the eventId using ZXing,
-     * converts it to a PNG byte array, and uploads it to Firebase Storage.
-     *
-     * @param eventId The event identifier encoded in the QR code.
+     * US 02.01.01: Generate QR code for event
      */
-    private void generateAndUploadQRCode(String eventId) {
+    private void generateAndUploadQRCode(String eventId, String eventName) {
         try {
             // Generate QR code bitmap
-            QRCodeWriter writer = new QRCodeWriter();
-            BitMatrix bitMatrix = writer.encode(eventId, BarcodeFormat.QR_CODE, 512, 512);
-
-            int width = bitMatrix.getWidth();
-            int height = bitMatrix.getHeight();
-            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
-
-            for (int x = 0; x < width; x++) {
-                for (int y = 0; y < height; y++) {
-                    bitmap.setPixel(x, y, bitMatrix.get(x, y) ? 0xFF000000 : 0xFFFFFFFF);
-                }
-            }
+            generateQRCodeBitmap(eventId);
+            Bitmap bitmap = qrBitmap;
 
             // Convert to byte array
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -604,28 +697,112 @@ public class CreateEventActivity extends AppCompatActivity {
             qrRef.putBytes(data)
                     .addOnSuccessListener(taskSnapshot -> {
                         hideLoading();
-                        showSuccessAndNavigate();
+                        showSuccessAndNavigate(eventId, eventName);
                     })
                     .addOnFailureListener(e -> {
                         hideLoading();
                         // Still show success even if QR upload fails
-                        showSuccessAndNavigate();
+                        showSuccessAndNavigate(eventId, eventName);
                     });
 
         } catch (WriterException e) {
             hideLoading();
-            showSuccessAndNavigate();
+            // Still navigate to QR code display
+            showSuccessAndNavigate(eventId, eventName);
+        }
+    }
+
+    private void showSuccessAndNavigate(String eventId, String eventName) {
+        // Show QR code dialog first, then navigate when closed
+        if (qrBitmap != null) {
+            showQRCodeDialog(eventId, eventName);
+        } else {
+            // If QR bitmap is not available, try to generate it again
+            try {
+                generateQRCodeBitmap(eventId);
+                if (qrBitmap != null) {
+                    showQRCodeDialog(eventId, eventName);
+                } else {
+                    navigateToQRCodeActivity(eventId, eventName);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error generating QR code for display", e);
+                navigateToQRCodeActivity(eventId, eventName);
+            }
         }
     }
 
     /**
-     * Shows a success message and navigates back to MainActivity,
-     * clearing the back stack.
+     * Generate QR code bitmap (helper method)
      */
-    private void showSuccessAndNavigate() {
-        Toast.makeText(this, "Event created successfully!", Toast.LENGTH_LONG).show();
+    private void generateQRCodeBitmap(String eventId) throws WriterException {
+        QRCodeWriter writer = new QRCodeWriter();
+        BitMatrix bitMatrix = writer.encode(eventId, BarcodeFormat.QR_CODE, 512, 512);
 
-        // Go back to main activity
+        int width = bitMatrix.getWidth();
+        int height = bitMatrix.getHeight();
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                bitmap.setPixel(x, y, bitMatrix.get(x, y) ? 0xFF000000 : 0xFFFFFFFF);
+            }
+        }
+
+        qrBitmap = bitmap;
+    }
+
+    /**
+     * Show QR code dialog after event creation
+     */
+    private void showQRCodeDialog(String eventId, String eventName) {
+        try {
+            // Inflate custom dialog layout
+            View dialogView = getLayoutInflater().inflate(R.layout.dialog_qr_code, null);
+
+            // Set QR code image
+            ImageView ivQrCode = dialogView.findViewById(R.id.ivQrCode);
+            ivQrCode.setImageBitmap(qrBitmap);
+
+            // Create dialog
+            AlertDialog dialog = new AlertDialog.Builder(this)
+                    .setView(dialogView)
+                    .setCancelable(false) // Prevent dismissing by clicking outside
+                    .create();
+
+            // Setup button listeners
+            MaterialButton btnSave = dialogView.findViewById(R.id.btnSaveQr);
+            MaterialButton btnShare = dialogView.findViewById(R.id.btnShareQr);
+            MaterialButton btnClose = dialogView.findViewById(R.id.btnCloseQr);
+
+            btnSave.setOnClickListener(v -> {
+                saveQrCodeToGallery(qrBitmap, eventName);
+            });
+
+            btnShare.setOnClickListener(v -> {
+                shareQrCode(qrBitmap, eventName);
+            });
+
+            btnClose.setOnClickListener(v -> {
+                dialog.dismiss();
+                navigateToQRCodeActivity(eventId, eventName);
+            });
+
+            // Show success toast
+            Toast.makeText(this, "Event created successfully!", Toast.LENGTH_LONG).show();
+            dialog.show();
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error showing QR code dialog", e);
+            navigateToQRCodeActivity(eventId, eventName);
+        }
+    }
+
+    /**
+     * Navigate after QR code dialog is closed
+     */
+    private void navigateToQRCodeActivity(String eventId, String eventName) {
+        // Navigate to MainActivity after QR code is shown
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);
@@ -633,17 +810,98 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * Displays the loading view and disables the Create Event button
-     * to prevent duplicate submissions.
+     * Save QR code to device gallery
      */
+    private void saveQrCodeToGallery(Bitmap qrBitmap, String eventName) {
+        try {
+            String fileName = (eventName != null ? eventName.replaceAll("[^a-zA-Z0-9]", "_") : "Event") + "_QR.png";
+
+            // For Android 10+ (API 29+)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
+                values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+                values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/LuckySpot");
+
+                Uri uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                if (uri != null) {
+                    OutputStream outputStream = getContentResolver().openOutputStream(uri);
+                    if (outputStream != null) {
+                        qrBitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+                        outputStream.close();
+                        Toast.makeText(this, "QR code saved to gallery!", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            } else {
+                // For older Android versions
+                String imagesDir = Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_PICTURES).toString() + "/LuckySpot";
+                File dir = new File(imagesDir);
+                if (!dir.exists()) {
+                    dir.mkdirs();
+                }
+
+                File file = new File(dir, fileName);
+                FileOutputStream fos = new FileOutputStream(file);
+                qrBitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                fos.close();
+
+                // Notify gallery
+                Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                mediaScanIntent.setData(Uri.fromFile(file));
+                sendBroadcast(mediaScanIntent);
+
+                Toast.makeText(this, "QR code saved to gallery!", Toast.LENGTH_SHORT).show();
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Error saving QR code", e);
+            Toast.makeText(this, "Failed to save QR code", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Share QR code
+     */
+    private void shareQrCode(Bitmap qrBitmap, String eventName) {
+        try {
+            // Save to cache directory first
+            File cachePath = new File(getCacheDir(), "qr_codes");
+            cachePath.mkdirs();
+
+            String fileName = (eventName != null ? eventName.replaceAll("[^a-zA-Z0-9]", "_") : "Event") + "_QR.png";
+            File file = new File(cachePath, fileName);
+
+            FileOutputStream stream = new FileOutputStream(file);
+            qrBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            stream.close();
+
+            // Get URI using FileProvider
+            Uri contentUri = FileProvider.getUriForFile(
+                    this,
+                    "com.example.event_app.fileprovider",
+                    file
+            );
+
+            // Create share intent
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("image/png");
+            shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
+            shareIntent.putExtra(Intent.EXTRA_TEXT,
+                    "Join \"" + (eventName != null ? eventName : "this event") + "\" by scanning this QR code!");
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            startActivity(Intent.createChooser(shareIntent, "Share QR Code"));
+        } catch (IOException e) {
+            Log.e(TAG, "Error sharing QR code", e);
+            Toast.makeText(this, "Failed to share QR code", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void showLoading() {
         loadingView.setVisibility(View.VISIBLE);
         btnCreateEvent.setEnabled(false);
     }
 
-    /**
-     * Hides the loading indicator and re-enables the Create Event button.
-     */
     private void hideLoading() {
         loadingView.setVisibility(View.GONE);
         btnCreateEvent.setEnabled(true);
