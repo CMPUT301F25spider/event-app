@@ -29,12 +29,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * MyOrganizedEventsTabFragment - View events organized by current user
+ * MyOrganizedEventsTabFragment - Displays all events created by the current user.
  *
  * Features:
- * - List of user's organized events
- * - Quick create event button
- * - Navigate to event details for management
+ * <ul>
+ *     <li>Real-time listener for organizer's events</li>
+ *     <li>List of events organized by logged-in user</li>
+ *     <li>Quick "Create Event" button</li>
+ *     <li>Automatic UI states: loading, empty, populated</li>
+ * </ul>
  */
 public class MyOrganizedEventsTabFragment extends Fragment {
     // UI Components
@@ -53,6 +56,14 @@ public class MyOrganizedEventsTabFragment extends Fragment {
     // Real-time listener for organizer's events
     private com.google.firebase.firestore.ListenerRegistration eventsListener;
 
+    /**
+     * Inflates the layout for the organized-events tab.
+     *
+     * @param inflater LayoutInflater used to inflate the UI
+     * @param container Optional parent container
+     * @param savedInstanceState Previously saved state
+     * @return The inflated root view
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -60,6 +71,13 @@ public class MyOrganizedEventsTabFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_my_organized_events_tab, container, false);
     }
 
+    /**
+     * Initializes Firebase, sets up UI, RecyclerView, listeners, and starts
+     * loading real-time organized event data.
+     *
+     * @param view Fragment root view
+     * @param savedInstanceState Previously saved state
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -82,6 +100,17 @@ public class MyOrganizedEventsTabFragment extends Fragment {
         loadMyOrganizedEvents();
     }
 
+    /**
+     * Initializes UI components for:
+     * <ul>
+     *     <li>RecyclerView for organizer events</li>
+     *     <li>Loading indicator</li>
+     *     <li>Empty state layout</li>
+     *     <li>Create Event button</li>
+     * </ul>
+     *
+     * @param view Root view containing the fragment UI elements
+     */
     private void initViews(View view) {
         rvMyEvents = view.findViewById(R.id.rvMyEvents);
         progressBar = view.findViewById(R.id.progressBar);
@@ -90,12 +119,26 @@ public class MyOrganizedEventsTabFragment extends Fragment {
         btnCreateEvent = view.findViewById(R.id.btnCreateEvent);
     }
 
+    /**
+     * Configures the RecyclerView with:
+     * <ul>
+     *     <li>LinearLayoutManager</li>
+     *     <li>OrganizerEventsAdapter</li>
+     * </ul>
+     * Ensures events display in vertical scrolling list format.
+     */
     private void setupRecyclerView() {
         adapter = new OrganizerEventsAdapter(requireContext());
         rvMyEvents.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvMyEvents.setAdapter(adapter);
     }
 
+    /**
+     * Attaches interaction listeners including:
+     * <ul>
+     *     <li>"Create Event" button → opens CreateEventActivity</li>
+     * </ul>
+     */
     private void setupListeners() {
         btnCreateEvent.setOnClickListener(v -> {
             Intent intent = new Intent(requireContext(), CreateEventActivity.class);
@@ -104,8 +147,18 @@ public class MyOrganizedEventsTabFragment extends Fragment {
     }
 
     /**
-     * Real-time updates for organizer's events
-     * New events appear instantly when created!
+     * Loads events organized by the current user using a real-time Firestore listener.
+     *
+     * Behavior:
+     * <ul>
+     *     <li>If user not logged in → empty state with message</li>
+     *     <li>Shows loading indicator while fetching</li>
+     *     <li>Listens for live updates to the user's events</li>
+     *     <li>Populates list or shows empty message accordingly</li>
+     * </ul>
+     *
+     * Real-time:
+     * Automatically updates when events are created, edited, or deleted.
      */
     private void loadMyOrganizedEvents() {
         if (mAuth.getCurrentUser() == null) {
@@ -151,18 +204,29 @@ public class MyOrganizedEventsTabFragment extends Fragment {
                 });
     }
 
+    /**
+     * Displays the loading state while hiding list and empty view.
+     */
     private void showLoading() {
         rvMyEvents.setVisibility(View.GONE);
         progressBar.setVisibility(View.VISIBLE);
         emptyView.setVisibility(View.GONE);
     }
 
+    /**
+     * Displays the populated events list and hides loading/empty states.
+     */
     private void showEvents() {
         rvMyEvents.setVisibility(View.VISIBLE);
         progressBar.setVisibility(View.GONE);
         emptyView.setVisibility(View.GONE);
     }
 
+    /**
+     * Shows an empty state message when no organized events are available.
+     *
+     * @param message Text explaining why the list is empty
+     */
     private void showEmpty(String message) {
         rvMyEvents.setVisibility(View.GONE);
         progressBar.setVisibility(View.GONE);
@@ -170,6 +234,10 @@ public class MyOrganizedEventsTabFragment extends Fragment {
         tvEmptyMessage.setText(message);
     }
 
+    /**
+     * Cleans up real-time Firestore listener to prevent memory leaks
+     * when the fragment's view is destroyed.
+     */
     @Override
     public void onDestroyView() {
         super.onDestroyView();

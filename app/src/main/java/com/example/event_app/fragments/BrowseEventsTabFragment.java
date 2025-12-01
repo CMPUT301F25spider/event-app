@@ -37,17 +37,20 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * BrowseEventsTabFragment - Browse all available events
+ * Fragment for browsing and filtering all available events.
  *
- * Features:
- * - Search events by name, organizer, location, description
- * - Filter by time (All, This Week, This Month)
- * - Filter by category (Music, Sports, Art, etc.)
- * - Sort by date, name, or popularity
+ * Supports:
+ * <ul>
+ *     <li>Search by name, description, organizer, location, or category</li>
+ *     <li>Filtering by built-in and custom categories</li>
+ *     <li>Sorting by date, name, or popularity</li>
+ *     <li>Real-time Firestore updates for event changes</li>
+ * </ul>
  *
- * US 01.01.03: Browse available events
- * US 01.01.04: Filter events based on interests
- * US 01.05.04: See waiting list count for each event
+ * Implements:
+ * <br>US 01.01.03 – Browse available events<br>
+ * US 01.01.04 – Filter events by interests<br>
+ * US 01.05.04 – Display waiting list count
  */
 public class BrowseEventsTabFragment extends Fragment {
 
@@ -98,6 +101,14 @@ public class BrowseEventsTabFragment extends Fragment {
         }
     }
 
+    /**
+     * Inflates the layout for the Browse Events tab.
+     *
+     * @param inflater LayoutInflater used to inflate the fragment UI
+     * @param container parent view the fragment attaches to
+     * @param savedInstanceState saved state bundle
+     * @return the inflated fragment view
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -105,6 +116,14 @@ public class BrowseEventsTabFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_browse_events_tab, container, false);
     }
 
+    /**
+     * Called after the view is created.
+     * Initializes Firestore, sets up UI elements, listeners, adapters,
+     * loads custom categories, and begins real-time event loading.
+     *
+     * @param view the fragment's root view
+     * @param savedInstanceState saved state bundle
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -119,6 +138,11 @@ public class BrowseEventsTabFragment extends Fragment {
         loadAllEvents();
     }
 
+    /**
+     * Initializes all UI components in the fragment.
+     *
+     * @param view the root view containing UI references
+     */
     private void initViews(View view) {
         searchBox = view.findViewById(R.id.searchBox);
         btnClearSearch = view.findViewById(R.id.btnClearSearch);
@@ -145,12 +169,24 @@ public class BrowseEventsTabFragment extends Fragment {
         btnRetry = view.findViewById(R.id.btnRetry);
     }
 
+    /**
+     * Configures the RecyclerView and attaches the FullEventAdapter.
+     */
     private void setupRecyclerView() {
         adapter = new FullEventAdapter(requireContext());
         rvEvents.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvEvents.setAdapter(adapter);
     }
 
+    /**
+     * Sets up listeners for:
+     * <ul>
+     *     <li>Search box updates</li>
+     *     <li>Category chip filters</li>
+     *     <li>Sort button</li>
+     *     <li>Error retry button</li>
+     * </ul>
+     */
     private void setupListeners() {
         searchBox.addTextChangedListener(new TextWatcher() {
             @Override
@@ -220,7 +256,8 @@ public class BrowseEventsTabFragment extends Fragment {
     }
 
     /**
-     * Load custom categories from Firestore and add them as chips
+     * Loads additional user-defined categories from Firestore
+     * and triggers dynamic chip creation.
      */
     private void loadCustomCategories() {
         db.collection("categories")
@@ -244,7 +281,8 @@ public class BrowseEventsTabFragment extends Fragment {
     }
 
     /**
-     * Dynamically add chips for custom categories
+     * Dynamically creates filter Chips for all custom categories,
+     * removes previous custom chips, and hides the default "Other" chip.
      */
     private void addCustomCategoryChips() {
         // Remove existing custom category chips
@@ -278,8 +316,10 @@ public class BrowseEventsTabFragment extends Fragment {
     }
 
     /**
-     *  Real-time updates for all active events
-     * Events appear/update instantly across all users!
+     * Loads all active events using a Firestore real-time listener.
+     * Automatically updates when events are created, edited, or deleted.
+     *
+     * Clears old listeners to prevent memory leaks.
      */
     private void loadAllEvents() {
         showLoading();
@@ -316,6 +356,16 @@ public class BrowseEventsTabFragment extends Fragment {
                 });
     }
 
+    /**
+     * Applies all active filters and sorting rules to the events list.
+     * Steps:
+     * <ol>
+     *     <li>Search filtering</li>
+     *     <li>Category filtering</li>
+     *     <li>Sorting (date, name, popularity)</li>
+     * </ol>
+     * Updates the RecyclerView and empty/error states accordingly.
+     */
     private void applyFiltersAndSort() {
         List<Event> filtered = new ArrayList<>(allEvents);
 
@@ -343,6 +393,14 @@ public class BrowseEventsTabFragment extends Fragment {
         }
     }
 
+    /**
+     * Filters events by a search query that matches:
+     * name, description, organizer, location, or category.
+     *
+     * @param events the list to filter
+     * @param query the user's search text
+     * @return filtered list matching the query
+     */
     private List<Event> filterBySearch(List<Event> events, String query) {
         List<Event> result = new ArrayList<>();
         String lowerQuery = query.toLowerCase();
@@ -364,6 +422,14 @@ public class BrowseEventsTabFragment extends Fragment {
         return result;
     }
 
+    /**
+     * Filters events to those occurring within a given time window:
+     * "week", "month", or no filtering.
+     *
+     * @param events list of events
+     * @param timeFilter type of filter ("week", "month", or none)
+     * @return filtered list of events
+     */
     private List<Event> filterByTime(List<Event> events, String timeFilter) {
         List<Event> result = new ArrayList<>();
         Calendar calendar = Calendar.getInstance();
@@ -390,6 +456,13 @@ public class BrowseEventsTabFragment extends Fragment {
         return result;
     }
 
+    /**
+     * Filters events by exact category match.
+     *
+     * @param events list to filter
+     * @param category selected category name
+     * @return events belonging to the category
+     */
     private List<Event> filterByCategory(List<Event> events, String category) {
         List<Event> result = new ArrayList<>();
 
@@ -405,6 +478,22 @@ public class BrowseEventsTabFragment extends Fragment {
         return result;
     }
 
+    /**
+     * Sorts a list of events based on the selected SortOption.
+     *
+     * Supported options:
+     * <ul>
+     *     <li>DATE_ASC – earliest first</li>
+     *     <li>DATE_DESC – latest first</li>
+     *     <li>NAME_ASC – alphabetical</li>
+     *     <li>NAME_DESC – reverse alphabetical</li>
+     *     <li>POPULAR – most users waiting</li>
+     * </ul>
+     *
+     * @param events list to sort
+     * @param sortOption user-selected sort preference
+     * @return sorted list
+     */
     private List<Event> sortEvents(List<Event> events, SortOption sortOption) {
         List<Event> sorted = new ArrayList<>(events);
 
@@ -457,6 +546,10 @@ public class BrowseEventsTabFragment extends Fragment {
         return sorted;
     }
 
+    /**
+     * Displays a dialog allowing the user to choose a sort method.
+     * Updates sort state and re-applies all filters.
+     */
     private void showSortDialog() {
         String[] options = {
                 SortOption.DATE_ASC.getDisplayName(),
@@ -480,6 +573,12 @@ public class BrowseEventsTabFragment extends Fragment {
                 .show();
     }
 
+    /**
+     * Provides a short label for the sorting option for use on UI buttons.
+     *
+     * @param option the selected sort option
+     * @return a short display name
+     */
     private String getSortShortName(SortOption option) {
         switch (option) {
             case DATE_ASC: return "Date";
@@ -491,10 +590,21 @@ public class BrowseEventsTabFragment extends Fragment {
         }
     }
 
+    /**
+     * Updates the text showing how many events match the filters.
+     *
+     * @param count number of events displayed
+     */
     private void updateResultsCount(int count) {
         tvResultsCount.setText(count + (count == 1 ? " event" : " events"));
     }
 
+    /**
+     * Produces a context-aware empty state message depending on:
+     * search query, selected category, or no events at all.
+     *
+     * @return user-friendly empty state message
+     */
     private String getEmptyMessage() {
         if (!currentSearchQuery.isEmpty()) {
             return "No events match \"" + currentSearchQuery + "\"";
@@ -505,6 +615,9 @@ public class BrowseEventsTabFragment extends Fragment {
         return "No events available yet";
     }
 
+    /**
+     * Shows loading spinner and hides all other UI sections.
+     */
     private void showLoading() {
         rvEvents.setVisibility(View.GONE);
         progressBar.setVisibility(View.VISIBLE);
@@ -512,6 +625,9 @@ public class BrowseEventsTabFragment extends Fragment {
         errorView.setVisibility(View.GONE);
     }
 
+    /**
+     * Displays the RecyclerView of events and hides placeholders.
+     */
     private void showEvents() {
         rvEvents.setVisibility(View.VISIBLE);
         progressBar.setVisibility(View.GONE);
@@ -519,6 +635,11 @@ public class BrowseEventsTabFragment extends Fragment {
         errorView.setVisibility(View.GONE);
     }
 
+    /**
+     * Shows an empty-state message when filtering yields no results.
+     *
+     * @param message message to display
+     */
     private void showEmpty(String message) {
         rvEvents.setVisibility(View.GONE);
         progressBar.setVisibility(View.GONE);
@@ -527,6 +648,11 @@ public class BrowseEventsTabFragment extends Fragment {
         tvEmptyMessage.setText(message);
     }
 
+    /**
+     * Displays an error state when event loading fails.
+     *
+     * @param message error explanation
+     */
     private void showError(String message) {
         rvEvents.setVisibility(View.GONE);
         progressBar.setVisibility(View.GONE);
@@ -535,11 +661,15 @@ public class BrowseEventsTabFragment extends Fragment {
         tvErrorMessage.setText(message);
     }
 
+    /**
+     * Cleans up Firestore listeners to prevent memory leaks
+     * when the fragment view is destroyed.
+     */
     @Override
     public void onDestroyView() {
         super.onDestroyView();
 
-        //Clean up real-time listener to prevent memory leaks
+        // Clean up real-time listener to prevent memory leaks
         if (eventsListener != null) {
             eventsListener.remove();
             eventsListener = null;

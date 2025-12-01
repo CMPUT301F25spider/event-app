@@ -35,17 +35,22 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 /**
- * ProfileFragment - User profile with stats and organized actions
+ * ProfileFragment - Displays user profile, statistics, and app settings.
  *
  * Features:
- * - Sticky header (Profile + Settings)
- * - User info display
- * - Tappable quick stats (waiting, selected, attending counts)
- * - Single "My Events" button
- * - Organizer actions (always visible)
+ * <ul>
+ *     <li>User info and editable profile</li>
+ *     <li>Tappable event statistics (waiting, selected, attending)</li>
+ *     <li>Organizer actions (create event, view organized events)</li>
+ *     <li>Notification toggle</li>
+ *     <li>Accessibility settings (large text, contrast, touch targets)</li>
+ *     <li>Hidden admin unlock via secret code</li>
+ *     <li>App version Easter egg</li>
+ * </ul>
  *
- * US 01.02.02: Update profile information
- * US 01.02.03: View event history
+ * Supports:
+ * US 01.02.02 - Update profile information
+ * US 01.02.03 - View event history
  */
 public class ProfileFragment extends Fragment {
 
@@ -91,14 +96,22 @@ public class ProfileFragment extends Fragment {
     private LinearLayout layoutAppVersion;
     private TextView tvAppVersion, btnTermsConditions, btnPrivacyPolicy;
 
-    // NEW: Accessibility helper
+    // Accessibility helper
     private AccessibilityHelper accessibilityHelper;
 
-    // NEW: Admin unlock Easter egg
+    // Admin unlock Easter egg
     private int tapCount = 0;
     private long lastTapTime = 0;
     private static final String ADMIN_SECRET_CODE = "1234";
 
+    /**
+     * Inflates the ProfileFragment layout.
+     *
+     * @param inflater LayoutInflater used to inflate the fragment UI
+     * @param container Optional parent view
+     * @param savedInstanceState Previously saved fragment state
+     * @return The inflated view for the profile screen
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -106,6 +119,12 @@ public class ProfileFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_profile, container, false);
     }
 
+    /**
+     * Initializes Firebase, binds views, attaches listeners, and loads user data.
+     *
+     * @param view Root fragment view
+     * @param savedInstanceState Previously saved state
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -125,7 +144,17 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * Initialize all views
+     * Initializes all UI components including:
+     * <ul>
+     *     <li>User info</li>
+     *     <li>Stats</li>
+     *     <li>Event actions</li>
+     *     <li>Settings toggles</li>
+     *     <li>Accessibility switches</li>
+     *     <li>Admin unlock section</li>
+     * </ul>
+     *
+     * @param view Root view containing UI elements
      */
     private void initViews(View view) {
         // User Info
@@ -153,7 +182,7 @@ public class ProfileFragment extends Fragment {
         // Loading
         progressBar = view.findViewById(R.id.progressBar);
 
-        // NEW: Settings elements
+        // Settings elements
         switchNotifications = view.findViewById(R.id.switchNotifications);
         btnAccessibility = view.findViewById(R.id.btnAccessibility);
         layoutAccessibilityOptions = view.findViewById(R.id.layoutAccessibilityOptions);
@@ -174,7 +203,19 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * Setup all click listeners
+     * Attaches click listeners for:
+     * <ul>
+     *     <li>Settings navigation</li>
+     *     <li>Edit profile</li>
+     *     <li>Stats navigation (waiting, selected, attending)</li>
+     *     <li>My Events / Organized Events</li>
+     *     <li>Create Event</li>
+     *     <li>Notification toggle</li>
+     *     <li>Accessibility panel expand/collapse</li>
+     *     <li>Accessibility settings</li>
+     *     <li>Admin unlock popup</li>
+     *     <li>App version Easter egg</li>
+     * </ul>
      */
     private void setupListeners() {
         // Settings
@@ -228,14 +269,14 @@ public class ProfileFragment extends Fragment {
             startActivity(intent);
         });
 
-        // NEW: Notifications toggle
+        // Notifications toggle
         switchNotifications.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (currentUser != null) {
                 updateNotificationPreference(isChecked);
             }
         });
 
-        // NEW: Accessibility expand/collapse
+        // Accessibility expand/collapse
         btnAccessibility.setOnClickListener(v -> {
             if (layoutAccessibilityOptions.getVisibility() == View.GONE) {
                 // Expand
@@ -248,20 +289,20 @@ public class ProfileFragment extends Fragment {
             }
         });
 
-        // NEW: Accessibility toggles
+        // Accessibility toggles
         initAccessibilitySwitches();
 
-        // NEW: Admin unlock
+        // Admin unlock
         if (btnUnlockAdmin != null) {
             btnUnlockAdmin.setOnClickListener(v -> showAdminCodeDialog());
         }
 
-        // NEW: App version (Easter egg - tap 7 times)
+        // App version (Easter egg - tap 7 times)
         if (layoutAppVersion != null) {
             layoutAppVersion.setOnClickListener(v -> handleVersionTap());
         }
 
-        // NEW: Terms & Conditions
+        // Terms & Conditions
         if (btnTermsConditions != null) {
             btnTermsConditions.setOnClickListener(v -> {
                 Toast.makeText(requireContext(), "Terms & Conditions", Toast.LENGTH_SHORT).show();
@@ -269,7 +310,7 @@ public class ProfileFragment extends Fragment {
             });
         }
 
-        // NEW: Privacy Policy
+        // Privacy Policy
         if (btnPrivacyPolicy != null) {
             btnPrivacyPolicy.setOnClickListener(v -> {
                 Toast.makeText(requireContext(), "Privacy Policy", Toast.LENGTH_SHORT).show();
@@ -279,7 +320,10 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * Load user profile and calculate stats
+     * Loads the user's profile document from Firestore.
+     * Displays user info and triggers event stats loading.
+     *
+     * Shows a loading indicator during fetch.
      */
     private void loadUserProfile() {
         // Check if user is signed in
@@ -312,7 +356,13 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * Display user information
+     * Populates UI fields with the user's profile data:
+     * <ul>
+     *     <li>Name</li>
+     *     <li>Email</li>
+     * </ul>
+     *
+     * Hides role display by design.
      */
     private void displayUserInfo() {
         // Name
@@ -326,7 +376,17 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * Load event statistics for this user
+     * Computes event participation statistics for the user by scanning
+     * all active events:
+     * <ul>
+     *     <li>Waiting list count</li>
+     *     <li>Selected list count</li>
+     *     <li>Attending (signed-up) count</li>
+     * </ul>
+     *
+     * Updates UI when finished and hides loading state.
+     *
+     * @param userId ID of the current user
      */
     private void loadEventStats(String userId) {
         // Load all active events
@@ -366,7 +426,7 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * Display statistics
+     * Updates the UI counters for waiting, selected, and attending event stats.
      */
     private void displayStats() {
         // Update counts in stats boxes
@@ -376,21 +436,28 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * Show loading indicator
+     * Shows the progress bar to indicate loading state.
      */
     private void showLoading() {
         progressBar.setVisibility(View.VISIBLE);
     }
 
     /**
-     * Hide loading indicator
+     * Hides the progress bar when loading finishes.
      */
     private void hideLoading() {
         progressBar.setVisibility(View.GONE);
     }
 
     /**
-     * NEW: Initialize accessibility switches
+     * Initializes accessibility preference switches:
+     * <ul>
+     *     <li>Large text</li>
+     *     <li>High contrast</li>
+     *     <li>Large touch targets</li>
+     * </ul>
+     *
+     * Loads stored settings and attaches listeners for updating preferences.
      */
     private void initAccessibilitySwitches() {
         if (switchLargeText == null || switchHighContrast == null || switchLargeButtons == null) {
@@ -422,7 +489,10 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * NEW: Show restart dialog
+     * Displays a dialog informing the user that the selected accessibility feature
+     * will take full effect after restarting the app.
+     *
+     * @param feature Name of the feature activated
      */
     private void showRestartDialog(String feature) {
         new AlertDialog.Builder(requireContext())
@@ -433,7 +503,9 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * Update notification preference
+     * Updates the user's notification preference in Firestore.
+     *
+     * @param enabled Whether push notifications are allowed
      */
     private void updateNotificationPreference(boolean enabled) {
         if (mAuth.getCurrentUser() == null) return;
@@ -452,7 +524,10 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * Hidden admin unlock - tap version 3 times rapidly
+     * Easter egg listener for app version text.
+     * If tapped rapidly 3 times, triggers the admin code dialog.
+     *
+     * Also shows progress messages (e.g., "1 more tap to unlock").
      */
     private void handleVersionTap() {
         long currentTime = System.currentTimeMillis();
@@ -474,7 +549,8 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * Show admin code entry dialog
+     * Shows a dialog prompting the user to enter the secret admin unlock code.
+     * On submit, verifies the code.
      */
     private void showAdminCodeDialog() {
         View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_admin_code, null);
@@ -492,7 +568,10 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * Verify admin code and grant access
+     * Validates the entered admin unlock code.
+     * If correct, grants admin access. Otherwise shows an error toast.
+     *
+     * @param enteredCode Code entered by the user
      */
     private void verifyAdminCode(String enteredCode) {
         if (enteredCode.equals(ADMIN_SECRET_CODE)) {
@@ -503,7 +582,13 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * Grant admin access to current user
+     * Grants admin privileges to the current user:
+     * <ul>
+     *     <li>Adds "admin" to their roles</li>
+     *     <li>Saves updated user document</li>
+     *     <li>Updates admin UI</li>
+     *     <li>Redirects user to AdminHomeActivity</li>
+     * </ul>
      */
     private void grantAdminAccess() {
         if (currentUser == null || mAuth.getCurrentUser() == null) return;
@@ -531,7 +616,8 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * NEW: Update admin UI based on user role
+     * Updates UI components based on whether the user has admin privileges.
+     * Shows green status text and hides unlock button for admins.
      */
     private void updateAdminUI() {
         if (currentUser == null) return;
@@ -547,7 +633,10 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-
+    /**
+     * Reloads user profile whenever returning to this fragment,
+     * ensuring settings and stats stay up-to-date.
+     */
     @Override
     public void onResume() {
         super.onResume();
