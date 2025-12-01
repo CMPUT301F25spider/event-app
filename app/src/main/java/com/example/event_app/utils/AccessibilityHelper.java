@@ -26,7 +26,6 @@ import com.google.android.material.button.MaterialButton;
  * 1. In SettingsActivity: Toggle switches save preferences
  * 2. In every Activity onCreate(): Call applyAccessibilitySettings()
  *
- * @author LuckySpot Team
  */
 public class AccessibilityHelper {
 
@@ -44,7 +43,10 @@ public class AccessibilityHelper {
     private final SharedPreferences prefs;
 
     /**
-     * Constructor
+     * Creates a new AccessibilityHelper instance.
+     * Initializes SharedPreferences used to store user-selected accessibility settings.
+     *
+     * @param context Application or Activity context used to read resources and preferences
      */
     public AccessibilityHelper(Context context) {
         this.context = context;
@@ -56,28 +58,37 @@ public class AccessibilityHelper {
     // ========================================================================
 
     /**
-     * Check if large text mode is enabled
+     * Returns whether large-text mode is enabled.
+     *
+     * @return true if large text mode is active, false otherwise
      */
     public boolean isLargeTextEnabled() {
         return prefs.getBoolean(KEY_LARGE_TEXT, false);
     }
 
     /**
-     * Enable or disable large text mode
+     * Enables or disables large-text mode and saves the preference.
+     *
+     * @param enabled true = enlarge all text views by the configured multiplier
      */
     public void setLargeTextEnabled(boolean enabled) {
         prefs.edit().putBoolean(KEY_LARGE_TEXT, enabled).apply();
     }
 
     /**
-     * Check if high contrast mode is enabled
+     * Returns whether high-contrast (dark mode) is enabled.
+     *
+     * @return true if high-contrast mode is enabled
      */
     public boolean isHighContrastEnabled() {
         return prefs.getBoolean(KEY_HIGH_CONTRAST, false);
     }
 
     /**
-     * Enable or disable high contrast mode
+     * Enables or disables high-contrast mode.
+     * Immediately applies theme changes via AppCompatDelegate.
+     *
+     * @param enabled true = enable high-contrast mode (dark theme)
      */
     public void setHighContrastEnabled(boolean enabled) {
         prefs.edit().putBoolean(KEY_HIGH_CONTRAST, enabled).apply();
@@ -85,14 +96,18 @@ public class AccessibilityHelper {
     }
 
     /**
-     * Check if larger buttons mode is enabled
+     * Returns whether larger touch-targets mode is enabled.
+     *
+     * @return true if larger button padding and minimum size are applied
      */
     public boolean isLargeButtonsEnabled() {
         return prefs.getBoolean(KEY_LARGE_BUTTONS, false);
     }
 
     /**
-     * Enable or disable larger buttons mode
+     * Enables or disables larger button touch targets.
+     *
+     * @param enabled true = increase padding/minimum touch size on MaterialButtons
      */
     public void setLargeButtonsEnabled(boolean enabled) {
         prefs.edit().putBoolean(KEY_LARGE_BUTTONS, enabled).apply();
@@ -103,20 +118,17 @@ public class AccessibilityHelper {
     // ========================================================================
 
     /**
-     * Apply all accessibility settings to an activity
+     * Applies all accessibility settings to the given activity.
+     * Must be called *after* setContentView() in every Activity.
      *
-     * Call this in onCreate() of each activity AFTER setContentView():
+     * Behavior:
+     * <ul>
+     *   <li>Applies high-contrast mode (dark theme) instantly</li>
+     *   <li>Recursively updates all TextViews & MaterialButtons if large-text
+     *       or large-buttons mode is enabled</li>
+     * </ul>
      *
-     * Example:
-     * protected void onCreate(Bundle savedInstanceState) {
-     *     super.onCreate(savedInstanceState);
-     *     setContentView(R.layout.activity_main);
-     *
-     *     // Apply accessibility
-     *     new AccessibilityHelper(this).applyAccessibilitySettings(this);
-     *
-     *     // Rest of your code...
-     * }
+     * @param activity Activity whose entire view tree should update accessibility settings
      */
     public void applyAccessibilitySettings(AppCompatActivity activity) {
         // Apply high contrast if enabled
@@ -138,7 +150,11 @@ public class AccessibilityHelper {
     // ========================================================================
 
     /**
-     * Apply high contrast mode (dark theme)
+     * Applies the high-contrast theme using AppCompatDelegate.
+     * <ul>
+     *   <li>High contrast ON → force MODE_NIGHT_YES</li>
+     *   <li>High contrast OFF → follow system theme</li>
+     * </ul>
      */
     private void applyHighContrast() {
         if (isHighContrastEnabled()) {
@@ -149,14 +165,18 @@ public class AccessibilityHelper {
     }
 
     /**
-     * Get high contrast text color
+     * Returns an appropriate text color based on high-contrast mode.
+     *
+     * @return White text when high contrast is enabled, black otherwise
      */
     public int getHighContrastTextColor() {
         return isHighContrastEnabled() ? Color.WHITE : Color.BLACK;
     }
 
     /**
-     * Get high contrast background color
+     * Returns an appropriate background color based on high-contrast mode.
+     *
+     * @return Black background when high contrast is enabled, white otherwise
      */
     public int getHighContrastBackgroundColor() {
         return isHighContrastEnabled() ? Color.BLACK : Color.WHITE;
@@ -167,7 +187,16 @@ public class AccessibilityHelper {
     // ========================================================================
 
     /**
-     * Recursively apply accessibility settings to all views in hierarchy
+     * Recursively applies accessibility rules to the given view and all children.
+     *
+     * Behavior:
+     * <ul>
+     *   <li>TextView → enlarged text (if enabled)</li>
+     *   <li>MaterialButton → enlarged padding & min size (if enabled)</li>
+     *   <li>ViewGroup → recursively processes children</li>
+     * </ul>
+     *
+     * @param view The root view to apply accessibility updates to
      */
     private void applyToAllViews(View view) {
         if (view == null) return;
@@ -196,7 +225,10 @@ public class AccessibilityHelper {
     // ========================================================================
 
     /**
-     * Apply large text to TextView (and subclasses)
+     * Enlarges a TextView’s text size according to TEXT_SIZE_MULTIPLIER.
+     * Only applied when large-text mode is active.
+     *
+     * @param textView TextView whose text size should be increased
      */
     private void applyToTextView(TextView textView) {
         if (!isLargeTextEnabled()) return;
@@ -222,7 +254,15 @@ public class AccessibilityHelper {
     // ========================================================================
 
     /**
-     * Apply larger touch targets to buttons
+     * Applies larger touch targets to a MaterialButton.
+     *
+     * Behavior:
+     * <ul>
+     *   <li>Increases all paddings using BUTTON_PADDING_MULTIPLIER</li>
+     *   <li>Ensures min size is at least 48dp (Android accessibility guideline)</li>
+     * </ul>
+     *
+     * @param button MaterialButton to enlarge
      */
     private void applyToButton(MaterialButton button) {
         if (!isLargeButtonsEnabled()) return;
@@ -256,7 +296,10 @@ public class AccessibilityHelper {
     // ========================================================================
 
     /**
-     * Convert DP to pixels
+     * Converts a DP value to pixels based on screen density.
+     *
+     * @param dp Value in density-independent pixels
+     * @return Equivalent pixel value
      */
     private int dpToPx(int dp) {
         float density = context.getResources().getDisplayMetrics().density;
@@ -264,7 +307,10 @@ public class AccessibilityHelper {
     }
 
     /**
-     * Convert pixels to DP
+     * Converts pixel measurement into DP units.
+     *
+     * @param px Pixel value
+     * @return Equivalent DP value
      */
     private int pxToDp(int px) {
         float density = context.getResources().getDisplayMetrics().density;
@@ -272,7 +318,10 @@ public class AccessibilityHelper {
     }
 
     /**
-     * Clear all accessibility preferences (for testing)
+     * Clears all saved accessibility settings.
+     * Also resets theme mode back to system default.
+     *
+     * Intended for testing or debug tools.
      */
     public void clearAllSettings() {
         prefs.edit().clear().apply();
@@ -280,7 +329,9 @@ public class AccessibilityHelper {
     }
 
     /**
-     * Get summary of current accessibility settings
+     * Builds a readable multi-line summary of all active accessibility settings.
+     *
+     * @return Summary string (Large Text, High Contrast, Large Buttons)
      */
     public String getAccessibilitySettingsSummary() {
         StringBuilder summary = new StringBuilder();

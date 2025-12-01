@@ -19,15 +19,39 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * ReportExporter - Utility for exporting platform reports
- * US 03.13.01: Export platform usage reports
+ * ReportExporter - Generates and exports platform usage reports as CSV files.
+ *
+ * <p>This utility supports:</p>
+ * <ul>
+ *     <li>Exporting user and event statistics</li>
+ *     <li>Highlighting events with high cancellation rates</li>
+ *     <li>Sharing generated CSV files via Android's share sheet</li>
+ * </ul>
+ *
+ * <p>User Story: US 03.13.01 — Export platform usage reports</p>
  */
 public class ReportExporter {
 
     private static final String TAG = "ReportExporter";
 
     /**
-     * Export platform statistics to CSV file
+     * Generates a full platform analytics report and exports it as a CSV file.
+     * <p>
+     * The report includes:
+     * <ul>
+     *     <li>Total number of users and events</li>
+     *     <li>Organizer count</li>
+     *     <li>Active event count</li>
+     *     <li>Events with high cancellation rates</li>
+     *     <li>Summary of all events (selected, attending, cancellation rate)</li>
+     * </ul>
+     * After generating the file, the method automatically opens the Android
+     * share sheet so the file can be sent via email, Drive, WhatsApp, etc.
+     * </p>
+     *
+     * @param context Android context used for file creation and sharing
+     * @param events  list of all events on the platform
+     * @param users   list of all users on the platform
      */
     public static void exportPlatformReport(Context context,
                                             List<Event> events,
@@ -113,7 +137,12 @@ public class ReportExporter {
     }
 
     /**
-     * Create a file for the report
+     * Creates a timestamped CSV report file in the app's external files directory.
+     *
+     * @param context the calling context, used to access storage directories
+     * @param prefix  filename prefix (e.g., "platform_report")
+     * @return a newly created File object pointing to the CSV report
+     * @throws IOException if the file cannot be created
      */
     private static File createReportFile(Context context, String prefix) throws IOException {
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
@@ -125,7 +154,12 @@ public class ReportExporter {
     }
 
     /**
-     * Get current date and time as string
+     * Returns the current system date and time formatted as:
+     * <pre>yyyy-MM-dd HH:mm:ss</pre>
+     *
+     * Used for report headers.
+     *
+     * @return formatted date-time string
      */
     private static String getCurrentDateTime() {
         return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
@@ -133,7 +167,14 @@ public class ReportExporter {
     }
 
     /**
-     * Share the report file
+     * Shares the generated CSV file using Android's share sheet.
+     * <p>
+     * The method uses a FileProvider to securely expose the file URI to
+     * external applications, and grants temporary read permission.
+     * </p>
+     *
+     * @param context context used to launch the share intent
+     * @param file    the CSV file to be shared
      */
     private static void shareFile(Context context, File file) {
         Uri fileUri = FileProvider.getUriForFile(
