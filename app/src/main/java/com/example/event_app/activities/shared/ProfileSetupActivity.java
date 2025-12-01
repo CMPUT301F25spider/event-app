@@ -21,16 +21,26 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 /**
- * ProfileSetupActivity - Clean Uber-Inspired Onboarding
+ * ProfileSetupActivity
  *
- * US 01.02.01: Provide personal information (name, email, phone)
- * US 01.07.01: Device-based identification
+ * Onboarding screen where new users provide basic personal information
+ * before accessing the app.
+ *
+ * Supports:
+ * <ul>
+ *   <li>US 01.02.01 – User enters name, email, phone number</li>
+ *   <li>US 01.07.01 – Device-based identification</li>
+ *   <li>Assigning default ENTRANT role</li>
+ *   <li>Navigating to unified MainActivity after setup</li>
+ * </ul>
  *
  * Flow:
- * 1. Collect name, email, phone (optional)
- * 2. Create user with ENTRANT role by default
- * 3. Navigate to MainActivity
- * 4. User can upgrade to ORGANIZER later in settings
+ * <ol>
+ *   <li>User enters personal details</li>
+ *   <li>User profile is created in Firestore</li>
+ *   <li>Device ID is linked for identification</li>
+ *   <li>User is directed to main app</li>
+ * </ol>
  */
 public class ProfileSetupActivity extends AppCompatActivity {
 
@@ -78,7 +88,7 @@ public class ProfileSetupActivity extends AppCompatActivity {
     }
 
     /**
-     * Initialize all views
+     * Initializes all input fields and the continue button.
      */
     private void initViews() {
         editTextName = findViewById(R.id.editTextName);
@@ -88,7 +98,13 @@ public class ProfileSetupActivity extends AppCompatActivity {
     }
 
     /**
-     * Handle continue button click
+     * Handles the Continue button click:
+     * <ol>
+     *   <li>Reads input values</li>
+     *   <li>Validates name & email</li>
+     *   <li>Disables the button to prevent duplicate submissions</li>
+     *   <li>Creates the user profile in Firestore</li>
+     * </ol>
      */
     private void handleContinue() {
         // Get input values
@@ -109,7 +125,16 @@ public class ProfileSetupActivity extends AppCompatActivity {
     }
 
     /**
-     * Validate user inputs
+     * Validates required onboarding fields.
+     * Ensures:
+     * <ul>
+     *   <li>Name is not empty and at least 2 characters</li>
+     *   <li>Email is provided and matches a valid pattern</li>
+     * </ul>
+     *
+     * @param name the user’s name
+     * @param email the user’s email
+     * @return true if all input fields are valid; false otherwise
      */
     private boolean validateInputs(String name, String email) {
         // Validate name
@@ -142,8 +167,20 @@ public class ProfileSetupActivity extends AppCompatActivity {
     }
 
     /**
-     * Create user profile and save to Firebase
-     * Everyone starts as ENTRANT by default
+     * Creates a new User profile in Firestore using the provided details.
+     *
+     * Behavior:
+     * <ul>
+     *   <li>Uses Firebase UID as the unique identifier</li>
+     *   <li>Binds deviceId for device-based identification (US 01.07.01)</li>
+     *   <li>Assigns ENTRANT role to every new user by default</li>
+     *   <li>Includes phone only if provided</li>
+     *   <li>On success: navigates to MainActivity</li>
+     * </ul>
+     *
+     * @param name user's full name
+     * @param email user’s email address
+     * @param phone optional phone number
      */
     private void createUserProfile(String name, String email, String phone) {
         // Get current user ID
@@ -184,7 +221,8 @@ public class ProfileSetupActivity extends AppCompatActivity {
     }
 
     /**
-     * Navigate to MainActivity (unified home for all users)
+     * Navigates to MainActivity and clears the back stack so the user
+     * cannot return to onboarding screens.
      */
     private void navigateToHome() {
         Intent intent = new Intent(this, MainActivity.class);
