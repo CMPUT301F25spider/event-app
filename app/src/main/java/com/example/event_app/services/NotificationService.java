@@ -15,7 +15,34 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * NotificationService - Handles all notification operations
+ * NotificationService - Centralized manager for all notification behavior in LuckySpot.
+ *
+ * <p>This service handles:</p>
+ *
+ * <ul>
+ *     <li>Creating notification records in Firestore</li>
+ *     <li>Checking user notification preferences</li>
+ *     <li>Sending push messages through Firebase Cloud Messaging (FCM)</li>
+ *     <li>Logging notification actions for auditing</li>
+ *     <li>Fetching, counting, and updating user notifications</li>
+ *     <li>Bulk sending for organizers</li>
+ * </ul>
+ *
+ * <h3>Cloud Function Integration</h3>
+ * <p>Push delivery is performed by the HTTPS Cloud Function <b>sendFCMNotification</b>.
+ * This service prepares the payload, validates the token, and calls the function.</p>
+ *
+ * <h3>Audit Logging</h3>
+ * <p>All notifications—successful, failed, or blocked—are recorded in the
+ * <code>notification_logs</code> collection for analytics and debugging.</p>
+ *
+ * <h3>Used By:</h3>
+ * <ul>
+ *     <li>Event selection notifications</li>
+ *     <li>Waitlist updates</li>
+ *     <li>Event cancellation alerts</li>
+ *     <li>Admin broadcast tools</li>
+ * </ul>
  */
 public class NotificationService {
 
@@ -29,6 +56,26 @@ public class NotificationService {
         this.db = FirebaseFirestore.getInstance();
     }
 
+    /**
+     * Sends a notification to a specific user.
+     *
+     * <p>This method:</p>
+     * <ol>
+     *     <li>Checks the user’s notification preferences</li>
+     *     <li>Blocks or allows sending accordingly</li>
+     *     <li>Creates a notification record in Firestore</li>
+     *     <li>Triggers push delivery through FCM</li>
+     *     <li>Logs the action in the audit log</li>
+     * </ol>
+     *
+     * @param userId    recipient user ID
+     * @param eventId   related event ID (nullable)
+     * @param eventName event name (nullable)
+     * @param type      notification type (e.g., "selection", "reminder")
+     * @param title     notification title
+     * @param message   notification body
+     * @param callback  callback reporting success or failure
+     */
     public void sendNotification(String userId, String eventId, String eventName,
                                  String type, String title, String message,
                                  NotificationCallback callback) {
@@ -62,6 +109,19 @@ public class NotificationService {
                 });
     }
 
+    /**
+     * Creates a Firestore notification entry and triggers push delivery.
+     *
+     * <p>This method is called after preference checks or failure to read preferences.</p>
+     *
+     * @param userId       notification recipient
+     * @param eventId      event ID
+     * @param eventName    event name
+     * @param type         notification type
+     * @param title        notification title
+     * @param message      notification body
+     * @param callback     result callback
+     */
     private void createAndSendNotification(String userId, String eventId, String eventName,
                                            String type, String title, String message,
                                            NotificationCallback callback) {
@@ -99,6 +159,17 @@ public class NotificationService {
                 });
     }
 
+    /**
+     * Fetches the user's FCM token and sends a push notification via Cloud Function.
+     *
+     * <p>If no token exists, sending is skipped but a log is preserved.</p>
+     *
+     * @param userId    notification recipient
+     * @param title     push title
+     * @param message   push body
+     * @param eventId   related event ID
+     * @param eventName event name (ignored in payload)
+     */
     private void sendFCMPushNotification(String userId, String title, String message,
                                          String eventId, String eventName) {
 
@@ -125,7 +196,14 @@ public class NotificationService {
     }
 
     /**
-     * Ensure all values are explicitly converted to String
+     * Calls the Firebase HTTPS Cloud Function "sendFCMNotification".
+     *
+     * <p>All values are converted to String to avoid type mismatch issues in Functions.</p>
+     *
+     * @param token    FCM token to send to
+     * @param title    notification title
+     * @param message  notification message
+     * @param eventId  event identifier (empty string if null)
      */
     private void callCloudFunctionToSendFCM(String token, String title, String message, String eventId) {
         FirebaseFunctions functions = FirebaseFunctions.getInstance();
@@ -148,6 +226,20 @@ public class NotificationService {
                 });
     }
 
+    /**
+     * Logs a notification after it is successfully stored in Firestore.
+     *
+     * <p>This expands the log entry with recipient name and notification ID.</p>
+     *
+     * @param notificationId Firestore notification record ID
+     * @param recipientId    user receiving the notification
+     * @param eventId        related event ID
+     * @param eventName      event name
+     * @param type           notification type
+     * @param title          title
+     * @param message        message
+     * @param status         delivery status ("sent", "blocked", "failed")
+     */
     private void logNotificationAfterSend(String notificationId, String recipientId,
                                           String eventId, String eventName,
                                           String type, String title, String message,
@@ -174,6 +266,22 @@ public class NotificationService {
                 eventId, eventName, type, title, message, status, null);
     }
 
+    /**
+     * Logs a notification event to the audit collection.
+     *
+     * <p>Used for successful sends, blocked sends, and failures.</p>
+     *
+     * @param senderId       ID of sender (defaults to "system")
+     * @param senderName     human-readable sender name
+     * @param recipientId    receiving user ID
+     * @param recipientName  receiving user name
+     * @param eventId        related event ID
+     * @param eventName      related event name
+     * @param type           notification type
+     * @param title          title
+     * @param message        body text
+     * @param status         outcome ("sent", "blocked_user_preference", "failed")
+     */
     private void logNotification(String senderId, String senderName,
                                  String recipientId, String recipientName,
                                  String eventId, String eventName,
@@ -209,6 +317,25 @@ public class NotificationService {
                 });
     }
 
+    /**
+     * Sends the same notification to a list of users.
+     *
+     * <p>This method:</p>
+     * <ul>
+     *     <li>Loops through each user</li>
+     *     <li>Delegates actual sending to sendNotification()</li>
+     *     <li>Tracks success/failure counts</li>
+     *     <li>Returns results once all sends complete</li>
+     * </ul>
+     *
+     * @param userIds   list of recipients
+     * @param eventId   related event
+     * @param eventName event name
+     * @param type      notification type
+     * @param title     notification title
+     * @param message   notification body
+     * @param callback  bulk callback reporting success/failure totals
+     */
     public void sendBulkNotifications(List<String> userIds, String eventId, String eventName,
                                       String type, String title, String message,
                                       BulkNotificationCallback callback) {
@@ -245,6 +372,12 @@ public class NotificationService {
         }
     }
 
+    /**
+     * Retrieves all notifications for a user ordered by newest first.
+     *
+     * @param userId   ID of user
+     * @param callback returns a list of Notification objects or failure error
+     */
     public void getUserNotifications(String userId, NotificationListCallback callback) {
         db.collection(COLLECTION_NOTIFICATIONS)
                 .whereEqualTo("userId", userId)
@@ -274,6 +407,12 @@ public class NotificationService {
                 });
     }
 
+    /**
+     * Counts the number of unread notifications for a user.
+     *
+     * @param userId   user ID
+     * @param callback callback returning the unread count or error
+     */
     public void getUnreadCount(String userId, UnreadCountCallback callback) {
         db.collection(COLLECTION_NOTIFICATIONS)
                 .whereEqualTo("userId", userId)
@@ -297,6 +436,12 @@ public class NotificationService {
                 });
     }
 
+    /**
+     * Marks a single notification as read.
+     *
+     * @param notificationId ID of notification
+     * @param callback       completion callback
+     */
     public void markAsRead(String notificationId, NotificationCallback callback) {
         db.collection(COLLECTION_NOTIFICATIONS)
                 .document(notificationId)
@@ -317,6 +462,12 @@ public class NotificationService {
                 });
     }
 
+    /**
+     * Marks all unread notifications as read for the specified user.
+     *
+     * @param userId   ID of user
+     * @param callback callback after update
+     */
     public void markAllAsRead(String userId, NotificationCallback callback) {
         db.collection(COLLECTION_NOTIFICATIONS)
                 .whereEqualTo("userId", userId)
@@ -350,6 +501,12 @@ public class NotificationService {
                 });
     }
 
+    /**
+     * Deletes a single notification from Firestore.
+     *
+     * @param notificationId ID of notification
+     * @param callback       callback after deletion
+     */
     public void deleteNotification(String notificationId, NotificationCallback callback) {
         db.collection(COLLECTION_NOTIFICATIONS)
                 .document(notificationId)
@@ -370,6 +527,12 @@ public class NotificationService {
                 });
     }
 
+    /**
+     * Deletes all notifications belonging to a user.
+     *
+     * @param userId   ID of the user
+     * @param callback completion callback
+     */
     public void deleteAllNotifications(String userId, NotificationCallback callback) {
         db.collection(COLLECTION_NOTIFICATIONS)
                 .whereEqualTo("userId", userId)
@@ -393,22 +556,33 @@ public class NotificationService {
                 });
     }
 
-    // Callback interfaces
+    /**
+     * Callback for single-notification operations.
+     */
     public interface NotificationCallback {
         void onSuccess();
         void onFailure(String error);
     }
 
+    /**
+     * Callback returning a list of notifications.
+     */
     public interface NotificationListCallback {
         void onSuccess(List<Notification> notifications);
         void onFailure(String error);
     }
 
+    /**
+     * Callback returning unread notification count.
+     */
     public interface UnreadCountCallback {
         void onSuccess(int count);
         void onFailure(String error);
     }
 
+    /**
+    * Callback for bulk send operations.
+    */
     public interface BulkNotificationCallback {
         void onComplete(int successCount, int failureCount);
     }
