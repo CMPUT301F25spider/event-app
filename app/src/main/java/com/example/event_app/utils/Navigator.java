@@ -7,15 +7,26 @@ import android.widget.Toast;
 import com.example.event_app.activities.entrant.EventDetailsActivity;
 
 /**
- * Navigator - Handles app navigation
+ * Navigator - Centralized helper class for handling navigation and user feedback.
+ *
+ * Features:
+ * <ul>
+ *     <li>Navigates to event details screens</li>
+ *     <li>Displays success and error messages</li>
+ *     <li>Handles invalid QR scan feedback</li>
+ * </ul>
+ *
+ * Used throughout the app to keep navigation logic consistent.
  */
 public class Navigator {
 
     public static final String EXTRA_EVENT_ID = "com.example.event_app.EVENT_ID";
 
     /**
-     * Navigate to Event Details screen
-     * TEMP: Just shows toast until we build EventDetailsActivity
+     * Navigate to the Event Details screen for the given event.
+     *
+     * @param context the calling context used to start the new activity
+     * @param eventId the ID of the event to display
      */
     public void navigateToEventDetails(Context context, String eventId) {
         Intent intent = new Intent(context, EventDetailsActivity.class);
@@ -24,21 +35,29 @@ public class Navigator {
     }
 
     /**
-     * Show error message for invalid QR code
+     * Display an error message when a scanned QR code is not valid.
+     *
+     * @param context the context used to show the toast message
      */
     public void showInvalidQrError(Context context) {
         Toast.makeText(context, "Invalid QR code. Please scan an event QR code.", Toast.LENGTH_LONG).show();
     }
 
     /**
-     * Show generic error message
+     * Display a short error message to the user.
+     *
+     * @param context the context used to show the toast
+     * @param message the message text to display
      */
     public void showError(Context context, String message) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
     }
 
     /**
-     * Show success message
+     * Display a short success message to the user.
+     *
+     * @param context the context used to show the toast
+     * @param message the message text to display
      */
     public void showSuccess(Context context, String message) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show();

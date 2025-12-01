@@ -22,13 +22,27 @@ public class FavoritesManager {
     private final FirebaseFirestore db;
     private final FirebaseAuth mAuth;
 
+    /**
+     * Creates a FavoritesManager instance and initializes Firebase Auth
+     * and Firestore references used for updating user favorite lists.
+     */
     public FavoritesManager() {
         this.db = FirebaseFirestore.getInstance();
         this.mAuth = FirebaseAuth.getInstance();
     }
 
     /**
-     * Add event to user's favorites
+     * Adds the given event ID to the logged-in user's list of favorite events.
+     *
+     * Behavior:
+     * <ul>
+     *   <li>Fails immediately if no user is authenticated</li>
+     *   <li>Updates the Firestore array using FieldValue.arrayUnion()</li>
+     *   <li>Invokes callback onSuccess() or onFailure()</li>
+     * </ul>
+     *
+     * @param eventId ID of the event to add to favorites
+     * @param callback Callback triggered on success or failure
      */
     public void addFavorite(String eventId, FavoriteCallback callback) {
         if (mAuth.getCurrentUser() == null) {
@@ -51,7 +65,17 @@ public class FavoritesManager {
     }
 
     /**
-     * Remove event from user's favorites
+     * Removes the given event ID from the logged-in user's favorite events.
+     *
+     * Behavior:
+     * <ul>
+     *   <li>Fails immediately if user is not logged in</li>
+     *   <li>Uses FieldValue.arrayRemove() to update Firestore list</li>
+     *   <li>Invokes callback onSuccess() or onFailure()</li>
+     * </ul>
+     *
+     * @param eventId ID of the event to remove from favorites
+     * @param callback Callback triggered when operation completes
      */
     public void removeFavorite(String eventId, FavoriteCallback callback) {
         if (mAuth.getCurrentUser() == null) {
@@ -74,7 +98,17 @@ public class FavoritesManager {
     }
 
     /**
-     * Check if event is in user's favorites
+     * Checks whether the given event ID is present in the user's favorites.
+     *
+     * Behavior:
+     * <ul>
+     *   <li>Returns false immediately if user is not logged in</li>
+     *   <li>Fetches user's document and inspects "favoriteEvents" array</li>
+     *   <li>Invokes callback with true or false</li>
+     * </ul>
+     *
+     * @param eventId ID of the event to check
+     * @param callback Callback returning true if the event is favorited
      */
     public void isFavorite(String eventId, IsFavoriteCallback callback) {
         if (mAuth.getCurrentUser() == null) {
@@ -102,7 +136,10 @@ public class FavoritesManager {
     }
 
     /**
-     * Callback for add/remove operations
+     * Callback for add/remove favorites operations.
+     *
+     * onSuccess() is invoked when Firestore update succeeds,
+     * onFailure(error) provides an error message if the operation fails.
      */
     public interface FavoriteCallback {
         void onSuccess();
@@ -110,7 +147,7 @@ public class FavoritesManager {
     }
 
     /**
-     * Callback for checking if favorited
+     * Callback for checking whether an event is marked as a favorite.
      */
     public interface IsFavoriteCallback {
         void onResult(boolean isFavorite);

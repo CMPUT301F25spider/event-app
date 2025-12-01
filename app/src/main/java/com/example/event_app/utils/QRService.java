@@ -5,7 +5,16 @@ import android.text.TextUtils;
 import android.util.Log;
 
 /**
- * QRService - Processes scanned QR codes
+ * QRService - Handles processing and validation of scanned QR codes.
+ *
+ * Responsibilities:
+ * <ul>
+ *     <li>Validate QR content format</li>
+ *     <li>Navigate to event details if valid</li>
+ *     <li>Show appropriate user-facing error messages on invalid scans</li>
+ * </ul>
+ *
+ * Supports dependency injection for Navigator to improve testability.
  */
 public class QRService {
 
@@ -13,21 +22,31 @@ public class QRService {
     private final Navigator navigator;
 
     /**
-     * Default constructor - creates Navigator internally
+     * Creates a QRService instance using a default Navigator implementation.
      */
     public QRService() {
         this.navigator = new Navigator();
     }
 
     /**
-     * Constructor with Navigator dependency injection
+     * Creates a QRService with a provided Navigator.
+     *
+     * @param navigator the Navigator instance used to handle UI navigation and messages
      */
     public QRService(Navigator navigator) {
         this.navigator = navigator;
     }
 
     /**
-     * Process scanned QR code content
+     * Processes scanned QR code content.
+     * <p>
+     * If the QR content matches the expected event ID format, the user is
+     * navigated to the Event Details screen. Otherwise, an error message
+     * is shown indicating an invalid QR scan.
+     * </p>
+     *
+     * @param context   the context used for navigation and Toast messages
+     * @param qrContent the raw string content extracted from the QR code
      */
     public void processQrCode(Context context, String qrContent) {
         Log.d(TAG, "Processing QR code: " + qrContent);
@@ -42,7 +61,18 @@ public class QRService {
     }
 
     /**
-     * Validate event ID format
+     * Validates whether the scanned QR content is a properly formatted event ID.
+     * <p>
+     * Rules:
+     * <ul>
+     *     <li>Must not be null or empty</li>
+     *     <li>Length must be between 10 and 50 characters</li>
+     *     <li>Allowed characters: letters, digits, underscore, hyphen</li>
+     * </ul>
+     * </p>
+     *
+     * @param eventId the QR content to validate
+     * @return true if the event ID is valid, false otherwise
      */
     private boolean isValidEventId(String eventId) {
         if (TextUtils.isEmpty(eventId)) {
