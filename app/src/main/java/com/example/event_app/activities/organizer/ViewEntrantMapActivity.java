@@ -30,24 +30,29 @@ import java.util.Map;
 /**
  * ViewEntrantMapActivity
  *
- * US 02.02.02: As an organizer I want to see on a map where entrants joined
- * my event waiting list from.
+ * Displays a Google Map showing the geographic locations from which entrants
+ * joined an event's waiting list.
+ *
+ * User Story:
+ * - US 02.02.02 — Organizer views entrant join locations on a map.
  *
  * Features:
- * - Displays map with markers for each entrant location
- * - Clusters markers when multiple entrants are from same location
- * - Shows event location if available
- * - Automatically adjusts camera to show all markers
- * - Handles geolocation-disabled events gracefully
+ * <ul>
+ *     <li>Loads entrant geolocation data from Firestore</li>
+ *     <li>Displays markers and visibility circles for each location</li>
+ *     <li>Auto-adjusts camera to fit all entrant markers</li>
+ *     <li>Handles single and multiple marker cases</li>
+ *     <li>Validates coordinates and ignores malformed data</li>
+ *     <li>Gracefully handles geolocation-disabled events</li>
+ * </ul>
  *
  * Architecture:
- * - Loads event data from Firestore
- * - Processes entrantLocations map: { "userId": { "latitude": X, "longitude": Y } }
- * - Displays markers with circles for visibility
- * - Auto-adjusts camera bounds to show all locations
+ * - Fetches Event document from Firestore
+ * - Extracts entrantLocations: { "userId": { "latitude": X, "longitude": Y } }
+ * - Converts them to LatLng objects
+ * - Renders markers on Google Maps API
  */
 public class ViewEntrantMapActivity extends AppCompatActivity implements OnMapReadyCallback {
-
     private static final String TAG = "ViewEntrantMap";
     private static final float DEFAULT_ZOOM = 10f;
     private static final float SINGLE_LOCATION_ZOOM = 12f;
@@ -92,7 +97,8 @@ public class ViewEntrantMapActivity extends AppCompatActivity implements OnMapRe
     }
 
     /**
-     * Initialize UI components
+     * Initializes basic UI components including the back button
+     * and assigns click listeners.
      */
     private void initializeUI() {
         btnBack = findViewById(R.id.btnBack);
@@ -100,7 +106,10 @@ public class ViewEntrantMapActivity extends AppCompatActivity implements OnMapRe
     }
 
     /**
-     * Initialize Google Map fragment
+     * Retrieves the SupportMapFragment and asynchronously requests
+     * the Google Map instance via getMapAsync().
+     *
+     * Shows a user-facing error if map initialization fails.
      */
     private void initializeMap() {
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -114,7 +123,13 @@ public class ViewEntrantMapActivity extends AppCompatActivity implements OnMapRe
     }
 
     /**
-     * Load event data from Firestore
+     * Loads the Event document from Firestore using the eventId.
+     *
+     * - Validates existence of the event
+     * - Checks whether geolocation tracking is enabled
+     * - Extracts and processes entrantLocations
+     *
+     * On failure, the activity exits gracefully with a toast message.
      */
     private void loadEventData() {
         db.collection("events").document(eventId)
@@ -148,13 +163,16 @@ public class ViewEntrantMapActivity extends AppCompatActivity implements OnMapRe
     }
 
     /**
-     * Process entrant locations from event data
+     * Processes the entrantLocations field from the Event object.
      *
-     * Expected Firebase structure:
-     * entrantLocations: {
-     *   "userId1": { "latitude": 53.5, "longitude": -113.5 },
-     *   "userId2": { "latitude": 51.0, "longitude": -114.0 }
+     * Expected structure:
+     * {
+     *   "userId": { "latitude": <Double>, "longitude": <Double> },
+     *   ...
      * }
+     *
+     * Validates coordinate ranges, converts each valid entry into LatLng,
+     * and prepares the map for rendering markers.
      */
     private void processEntrantLocations() {
         entrantLocations.clear();
@@ -189,14 +207,23 @@ public class ViewEntrantMapActivity extends AppCompatActivity implements OnMapRe
     }
 
     /**
-     * Validate that coordinates are within valid ranges
+     * Validates latitude and longitude ranges.
+     *
+     * @param lat latitude value to validate
+     * @param lng longitude value to validate
+     * @return true if both coordinates are within geographic bounds
      */
     private boolean isValidCoordinate(double lat, double lng) {
         return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
     }
 
     /**
-     * Called when Google Map is ready
+     * Callback invoked when the Google Map is ready.
+     *
+     * Configures UI settings, default map type, and renders entrant markers
+     * if location data has already been loaded.
+     *
+     * @param googleMap GoogleMap instance provided by the Maps API
      */
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
@@ -222,7 +249,12 @@ public class ViewEntrantMapActivity extends AppCompatActivity implements OnMapRe
     }
 
     /**
-     * Display all entrant locations on the map with markers and circles
+     * Renders each entrant location on the map by:
+     * - Adding a marker
+     * - Drawing a visibility circle
+     * - Adjusting camera bounds to fit all markers
+     *
+     * Also displays a toast summarizing how many locations were rendered.
      */
     private void displayLocationsOnMap() {
         if (mMap == null) {
@@ -269,7 +301,12 @@ public class ViewEntrantMapActivity extends AppCompatActivity implements OnMapRe
     }
 
     /**
-     * Adjust camera position to show all markers in view
+     * Adjusts the Google Map camera depending on how many locations exist.
+     *
+     * - If one location → center and zoom in
+     * - If multiple → build LatLngBounds and fit map to show all markers
+     *
+     * Handles IllegalStateException if bounds cannot be computed.
      */
     private void adjustCameraToShowAllMarkers() {
         if (entrantLocations.size() == 1) {

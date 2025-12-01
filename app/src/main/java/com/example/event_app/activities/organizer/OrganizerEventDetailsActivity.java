@@ -62,30 +62,17 @@ import java.util.Map;
 import com.google.android.material.button.MaterialButton;
 
 /**
- * OrganizerEventDetailsActivity - Comprehensive event management with notifications
+ * OrganizerEventDetailsActivity — Provides full event-management functionality
+ * for organizers, including:
+ * • Running the lottery and drawing replacements (US 02.05.02, US 02.05.03)
+ * • Viewing entrant lists and entrant locations on a map (US 02.02.01–02)
+ * • Generating, saving, and sharing event QR codes (US 02.01.01)
+ * • Sending notifications to entrants (US 02.07.01–03)
+ * • Updating the event poster (US 02.04.02)
+ * • Exporting waiting/selected/attending lists as CSV (US 02.06.05)
+ * • Cancelling the event and notifying all entrants
  *
- * Features:
- * - Run lottery and select winners (with notifications)
- * - Draw replacement from pool (US 02.05.03)
- * - View entrants in different states
- * - View map of entrant locations
- * - Generate and view QR code
- * - Send notifications to entrants
- * - Export entrant lists to CSV
- * - Update event poster
- * - Send event reminders
- * - Cancel event
- *
- * User Stories:
- * US 02.01.01: Generate QR code
- * US 02.02.01: View waiting list
- * US 02.02.02: View entrant map
- * US 02.04.02: Update poster
- * US 02.05.02: Run lottery (with notifications)
- * US 02.05.03: Draw replacement from pool
- * US 02.06.01-04: Manage entrant lists
- * US 02.06.05: Export CSV
- * US 02.07.01-03: Send notifications
+ * Includes full real-time Firestore updates so organizers always see live data.
  */
 public class OrganizerEventDetailsActivity extends AppCompatActivity {
     // UI Elements
@@ -146,6 +133,12 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
         loadEventDetails();
     }
 
+    /**
+     * Initializes all UI components, toolbar, and buttons.
+     * Binds click listeners for all event-management actions:
+     * lottery, viewing entrants, QR generation, notifications,
+     * CSV export, poster update, cancellation, and replacement drawing.
+     */
     private void initViews() {
         // Toolbar
         toolbar = findViewById(R.id.toolbar);
@@ -168,7 +161,7 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
         btnExportCSV = findViewById(R.id.btnExportCSV);
         btnUpdatePoster = findViewById(R.id.btnUpdatePoster);
         btnCancelEvent = findViewById(R.id.btnCancelEvent);
-        btnDrawReplacement = findViewById(R.id.btnDrawReplacement); // ✨ NEW
+        btnDrawReplacement = findViewById(R.id.btnDrawReplacement);
 
         // Other views
         loadingView = findViewById(R.id.loadingView);
@@ -182,13 +175,17 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
         btnExportCSV.setOnClickListener(v -> exportToCSV());
         btnUpdatePoster.setOnClickListener(v -> selectNewPoster());
         btnCancelEvent.setOnClickListener(v -> showCancelEventDialog());
-        btnDrawReplacement.setOnClickListener(v -> showDrawReplacementDialog()); // ✨ NEW
+        btnDrawReplacement.setOnClickListener(v -> showDrawReplacementDialog());
 
         if (btnSendReminder != null) {
             btnSendReminder.setOnClickListener(v -> sendEventReminders());
         }
     }
 
+    /**
+     * Displays event information (name, capacity, waiting/selected/attending counts)
+     * and updates button enabled states based on the event’s current state.
+     */
     private void displayEventInfo() {
         tvEventName.setText(event.getName());
 
@@ -209,14 +206,18 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
         btnRunLottery.setEnabled(event.getCapacity() != null && waitingCount > 0);
         btnViewMap.setEnabled(event.isGeolocationEnabled());
 
-        // ✨ NEW: Update button visibility based on lottery state
+        // Update button visibility based on lottery state
         updateLotteryButtonVisibility();
     }
 
     /**
-     * ✨ NEW: Update lottery button visibility
-     * - Show "Run Lottery" BEFORE lottery
-     * - Show "Draw Replacement" AFTER lottery
+     * Controls which lottery button is shown:
+     * • Before lottery → shows “Run Lottery”
+     * • After lottery → shows “Draw Replacement”
+     *
+     * Also disables the replacement button if:
+     * • capacity is full, or
+     * • the replacement pool is empty.
      */
     private void updateLotteryButtonVisibility() {
         if (event.isLotteryRun()) {
@@ -244,6 +245,9 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Opens ViewEntrantsActivity to show waiting, selected, and attending lists.
+     */
     private void openViewEntrantsActivity() {
         Intent intent = new Intent(this, ViewEntrantsActivity.class);
         intent.putExtra("EVENT_ID", eventId);
@@ -251,8 +255,10 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * ✨ UPDATED: Real-time event details - Updates automatically!
-     * Organizers see live updates as entrants join, accept invitations, etc.
+     * Loads event details using a real-time Firestore listener.
+     * Automatically updates the UI whenever event data changes.
+     *
+     * US 02.02.01–04: Organizers see live entrant list changes.
      */
     private void loadEventDetails() {
         showLoading();
@@ -290,7 +296,14 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * US 02.02.02: Show map of entrant locations
+     * Opens ViewEntrantMapActivity to display entrant locations on a map.
+     *
+     * Validates:
+     * • event is loaded
+     * • geolocation is enabled
+     * • entrant location data exists
+     *
+     * US 02.02.02: View entrant map.
      */
     private void showEntrantMap() {
         // Check if event is loaded
@@ -317,7 +330,10 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     *Show QR code with Share and Save options
+     * Generates a QR code for the event ID and displays it in a custom dialog.
+     * Provides options to save the QR code to the gallery or share it externally.
+     *
+     * US 02.01.01: Generate event QR code.
      */
     private void showQRCode() {
         try {
@@ -370,7 +386,13 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Save QR code to device gallery
+     * Saves the generated QR code image to the device’s gallery.
+     *
+     * Handles both:
+     * • Android Q+ scoped storage
+     * • Legacy external storage paths
+     *
+     * @param qrBitmap QR code bitmap to save
      */
     private void saveQrCodeToGallery(Bitmap qrBitmap) {
         try {
@@ -420,7 +442,11 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     *Share QR code via other apps
+     * Shares the QR code via external apps.
+     * Saves a temporary file, exposes it via FileProvider,
+     * and attaches it to an ACTION_SEND intent.
+     *
+     * @param qrBitmap QR code bitmap to share
      */
     private void shareQrCode(Bitmap qrBitmap) {
         try {
@@ -458,7 +484,10 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Check if lottery already run
+     * Shows confirmation dialog before running the lottery.
+     * Prevents re-running and validates waiting list + capacity.
+     *
+     * US 02.05.02: Run lottery.
      */
     private void showLotteryDialog() {
         // Prevent running lottery twice
@@ -497,7 +526,10 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     *Run lottery with notSelectedList
+     * Randomly selects winners from the waiting list, assigns the non-winners
+     * to the replacement pool, updates Firestore, and sends notifications.
+     *
+     * @param numberOfWinners number of users to select as winners
      */
     private void runLottery(int numberOfWinners) {
         btnRunLottery.setEnabled(false);
@@ -523,13 +555,13 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
             }
         }
 
-        // ✨ NEW: Update Firebase with notSelectedList and lotteryRun flag
+        // Update Firebase with notSelectedList and lotteryRun flag
         db.collection("events").document(eventId)
                 .update(
                         "selectedList", event.getSelectedList(),
-                        "notSelectedList", notSelected,           // ✨ NEW: Save replacement pool
-                        "lotteryRun", true,                       // ✨ NEW: Mark lottery as run
-                        "lotteryDate", System.currentTimeMillis(), // ✨ NEW: Save when lottery ran
+                        "notSelectedList", notSelected,           // Save replacement pool
+                        "lotteryRun", true,                       // Mark lottery as run
+                        "lotteryDate", System.currentTimeMillis(), // Save when lottery ran
                         "totalSelected", event.getSelectedList().size()
                 )
                 .addOnSuccessListener(aVoid -> {
@@ -551,7 +583,10 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Show dialog to draw replacement
+     * Shows confirmation dialog before drawing a single replacement from
+     * the replacement pool after the main lottery.
+     *
+     * US 02.05.03: Draw replacement applicant.
      */
     private void showDrawReplacementDialog() {
         int poolSize = event.getNotSelectedList() != null ? event.getNotSelectedList().size() : 0;
@@ -580,8 +615,11 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Draw one replacement from the pool
-     * US 02.05.03: Draw replacement applicant from pooling system
+     * Randomly selects one user from notSelectedList,
+     * moves them into selectedList, logs the action,
+     * and sends a winner notification.
+     *
+     * US 02.05.03: Draw replacement.
      */
     private void drawReplacement() {
         btnDrawReplacement.setEnabled(false);
@@ -603,7 +641,7 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
         Collections.shuffle(pool);
         String replacementUserId = pool.get(0);
 
-        // ✨ NEW: Create log entry
+        // Create log entry
         Map<String, Object> logEntry = new HashMap<>();
         logEntry.put("replacementUserId", replacementUserId);
         logEntry.put("timestamp", System.currentTimeMillis());
@@ -641,7 +679,12 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Send notifications to lottery winners and non-winners
+     * Sends bulk notifications to:
+     * • Lottery winners
+     * • Non-selected entrants (placed in replacement pool)
+     *
+     * @param winners list of user IDs selected as winners
+     * @param notSelected list of user IDs placed in replacement pool
      */
     private void sendLotteryNotifications(List<String> winners, List<String> notSelected) {
         String eventName = event.getName();
@@ -683,7 +726,10 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * US 02.06.05: Export entrants to CSV
+     * Opens a dialog allowing the organizer to choose which entrant list
+     * to export (waiting, selected, attending). Delegates to performExport().
+     *
+     * US 02.06.05: Export entrants to CSV.
      */
     private void exportToCSV() {
         String[] options = {"Waiting List", "Selected", "Attending"};
@@ -713,6 +759,14 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Retrieves the selected group of entrants from the event and fetches
+     * all corresponding User documents from Firestore. Once all users are
+     * loaded, createCSVFile() is called to generate the CSV file.
+     *
+     * @param listType one of "waiting", "selected", or "attending"
+     * @param listName filename suffix to distinguish CSV exports
+     */
     private void performExport(String listType, String listName) {
         btnExportCSV.setEnabled(false);
 
@@ -776,6 +830,13 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Creates a CSV file containing entrant information (name, email, phone)
+     * and stores it in the device's Downloads directory.
+     *
+     * @param users list of User objects to export
+     * @param listName identifier for filename (waiting_list, selected, attending)
+     */
     private void createCSVFile(List<User> users, String listName) {
         try {
             String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
@@ -804,11 +865,21 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
         btnExportCSV.setEnabled(true);
     }
 
+    /**
+     * Launches the system image picker to allow the organizer to choose
+     * a new event poster image from device storage.
+     */
     private void selectNewPoster() {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         imagePickerLauncher.launch(intent);
     }
 
+    /**
+     * Uploads the newly selected event poster to Firebase Storage, retrieves
+     * its public URL, updates the Firestore event document, and refreshes UI.
+     *
+     * Disables the button during upload to prevent duplicate submissions.
+     */
     private void updateEventPoster() {
         if (newPosterUri == null) return;
 
@@ -839,7 +910,10 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * US 02.07.01-03: Send message to entrants
+     * Displays a dialog allowing the organizer to choose which group of
+     * entrants (waiting, selected, attending) should receive a message.
+     *
+     * US 02.07.01–03: Send notifications to entrants.
      */
     private void showMessageDialog() {
         String[] options = {"Waiting List", "Selected", "Attending"};
@@ -859,6 +933,12 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Shows an input dialog where the organizer types a custom message.
+     * Once confirmed, sendMessageToEntrants() is called.
+     *
+     * @param group target group for message ("waiting", "selected", "attending")
+     */
     private void showMessageInputDialog(String group) {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_send_message, null);
         EditText editMessage = dialogView.findViewById(R.id.editMessage);
@@ -877,7 +957,11 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Send custom message with actual notifications
+     * Sends a custom notification message to all users in the selected group.
+     * Uses NotificationService to issue bulk notifications.
+     *
+     * @param message text content of the message
+     * @param group one of "waiting", "selected", or "attending"
      */
     private void sendMessageToEntrants(String message, String group) {
         List<String> userIds = new ArrayList<>();
@@ -919,7 +1003,10 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Send event reminders to all attending users
+     * Sends reminder notifications to all attendees for the event.
+     * Triggered manually by the organizer.
+     *
+     * US 02.07.03: Send event reminders.
      */
     private void sendEventReminders() {
         String eventName = event.getName();
@@ -947,6 +1034,10 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
         );
     }
 
+    /**
+     * Shows a confirmation dialog before cancelling the event.
+     * Cancellation is irreversible and affects all entrants.
+     */
     private void showCancelEventDialog() {
         new AlertDialog.Builder(this)
                 .setTitle("Cancel Event")
@@ -957,7 +1048,10 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Cancel event and notify all entrants
+     * Updates the event status to "cancelled" in Firestore, records timestamp,
+     * disables UI, and triggers notifications to all affected entrants.
+     *
+     * Calls notifyEntrantsOfCancellation() after success.
      */
     private void cancelEvent() {
         btnCancelEvent.setEnabled(false);
@@ -986,7 +1080,10 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Notify all entrants that event is cancelled
+     * Collects all entrants (waiting, selected, attending) without duplicates
+     * and sends a bulk cancellation notification to each.
+     *
+     * Notifies users that the event is no longer happening.
      */
     private void notifyEntrantsOfCancellation() {
         List<String> allEntrants = new ArrayList<>();
@@ -1026,19 +1123,35 @@ public class OrganizerEventDetailsActivity extends AppCompatActivity {
         );
     }
 
+    /**
+     * Capitalizes the first letter of a string.
+     *
+     * @param str input string
+     * @return string with first letter capitalized, or original if null/empty
+     */
     private String capitalizeFirst(String str) {
         if (str == null || str.isEmpty()) return str;
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 
+    /**
+     * Displays the loading overlay while network operations are in progress.
+     */
     private void showLoading() {
         loadingView.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Hides the loading overlay when operations complete.
+     */
     private void hideLoading() {
         loadingView.setVisibility(View.GONE);
     }
 
+    /**
+     * Cleans up the Firestore event listener to prevent memory leaks
+     * when the activity is destroyed.
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();

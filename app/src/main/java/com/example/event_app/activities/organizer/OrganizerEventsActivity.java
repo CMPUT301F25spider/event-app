@@ -25,12 +25,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * OrganizerEventsActivity - View events created by organizer
+ * OrganizerEventsActivity
  *
- * Organizer can:
- * - See all their events
- * - Tap to manage each event
- * - Create new events
+ * Displays all events created by the currently authenticated organizer.
+ * Provides a dashboard where organizers can:
+ * <ul>
+ *   <li>View their list of created events</li>
+ *   <li>Tap an event to manage it</li>
+ *   <li>Create new events using the floating action button</li>
+ *   <li>Retry loading if a network error occurs</li>
+ * </ul>
+ *
+ * User Stories Supported:
+ * - US 02.01.01 – Organizer views their created events
+ * - US 02.04.01 – Organizer navigates to event management
  */
 public class OrganizerEventsActivity extends AppCompatActivity {
 
@@ -69,6 +77,14 @@ public class OrganizerEventsActivity extends AppCompatActivity {
         loadMyEvents();
     }
 
+    /**
+     * Initializes all UI elements, sets click listeners for:
+     * - Back button
+     * - Retry button
+     * - Create event FAB
+     *
+     * Also assigns references to empty and error state layouts.
+     */
     private void initViews() {
         rvEvents = findViewById(R.id.rvEvents);
         progressBar = findViewById(R.id.progressBar);
@@ -91,6 +107,10 @@ public class OrganizerEventsActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Configures the RecyclerView with a LinearLayoutManager and sets
+     * the OrganizerEventsAdapter responsible for displaying event items.
+     */
     private void setupRecyclerView() {
         adapter = new OrganizerEventsAdapter(this);
         rvEvents.setLayoutManager(new LinearLayoutManager(this));
@@ -98,7 +118,17 @@ public class OrganizerEventsActivity extends AppCompatActivity {
     }
 
     /**
-     * Load events created by this organizer
+     * Loads all events created by the current organizer from Firestore.
+     * Applies descending sort by creation date.
+     *
+     * On success:
+     * - Displays list if not empty
+     * - Shows empty state if none found
+     *
+     * On failure:
+     * - Shows error state with retry option
+     *
+     * US 02.01.01 – View organizer-created events.
      */
     private void loadMyEvents() {
         showLoading();
@@ -130,6 +160,10 @@ public class OrganizerEventsActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Displays loading spinner and hides all content/error/empty views
+     * while Firestore data is being fetched.
+     */
     private void showLoading() {
         progressBar.setVisibility(View.VISIBLE);
         rvEvents.setVisibility(View.GONE);
@@ -137,6 +171,11 @@ public class OrganizerEventsActivity extends AppCompatActivity {
         errorView.setVisibility(View.GONE);
     }
 
+    /**
+     * Displays the event list and hides loading, empty, and error states.
+     *
+     * @param events list of Event objects to show in the RecyclerView
+     */
     private void showEvents(List<Event> events) {
         progressBar.setVisibility(View.GONE);
         rvEvents.setVisibility(View.VISIBLE);
@@ -145,6 +184,9 @@ public class OrganizerEventsActivity extends AppCompatActivity {
         adapter.setEvents(events);
     }
 
+    /**
+     * Displays the empty state UI when the organizer has no created events.
+     */
     private void showEmpty() {
         progressBar.setVisibility(View.GONE);
         rvEvents.setVisibility(View.GONE);
@@ -153,6 +195,11 @@ public class OrganizerEventsActivity extends AppCompatActivity {
         tvEmptyState.setText("You haven't created any events yet.\nTap + to create your first event!");
     }
 
+    /**
+     * Shows the error state UI when loading events fails.
+     *
+     * @param message error message describing the failure
+     */
     private void showError(String message) {
         progressBar.setVisibility(View.GONE);
         rvEvents.setVisibility(View.GONE);
@@ -160,6 +207,10 @@ public class OrganizerEventsActivity extends AppCompatActivity {
         errorView.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Reloads the organizer's events whenever the activity returns
+     * to the foreground, ensuring the list reflects any updates.
+     */
     @Override
     protected void onResume() {
         super.onResume();

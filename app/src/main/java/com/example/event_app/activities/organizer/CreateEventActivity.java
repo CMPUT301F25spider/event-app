@@ -43,13 +43,15 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * CreateEventActivity - Create new events with geolocation toggle
+ * CreateEventActivity — Allows organizers to create new events including:
+ * • Selecting poster images (US 02.04.01)
+ * • Setting event date and registration period (US 02.01.04)
+ * • Enabling/disabling geolocation requirement (US 02.02.03)
+ * • Setting capacity limits (US 02.03.01)
+ * • Generating QR codes for created events (US 02.01.01)
  *
- * US 02.01.01: Create event and generate QR code
- * US 02.01.04: Set registration period
- * US 02.02.03: Enable/disable geolocation
- * US 02.03.01: Limit number of entrants
- * US 02.04.01: Upload event poster
+ * Handles poster upload, Firestore event creation, organizer role assignment,
+ * and Storage upload of QR codes and posters.
  */
 public class CreateEventActivity extends AppCompatActivity {
     // UI Elements
@@ -95,6 +97,10 @@ public class CreateEventActivity extends AppCompatActivity {
         initViews();
     }
 
+    /**
+     * Initializes all UI elements, sets up button listeners,
+     * and configures geolocation toggle behavior.
+     */
     private void initViews() {
         // Input fields
         editEventName = findViewById(R.id.editEventName);
@@ -136,13 +142,18 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * US 02.04.01: Upload event poster
+     * Opens the device gallery to allow the user to select an event poster image.
+     * US 02.04.01: Upload event poster.
      */
     private void selectPoster() {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         imagePickerLauncher.launch(intent);
     }
 
+    /**
+     * Displays the selected poster image in the preview ImageView.
+     * Updates the UI to indicate a poster has been chosen.
+     */
     private void displayPosterPreview() {
         emptyPosterView.setVisibility(View.GONE);
         ivPosterPreview.setVisibility(View.VISIBLE);
@@ -154,7 +165,8 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * Show category selection dialog
+     * Opens a dialog allowing the organizer to select a predefined event category.
+     * Updates the selectedCategory value and button text upon selection.
      */
     private void showCategoryDialog() {
         String[] categories = {
@@ -191,7 +203,8 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * Select event date
+     * Opens a dialog allowing the organizer to select a predefined event category.
+     * Updates the selectedCategory value and button text upon selection.
      */
     private void selectEventDate() {
         Calendar calendar = Calendar.getInstance();
@@ -232,7 +245,9 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * US 02.01.04: Set registration start date
+     * Allows the user to pick the registration start date.
+     * US 02.01.04: Set registration period.
+     * Applies minimum date constraints to prevent past-date selection.
      */
     private void selectRegistrationStart() {
         Calendar calendar = Calendar.getInstance();
@@ -265,7 +280,9 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * US 02.01.04: Set registration end date
+     * Allows the user to pick the registration end date.
+     * Ensures that the end date is on or after the start date.
+     * US 02.01.04: Set registration period.
      */
     private void selectRegistrationEnd() {
         if (regStartDate == null) {
@@ -308,6 +325,11 @@ public class CreateEventActivity extends AppCompatActivity {
 
         datePickerDialog.show();
     }
+
+    /**
+     * Ensures registration end date is not before the start date.
+     * Resets invalid selections and warns the user if necessary.
+     */
     private void checkEndDateValidity() {
         if (regStartDate != null && regEndDate != null && regEndDate.before(regStartDate)) {
             regEndDate = null;
@@ -317,7 +339,9 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * Show preview of how the event will look
+     * Displays a formatted preview of the event details in an AlertDialog
+     * before final creation. Includes name, description, dates, category,
+     * capacity, poster status, and geolocation state.
      */
     private void showPreview() {
         String name = editEventName.getText().toString().trim();
@@ -359,8 +383,14 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * US 02.01.01: Create event and generate QR code
-     * US 02.02.03: Enable/disable geolocations
+     * Validates inputs and constructs an Event object.
+     * Handles optional capacity parsing, geolocation setting,
+     * organizer name retrieval, and branching between:
+     * • Creating event with poster upload
+     * • Creating event without poster
+     *
+     * US 02.01.01: Create event
+     * US 02.02.03: Enable/disable geolocation
      */
     private void createEvent() {
         // Get values
@@ -426,6 +456,13 @@ public class CreateEventActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Validates the required fields for creating an event.
+     *
+     * @param name The event name.
+     * @param description The event description.
+     * @return true if all required fields are valid; false otherwise.
+     */
     private boolean validateInputs(String name, String description) {
         if (TextUtils.isEmpty(name)) {
             editEventName.setError("Event name is required");
@@ -448,7 +485,12 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * Upload poster to Firebase Storage
+     * Uploads the event poster to Firebase Storage.
+     * On success → retrieves download URL and saves event to Firestore.
+     * On failure → proceeds without poster.
+     *
+     * @param eventId Unique ID of the event.
+     * @param event   Event object to be stored.
      */
     private void uploadPosterAndCreateEvent(String eventId, Event event) {
         StorageReference posterRef = storage.getReference()
@@ -470,8 +512,13 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * Save event to Firestore and generate QR code
-     * Automatically add "organizer" role when user creates first event
+     * Saves the event to Firestore.
+     * After saving:
+     * • Adds "organizer" role to the user if not already present.
+     * • Generates and uploads a QR code.
+     *
+     * @param eventId ID under which the event will be stored.
+     * @param event   Event data to save.
      */
     private void saveEventToFirestore(String eventId, Event event) {
         String userId = mAuth.getCurrentUser().getUid();
@@ -492,7 +539,10 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * Add "organizer" role to user when they create their first event
+     * Adds the "organizer" role to the user in Firestore
+     * if they do not already possess it.
+     *
+     * @param userId Firebase Auth user ID.
      */
     private void addOrganizerRoleToUser(String userId) {
         db.collection("users").document(userId)
@@ -520,7 +570,10 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     /**
-     * US 02.01.01: Generate QR code for event
+     * Generates a QR code encoding the eventId using ZXing,
+     * converts it to a PNG byte array, and uploads it to Firebase Storage.
+     *
+     * @param eventId The event identifier encoded in the QR code.
      */
     private void generateAndUploadQRCode(String eventId) {
         try {
@@ -565,6 +618,10 @@ public class CreateEventActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Shows a success message and navigates back to MainActivity,
+     * clearing the back stack.
+     */
     private void showSuccessAndNavigate() {
         Toast.makeText(this, "Event created successfully!", Toast.LENGTH_LONG).show();
 
@@ -575,11 +632,18 @@ public class CreateEventActivity extends AppCompatActivity {
         finish();
     }
 
+    /**
+     * Displays the loading view and disables the Create Event button
+     * to prevent duplicate submissions.
+     */
     private void showLoading() {
         loadingView.setVisibility(View.VISIBLE);
         btnCreateEvent.setEnabled(false);
     }
 
+    /**
+     * Hides the loading indicator and re-enables the Create Event button.
+     */
     private void hideLoading() {
         loadingView.setVisibility(View.GONE);
         btnCreateEvent.setEnabled(true);

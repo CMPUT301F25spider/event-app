@@ -28,20 +28,32 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * ViewEntrantsActivity - View all entrants in different states
+ * ViewEntrantsActivity
  *
- * Shows entrants in FIVE tabs:
- * - Waiting List (people who joined)
- * - Selected (people who won lottery, awaiting response)
- * - Attending (people who accepted - FINAL LIST)
- * - Declined (people who declined invitation)
- * - Log (replacement draw history)
+ * Displays all entrants for a given event, separated into five logical tabs:
+ * <ul>
+ *   <li><b>Waiting</b> — Users who joined the event</li>
+ *   <li><b>Selected</b> — Users chosen by the lottery</li>
+ *   <li><b>Attending</b> — Users who accepted their invitation</li>
+ *   <li><b>Declined</b> — Users who declined their invitation</li>
+ *   <li><b>Log</b> — Replacement draw history with timestamps and reasons</li>
+ * </ul>
  *
- * US 02.02.01: View waiting list
- * US 02.06.01: View chosen entrants
- * US 02.06.02: See cancelled entrants (DECLINED TAB)
- * US 02.06.03: See final list (ATTENDING TAB)
- * US 02.06.04: View replacement log
+ * User Stories:
+ * <ul>
+ *   <li>US 02.02.01 — View waiting list</li>
+ *   <li>US 02.06.01 — View selected entrants</li>
+ *   <li>US 02.06.02 — View declined entrants</li>
+ *   <li>US 02.06.03 — View final attending list</li>
+ *   <li>US 02.06.04 — View replacement draw log</li>
+ * </ul>
+ *
+ * Architecture:
+ * - Loads a full Event object from Firestore
+ * - Dynamically filters entrant IDs based on selected tab
+ * - Uses RecyclerView to display entrant details
+ * - Displays replacement log using formatted TextViews
+ * - Handles empty-state UI for all categories
  */
 public class ViewEntrantsActivity extends AppCompatActivity {
 
@@ -92,6 +104,12 @@ public class ViewEntrantsActivity extends AppCompatActivity {
         loadEventDetails();
     }
 
+    /**
+     * Initializes toolbar, RecyclerView container, tab layout,
+     * loading view, and empty-state container.
+     *
+     * Also attaches a navigation click listener to the toolbar.
+     */
     private void initViews() {
         toolbar = findViewById(R.id.toolbar);
         tabLayout = findViewById(R.id.tabLayout);
@@ -106,14 +124,18 @@ public class ViewEntrantsActivity extends AppCompatActivity {
     }
 
     /**
-     * ✨ UPDATED: Setup tabs with "Log" added
+     * Configures the TabLayout with five tabs:
+     * Waiting, Selected, Attending, Declined, and Log.
+     *
+     * Handles tab selection events by updating the current tab state
+     * and refreshing the displayed entrants list.
      */
     private void setupTabs() {
         tabLayout.addTab(tabLayout.newTab().setText("Waiting"));
         tabLayout.addTab(tabLayout.newTab().setText("Selected"));
         tabLayout.addTab(tabLayout.newTab().setText("Attending"));
         tabLayout.addTab(tabLayout.newTab().setText("Declined"));
-        tabLayout.addTab(tabLayout.newTab().setText("Log"));  // ✨ NEW
+        tabLayout.addTab(tabLayout.newTab().setText("Log"));
 
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -123,7 +145,7 @@ public class ViewEntrantsActivity extends AppCompatActivity {
                     case 1: currentTab = "selected"; break;
                     case 2: currentTab = "attending"; break;
                     case 3: currentTab = "declined"; break;
-                    case 4: currentTab = "log"; break;  // ✨ NEW
+                    case 4: currentTab = "log"; break;
                 }
                 displayEntrants();
             }
@@ -136,12 +158,27 @@ public class ViewEntrantsActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Sets up the RecyclerView and assigns the EntrantListAdapter
+     * that displays entrant profile information.
+     */
     private void setupRecyclerView() {
         adapter = new EntrantListAdapter(this, eventId);
         rvEntrants.setLayoutManager(new LinearLayoutManager(this));
         rvEntrants.setAdapter(adapter);
     }
 
+    /**
+     * Loads the Event document from Firestore using the eventId.
+     *
+     * On success:
+     * - Converts Firestore data into an Event object
+     * - Triggers the initial display of entrants for the active tab
+     *
+     * On failure:
+     * - Shows an error toast
+     * - Stops the loading indicator
+     */
     private void loadEventDetails() {
         showLoading();
 
@@ -164,7 +201,20 @@ public class ViewEntrantsActivity extends AppCompatActivity {
     }
 
     /**
-     * Display entrants with "log" case added
+     * Displays entrant IDs corresponding to the currently selected tab.
+     *
+     * Tabs behave as follows:
+     * <ul>
+     *     <li>"waiting" → event.getWaitingList()</li>
+     *     <li>"selected" → event.getSelectedList()</li>
+     *     <li>"attending" → event.getSignedUpUsers()</li>
+     *     <li>"declined" → event.getDeclinedUsers()</li>
+     *     <li>"log" → handled separately by displayReplacementLog()</li>
+     * </ul>
+     *
+     * Handles:
+     * - Empty lists with appropriate UI
+     * - Passing IDs to the adapter for detailed rendering
      */
     private void displayEntrants() {
         if (event == null) return;
@@ -192,7 +242,7 @@ public class ViewEntrantsActivity extends AppCompatActivity {
                     userIds = event.getDeclinedUsers();
                 }
                 break;
-            case "log":  // ✨ NEW
+            case "log":
                 displayReplacementLog();
                 return;  // Special handling - don't show user list
         }
@@ -214,7 +264,11 @@ public class ViewEntrantsActivity extends AppCompatActivity {
     }
 
     /**
-     *  Get friendly display name for tab
+     * Converts an internal tab key (e.g., "waiting") into a
+     * user-friendly display label for UI purposes.
+     *
+     * @param tab internal tab identifier
+     * @return human-readable tab name (e.g., "Waiting List")
      */
     private String getTabDisplayName(String tab) {
         switch (tab) {
@@ -228,7 +282,18 @@ public class ViewEntrantsActivity extends AppCompatActivity {
     }
 
     /**
-     *  Display replacement log
+     * Displays the replacement selection history for the event.
+     *
+     * Each log entry includes:
+     * - replacementUserId (shortened for readability)
+     * - timestamp (formatted)
+     * - optional "reason" string
+     *
+     * If the log is empty:
+     * - Shows informative empty-state text
+     * - Explains when entries will appear
+     *
+     * Uses a dynamic TextView appended to the emptyView container.
      */
     private void displayReplacementLog() {
         if (event == null || event.getReplacementLog() == null || event.getReplacementLog().isEmpty()) {
@@ -298,14 +363,24 @@ public class ViewEntrantsActivity extends AppCompatActivity {
         emptyView.addView(logDisplay);
     }
 
+    /**
+     * Shows a loading overlay while event data is being retrieved.
+     */
     private void showLoading() {
         loadingView.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Hides the loading overlay once event data retrieval is complete.
+     */
     private void hideLoading() {
         loadingView.setVisibility(View.GONE);
     }
 
+    /**
+     * Refreshes event details whenever returning to this activity.
+     * Ensures lists and logs stay synchronized with Firestore.
+     */
     @Override
     protected void onResume() {
         super.onResume();
