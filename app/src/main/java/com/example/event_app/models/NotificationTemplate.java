@@ -3,11 +3,16 @@ package com.example.event_app.models;
 import java.util.Date;
 
 /**
- * NotificationTemplate - Model for managing notification templates
- * Used across the app for consistent messaging
+ * Represents a reusable notification template used across the LuckySpot system.
+ * Templates allow administrators to define consistent notification titles and
+ * message bodies that may contain placeholders (e.g., {userName}, {eventName}).
+ *
+ * <p>These templates make it easier for organizers and admins to send
+ * standardized notifications such as invitations, reminders, and announcements
+ * without rewriting messages each time. Templates can be activated or
+ * deactivated depending on availability or administrative policy.</p>
  */
 public class NotificationTemplate {
-
     private String templateId;
     private String name;               // Template name (e.g., "Invitation Sent")
     private String type;               // Template type/category
@@ -24,6 +29,20 @@ public class NotificationTemplate {
     public NotificationTemplate() {
     }
 
+    /**
+     * Creates a new notification template with customizable title,
+     * message body, and placeholder support.
+     *
+     * @param templateId unique identifier for the template
+     * @param name       user-friendly template name
+     * @param type       category/type of notification this template represents
+     * @param title      notification title (may contain placeholders)
+     * @param message    message body (may contain placeholders)
+     * @param isActive   whether this template is currently available for use
+     * @param createdAt  timestamp when the template was created
+     * @param updatedAt  timestamp of the latest modification
+     * @param createdBy  administrator ID who created the template
+     */
     public NotificationTemplate(String templateId, String name, String type,
                                 String title, String message, boolean isActive,
                                 Date createdAt, Date updatedAt, String createdBy) {
@@ -112,7 +131,24 @@ public class NotificationTemplate {
     }
 
     /**
-     * Replace placeholders in the template with actual values
+     * Replaces placeholder tokens in the provided template text with actual
+     * runtime values. Supported placeholders include:
+     * <ul>
+     *   <li>{userName}</li>
+     *   <li>{eventName}</li>
+     *   <li>{organizerName}</li>
+     *   <li>{date}</li>
+     * </ul>
+     *
+     * <p>This allows administrators and organizers to generate personalized
+     * notifications without modifying the template manually.</p>
+     *
+     * @param text          template text containing placeholders
+     * @param userName      name of the user receiving the notification
+     * @param eventName     associated event name
+     * @param organizerName name of the event organizer
+     * @param date          date string formatted for display
+     * @return formatted text with placeholders replaced; empty string if input text is null
      */
     public String applyPlaceholders(String text, String userName, String eventName,
                                     String organizerName, String date) {

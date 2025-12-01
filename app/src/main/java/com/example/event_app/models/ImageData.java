@@ -1,11 +1,14 @@
 package com.example.event_app.models;
 
 /**
- * ImageData Model - Represents an uploaded image
- * Used for event posters and profile pictures
+ * Represents metadata for an uploaded image stored in Firebase Storage.
+ * Image records are used for event posters, profile pictures, and other
+ * user-generated visual content throughout the LuckySpot system.
+ *
+ * <p>Each entry tracks the image URL, uploader, usage context, and the
+ * associated storage path for file management or cleanup operations.</p>
  */
 public class ImageData {
-
     private String imageId;
     private String imageUrl;
     private String uploadedBy;      // userId who uploaded
@@ -18,6 +21,15 @@ public class ImageData {
     public ImageData() {
     }
 
+    /**
+     * Creates a new image metadata entry, typically when an image is uploaded
+     * to Firebase Storage. The system automatically records the upload time.
+     *
+     * @param imageId     unique identifier for the image metadata entry
+     * @param imageUrl    public or secured URL of the uploaded image
+     * @param uploadedBy  user ID of the uploader
+     * @param type        category describing the image purpose
+     */
     public ImageData(String imageId, String imageUrl, String uploadedBy, String type) {
         this.imageId = imageId;
         this.imageUrl = imageUrl;
@@ -44,7 +56,12 @@ public class ImageData {
     public void setUploadedAt(long uploadedAt) { this.uploadedAt = uploadedAt; }
     public void setStoragePath(String storagePath) { this.storagePath = storagePath; }
 
-    //Convenience method to get uploader ID (handles both field names)
+    /**
+     * Convenience helper for retrieving the uploader identity. Provided for
+     * clarity and future compatibility with systems that may rename fields.
+     *
+     * @return the user ID of the image uploader
+     */
     public String getUploaderId() {
         return uploadedBy;
     }

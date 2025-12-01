@@ -3,8 +3,14 @@ package com.example.event_app.models;
 import java.util.Date;
 
 /**
- * NotificationLog - Model for tracking all notifications sent
- * Used for admin auditing and compliance
+ * Represents an immutable audit record for any notification sent within the
+ * LuckySpot system. These logs are used by administrators for moderation,
+ * troubleshooting, and compliance tracking.
+ *
+ * <p>Each record stores the sender, recipient, associated event (if any),
+ * notification type, delivery status, and timestamp. This model mirrors the
+ * actual notifications but is optimized for historical lookup and filtering
+ * by the admin interface.</p>
  */
 public class NotificationLog {
 
@@ -26,6 +32,24 @@ public class NotificationLog {
     public NotificationLog() {
     }
 
+    /**
+     * Creates a fully populated notification audit record to be stored in the
+     * NotificationLogs collection. Used primarily when a notification is sent.
+     *
+     * @param logId             unique Firestore document ID for this log entry
+     * @param notificationId    ID of the original in-app notification
+     * @param senderId          user ID of sender (admin or organizer)
+     * @param senderName        display name of sender
+     * @param recipientId       user ID of the recipient
+     * @param recipientName     display name of the recipient
+     * @param eventId           optional event ID associated with this notification
+     * @param eventName         event name for display convenience
+     * @param notificationType  type/category of the notification
+     * @param title             notification title
+     * @param message           content body of the notification
+     * @param timestamp         time the notification was sent
+     * @param status            delivery status ("sent", "delivered", "failed")
+     */
     public NotificationLog(String logId, String notificationId,
                            String senderId, String senderName,
                            String recipientId, String recipientName,

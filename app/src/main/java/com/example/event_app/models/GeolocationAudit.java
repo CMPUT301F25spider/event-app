@@ -3,8 +3,14 @@ package com.example.event_app.models;
 import java.util.Date;
 
 /**
- * GeolocationAudit - Model for tracking geolocation access
- * Used for privacy compliance and admin auditing
+ * Represents a geolocation audit entry used for privacy compliance and
+ * administrative monitoring. Each audit record captures when a user’s location
+ * was accessed or logged during interactions with an event.
+ *
+ * <p>Geolocation audits help track actions such as joining a waiting list,
+ * scanning a QR code, or verifying event attendance. These logs support
+ * transparency, administrative review, and compliance with data-handling
+ * requirements.</p>
  */
 public class GeolocationAudit {
 
@@ -22,6 +28,20 @@ public class GeolocationAudit {
     public GeolocationAudit() {
     }
 
+    /**
+     * Creates a new geolocation audit log entry capturing the user, event,
+     * location data, action performed, and timestamp of the event.
+     *
+     * @param auditId    unique identifier for the audit entry
+     * @param userId     ID of the user whose location was logged
+     * @param userName   display name of the user
+     * @param eventId    associated event ID
+     * @param eventName  name of the associated event
+     * @param latitude   recorded latitude value
+     * @param longitude  recorded longitude value
+     * @param timestamp  date and time when the location was captured
+     * @param action     description of the user action that triggered logging
+     */
     public GeolocationAudit(String auditId, String userId, String userName,
                             String eventId, String eventName,
                             double latitude, double longitude,
@@ -111,7 +131,9 @@ public class GeolocationAudit {
     }
 
     /**
-     * Get formatted location string
+     * Formats the latitude and longitude into a readable coordinate string.
+     *
+     * @return a string representing the location in "lat, lon" format rounded to 4 decimals
      */
     public String getLocationString() {
         return String.format("%.4f, %.4f", latitude, longitude);
