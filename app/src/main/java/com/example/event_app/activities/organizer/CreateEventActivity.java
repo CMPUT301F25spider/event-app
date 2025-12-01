@@ -2,10 +2,12 @@ package com.example.event_app.activities.organizer;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
@@ -13,6 +15,13 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
+
+import androidx.core.content.FileProvider;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -81,6 +90,7 @@ public class CreateEventActivity extends AppCompatActivity {
     private boolean geolocationEnabled = false;
     private String selectedCategory = "Food & Dining"; // Default category
     private List<String> customCategories = new ArrayList<>(); // User-added categories
+    private Bitmap qrBitmap; // Store generated QR code bitmap
 
     // Image picker launcher
     private final ActivityResultLauncher<Intent> imagePickerLauncher =
@@ -586,6 +596,9 @@ public class CreateEventActivity extends AppCompatActivity {
                 }
             }
 
+            // Store QR bitmap for display
+            qrBitmap = bitmap;
+
             // Convert to byte array
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
@@ -618,12 +631,167 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     private void showSuccessAndNavigate(String eventId, String eventName) {
-        // Navigate to QR code display activity
-        Intent intent = new Intent(this, QRCodeDisplayActivity.class);
-        intent.putExtra("eventId", eventId);
-        intent.putExtra("eventName", eventName);
-        startActivity(intent);
-        finish();
+        // Show QR code dialog first, then navigate when closed
+        if (qrBitmap != null) {
+            showQRCodeDialog(eventId, eventName);
+        } else {
+            // If QR bitmap is not available, navigate directly
+            navigateToQRCodeActivity(eventId, eventName);
+        }
+    }
+
+    /**
+     * Show QR code dialog after event creation
+     */
+    private void showQRCodeDialog(String eventId, String eventName) {
+        try {
+            // Inflate custom dialog layout
+            View dialogView = getLayoutInflater().inflate(R.layout.dialog_qr_code, null);
+
+            // Set QR code image
+            ImageView ivQrCode = dialogView.findViewById(R.id.ivQrCode);
+            ivQrCode.setImageBitmap(qrBitmap);
+
+            // Create dialog
+            AlertDialog dialog = new AlertDialog.Builder(this)
+                    .setView(dialogView)
+                    .setCancelable(false) // Prevent dismissing by clicking outside
+                    .create();
+
+            // Setup button listeners
+            MaterialButton btnSave = dialogView.findViewById(R.id.btnSaveQr);
+            MaterialButton btnShare = dialogView.findViewById(R.id.btnShareQr);
+            MaterialButton btnClose = dialogView.findViewById(R.id.btnCloseQr);
+
+            btnSave.setOnClickListener(v -> {
+                saveQrCodeToGallery(qrBitmap, eventName);
+            });
+
+            btnShare.setOnClickListener(v -> {
+                shareQrCode(qrBitmap, eventName);
+            });
+
+            btnClose.setOnClickListener(v -> {
+                dialog.dismiss();
+                navigateToQRCodeActivity(eventId, eventName);
+            });
+
+            // Show success toast
+            Toast.makeText(this, "Event created successfully!", Toast.LENGTH_LONG).show();
+            dialog.show();
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error showing QR code dialog", e);
+            navigateToQRCodeActivity(eventId, eventName);
+        }
+    }
+
+    /**
+     * Navigate to QR code display activity (existing functionality)
+     */
+    private void navigateToQRCodeActivity(String eventId, String eventName) {
+        try {
+            Intent intent = new Intent(this, QRCodeDisplayActivity.class);
+            intent.putExtra("eventId", eventId);
+            intent.putExtra("eventName", eventName);
+            startActivity(intent);
+            finish();
+        } catch (Exception e) {
+            // If QRCodeDisplayActivity doesn't exist, just go to MainActivity
+            Log.e(TAG, "QRCodeDisplayActivity not found, navigating to MainActivity", e);
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+            finish();
+        }
+    }
+
+    /**
+     * Save QR code to device gallery
+     */
+    private void saveQrCodeToGallery(Bitmap qrBitmap, String eventName) {
+        try {
+            String fileName = (eventName != null ? eventName.replaceAll("[^a-zA-Z0-9]", "_") : "Event") + "_QR.png";
+
+            // For Android 10+ (API 29+)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
+                values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+                values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/LuckySpot");
+
+                Uri uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                if (uri != null) {
+                    OutputStream outputStream = getContentResolver().openOutputStream(uri);
+                    if (outputStream != null) {
+                        qrBitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+                        outputStream.close();
+                        Toast.makeText(this, "QR code saved to gallery!", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            } else {
+                // For older Android versions
+                String imagesDir = Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_PICTURES).toString() + "/LuckySpot";
+                File dir = new File(imagesDir);
+                if (!dir.exists()) {
+                    dir.mkdirs();
+                }
+
+                File file = new File(dir, fileName);
+                FileOutputStream fos = new FileOutputStream(file);
+                qrBitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                fos.close();
+
+                // Notify gallery
+                Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                mediaScanIntent.setData(Uri.fromFile(file));
+                sendBroadcast(mediaScanIntent);
+
+                Toast.makeText(this, "QR code saved to gallery!", Toast.LENGTH_SHORT).show();
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Error saving QR code", e);
+            Toast.makeText(this, "Failed to save QR code", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Share QR code
+     */
+    private void shareQrCode(Bitmap qrBitmap, String eventName) {
+        try {
+            // Save to cache directory first
+            File cachePath = new File(getCacheDir(), "qr_codes");
+            cachePath.mkdirs();
+
+            String fileName = (eventName != null ? eventName.replaceAll("[^a-zA-Z0-9]", "_") : "Event") + "_QR.png";
+            File file = new File(cachePath, fileName);
+
+            FileOutputStream stream = new FileOutputStream(file);
+            qrBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            stream.close();
+
+            // Get URI using FileProvider
+            Uri contentUri = FileProvider.getUriForFile(
+                    this,
+                    "com.example.event_app.fileprovider",
+                    file
+            );
+
+            // Create share intent
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("image/png");
+            shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
+            shareIntent.putExtra(Intent.EXTRA_TEXT,
+                    "Join \"" + (eventName != null ? eventName : "this event") + "\" by scanning this QR code!");
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            startActivity(Intent.createChooser(shareIntent, "Share QR Code"));
+        } catch (IOException e) {
+            Log.e(TAG, "Error sharing QR code", e);
+            Toast.makeText(this, "Failed to share QR code", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void showLoading() {
