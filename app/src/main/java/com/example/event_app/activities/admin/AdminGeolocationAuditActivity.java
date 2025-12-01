@@ -29,9 +29,15 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * AdminGeolocationAuditActivity - Admin audit of geolocation usage
- * For privacy compliance monitoring
+ * Displays and manages the administrator audit interface for reviewing
+ * geolocation access logs. Records include user identity, event details,
+ * captured coordinates, and timestamps. This screen supports searching,
+ * browsing, and inspecting individual audit entries for privacy compliance.
+ *
+ * <p>Shows the most recent 500 audit records, sorted by timestamp.
+ * Administrators may also open a specific audit location in Google Maps.</p>
  */
+
 public class AdminGeolocationAuditActivity extends AppCompatActivity {
     private EditText etSearch;
     private RecyclerView recyclerViewAudits;
@@ -67,6 +73,10 @@ public class AdminGeolocationAuditActivity extends AppCompatActivity {
         loadAuditRecords();
     }
 
+    /**
+     * Initializes all UI components, including the search field, RecyclerView,
+     * empty-state container, progress bar, and total-records counter.
+     */
     private void initViews() {
         etSearch = findViewById(R.id.etSearchAudits);
         recyclerViewAudits = findViewById(R.id.recyclerViewAudits);
@@ -74,6 +84,12 @@ public class AdminGeolocationAuditActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
         tvTotalRecords = findViewById(R.id.tvTotalRecords);
     }
+
+    /**
+     * Configures the search bar to perform live filtering. As the administrator
+     * types, the list in {@link GeolocationAuditAdapter} is filtered based on
+     * username, event name, or action fields.
+     */
     private void setupSearch() {
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override
@@ -89,6 +105,11 @@ public class AdminGeolocationAuditActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Sets up the RecyclerView used to display geolocation audit entries.
+     * Initializes the adapter and attaches a click listener that opens a
+     * detailed dialog for the selected audit record.
+     */
     private void setupRecyclerView() {
         auditAdapter = new GeolocationAuditAdapter();
 
@@ -100,6 +121,13 @@ public class AdminGeolocationAuditActivity extends AppCompatActivity {
         recyclerViewAudits.setAdapter(auditAdapter);
     }
 
+    /**
+     * Fetches up to the most recent 500 geolocation audit records from Firestore,
+     * ordered by timestamp in descending order. Loaded records are stored locally
+     * and rendered through {@link #updateUI()}.
+     *
+     * Displays an error message if the fetch request fails.
+     */
     private void loadAuditRecords() {
         progressBar.setVisibility(View.VISIBLE);
         db.collection("geolocation_audits")
@@ -124,6 +152,11 @@ public class AdminGeolocationAuditActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Updates the visibility of UI components based on whether audit records
+     * are available. If records exist, the RecyclerView is displayed and the
+     * total-records count is updated. Otherwise, an empty-state message is shown.
+     */
     private void updateUI() {
         if (auditList.isEmpty()) {
             recyclerViewAudits.setVisibility(View.GONE);
@@ -138,6 +171,14 @@ public class AdminGeolocationAuditActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Displays a dialog containing full details for the selected audit entry,
+     * including user identity, event information, location coordinates, and a
+     * formatted timestamp. Also includes an option to open the coordinates
+     * in Google Maps.
+     *
+     * @param audit the geolocation audit record selected by the administrator
+     */
     private void showAuditDetails(GeolocationAudit audit) {
         SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy HH:mm:ss", Locale.getDefault());
 
@@ -160,7 +201,10 @@ public class AdminGeolocationAuditActivity extends AppCompatActivity {
     }
 
     /**
-     * NEW: Open location on Google Maps
+     * Opens the latitude/longitude of the given audit record in Google Maps.
+     * If Google Maps is not installed, falls back to a browser-based map view.
+     *
+     * @param audit the audit record whose location should be displayed on a map
      */
     private void openLocationOnMap(GeolocationAudit audit) {
         double latitude = audit.getLatitude();
@@ -201,6 +245,11 @@ public class AdminGeolocationAuditActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Handles ActionBar navigation by closing the activity.
+     *
+     * @return always returns true to indicate the event was consumed
+     */
     @Override
     public boolean onSupportNavigateUp() {
         finish();

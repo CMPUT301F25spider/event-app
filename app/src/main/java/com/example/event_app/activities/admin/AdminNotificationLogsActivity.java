@@ -31,8 +31,18 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * AdminNotificationLogsActivity - Admin review of all notification logs
- * US 03.08.01: Review logs of all notifications sent by organizers
+ * Activity for administrators to review all system notification logs.
+ * Provides search, filtering, and detailed inspection of notifications
+ * sent by organizers or the system. Supports filtering by notification
+ * type and loading up to the last 500 log entries for performance.
+ *
+ * <p>Supports:</p>
+ * <ul>
+ *     <li>US 03.08.01: Review logs of all notifications sent by organizers</li>
+ *     <li>Full-text search across logs</li>
+ *     <li>Type-based filtering (selected, rejected, invitation, waitlist)</li>
+ *     <li>Viewing detailed notification metadata</li>
+ * </ul>
  */
 public class AdminNotificationLogsActivity extends AppCompatActivity {
     private EditText etSearch;
@@ -82,6 +92,10 @@ public class AdminNotificationLogsActivity extends AppCompatActivity {
         loadNotificationLogs();
     }
 
+    /**
+     * Initializes all UI components including search field, filter spinner,
+     * RecyclerView, empty state layout, progress bar, and total log counter.
+     */
     private void initViews() {
         etSearch = findViewById(R.id.etSearchLogs);
         spinnerFilter = findViewById(R.id.spinnerFilter);
@@ -91,6 +105,10 @@ public class AdminNotificationLogsActivity extends AppCompatActivity {
         tvTotalLogs = findViewById(R.id.tvTotalLogs);
     }
 
+    /**
+     * Configures search functionality using a TextWatcher to filter log
+     * entries in real time based on sender, recipient, event, or message text.
+     */
     private void setupSearch() {
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override
@@ -106,6 +124,11 @@ public class AdminNotificationLogsActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Initializes the filter spinner with available notification-type
+     * categories and sets up a listener to reload logs when the filter
+     * selection changes.
+     */
     private void setupFilter() {
         // Create filter options
         String[] filterOptions = {
@@ -137,11 +160,21 @@ public class AdminNotificationLogsActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Updates the current filter mode and reloads notification logs accordingly.
+     *
+     * @param filter the selected filter label from the spinner
+     */
     private void applyFilter(String filter) {
         currentFilter = filter;
         loadNotificationLogs();
     }
 
+    /**
+     * Configures the RecyclerView and attaches the NotificationLogAdapter.
+     * Registers a click callback to allow administrators to view detailed
+     * information for any selected log entry.
+     */
     private void setupRecyclerView() {
         logAdapter = new NotificationLogAdapter();
 
@@ -153,6 +186,20 @@ public class AdminNotificationLogsActivity extends AppCompatActivity {
         recyclerViewLogs.setAdapter(logAdapter);
     }
 
+    /**
+     * Loads up to the last 500 notification logs from Firestore, applying the
+     * currently selected filter (if any). Queries are ordered by timestamp in
+     * descending order to show the most recent logs first.
+     *
+     * <p>Performs the following:</p>
+     * <ul>
+     *     <li>Builds the Firestore query based on the selected filter</li>
+     *     <li>Fetches logs and applies "Organizer Only" filtering locally</li>
+     *     <li>Updates the adapter and UI state</li>
+     * </ul>
+     *
+     * Displays progress indicators and error feedback.
+     */
     private void loadNotificationLogs() {
         progressBar.setVisibility(View.VISIBLE);
 
@@ -199,6 +246,11 @@ public class AdminNotificationLogsActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Updates the UI based on whether logs have been loaded.
+     * Shows or hides the empty state, updates total log count,
+     * and refreshes the adapter with the current list of logs.
+     */
     private void updateUI() {
         if (logList.isEmpty()) {
             recyclerViewLogs.setVisibility(View.GONE);
@@ -213,6 +265,13 @@ public class AdminNotificationLogsActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Displays all available details of a selected notification log in
+     * a modal dialog, including sender, recipient, event, type, message,
+     * and formatted timestamp.
+     *
+     * @param log the selected notification log whose details are shown
+     */
     private void showLogDetails(NotificationLog log) {
         SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy HH:mm:ss", Locale.getDefault());
 
@@ -232,6 +291,11 @@ public class AdminNotificationLogsActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Handles action-bar "Up" navigation by closing the activity.
+     *
+     * @return true after finishing the activity
+     */
     @Override
     public boolean onSupportNavigateUp() {
         finish();

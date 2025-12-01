@@ -31,15 +31,22 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * AdminBrowseEventsActivity - Admin can view, search, filter, and sort all events
- * US 03.04.01: Browse all events
- * Features:
- * - Search by event name or organizer
- * - Filter by status (All, Active, Inactive, Completed)
- * - Sort by date, name, or entrant count
- * - Display: event name, organizer, date, status, entrant count
+ * AdminBrowseEventsActivity
+ *
+ * <p>Allows administrators to browse, search, filter, and sort all events in the system.
+ * The activity supports the following features:</p>
+ *
+ * <ul>
+ *     <li>Real-time search by event name or organizer name</li>
+ *     <li>Status filtering using Material Design chips</li>
+ *     <li>Sorting by name, date, and entrant count</li>
+ *     <li>Viewing event details through the admin event details screen</li>
+ * </ul>
+ *
+ * <p>This activity fulfills US 03.04.01 — administrators can browse all created events.</p>
  */
 public class AdminBrowseEventsActivity extends AppCompatActivity {
+
     // Sort options
     private enum SortOption {
         NAME_ASC("Name (A-Z)"),
@@ -48,13 +55,10 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
         DATE_OLDEST("Date (Oldest First)"),
         ENTRANTS_HIGH("Entrants (High to Low)"),
         ENTRANTS_LOW("Entrants (Low to High)");
-
         private final String displayName;
-
         SortOption(String displayName) {
             this.displayName = displayName;
         }
-
         public String getDisplayName() {
             return displayName;
         }
@@ -110,7 +114,8 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
         loadEvents();
     }
     /**
-     * Initialize views
+     * Initializes all view references used in this activity, including RecyclerView,
+     * filter chips, search bar, and empty state layout.
      */
     private void initViews() {
         recyclerViewEvents = findViewById(R.id.recyclerViewEvents);
@@ -127,6 +132,11 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
         chipCancelled = findViewById(R.id.chipCancelled);
         chipFlagged = findViewById(R.id.chipFlagged);
     }
+
+    /**
+     * Configures the RecyclerView for displaying admin event items, initializes the adapter,
+     * and attaches a click listener that navigates to the admin event details screen.
+     */
     private void setupRecyclerView() {
         // Create admin adapter
         eventAdapter = new AdminEventAdapter();
@@ -143,7 +153,8 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
     }
 
     /**
-     * Set up search functionality
+     * Sets up search functionality using a TextWatcher. Updates the displayed events
+     * whenever the search query changes.
      */
     private void setupSearch() {
         if (searchEvents == null) {
@@ -166,7 +177,8 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
     }
 
     /**
-     * Set up status filter chips
+     * Configures status filter chips and updates the event list whenever the
+     * selected status filter changes.
      */
     private void setupFilters() {
         if (chipGroupStatus == null) {
@@ -198,7 +210,8 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
     }
 
     /**
-     * Set up sort button and dialog
+     * Attaches a click listener to the sort button which opens a dialog
+     * allowing administrators to choose a sorting option.
      */
     private void setupSort() {
         if (btnSort == null) {
@@ -209,7 +222,8 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
     }
 
     /**
-     * Show sort options dialog
+     * Displays a single-choice dialog listing all available sort options.
+     * Updates the sorting state and refreshes the event list when a choice is made.
      */
     private void showSortDialog() {
         String[] sortOptions = new String[SortOption.values().length];
@@ -232,7 +246,10 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
     }
 
     /**
-     * Load all events from Firebase
+     * Loads all event documents from Firestore, converts them to Event objects,
+     * stores them in memory, and applies search, filter, and sort operations.
+     *
+     * <p>Displays an error message if Firebase retrieval fails.</p>
      */
     private void loadEvents() {
         db.collection("events")
@@ -255,7 +272,8 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
     }
 
     /**
-     * Apply filters and sort
+     * Applies the current search query, status filter, and selected sort option
+     * to the list of all events. The resulting list is displayed through the adapter.
      */
     private void applyFiltersAndSort() {
         String searchQuery = currentSearchQuery.toLowerCase().trim();
@@ -281,7 +299,9 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
     }
 
     /**
-     * Sort events based on current sort option
+     * Sorts the given list of events according to the currently selected sort option.
+     *
+     * @param events the list of events to be sorted
      */
     private void sortEvents(List<Event> events) {
         switch (currentSort) {
@@ -338,7 +358,11 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
     }
 
     /**
-     * Check if event matches the current status filter
+     * Determines whether an event matches the active status filter, including
+     * special handling for flagged events (high cancellation rate).
+     *
+     * @param event the event to evaluate
+     * @return true if the event should be included in results
      */
     private boolean matchesStatusFilter(Event event) {
         if ("all".equals(currentStatusFilter)) {
@@ -358,7 +382,12 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
     }
 
     /**
-     * Check if event matches the search query
+     * Checks whether an event matches the current text-based search query by comparing
+     * the query against both the event name and the organizer name.
+     *
+     * @param event the event being tested
+     * @param query lowercase trimmed search query
+     * @return true if the event name or organizer name contains the query
      */
     private boolean matchesSearchQuery(Event event, String query) {
         boolean matchesName = event.getName() != null &&
@@ -370,10 +399,11 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
         return matchesName || matchesOrganizer;
     }
 
-
-
     /**
-     * Update UI based on filtered events
+     * Updates the visibility and content of UI elements based on whether
+     * filtered event results exist or whether an error occurred.
+     *
+     * @param isError true if events failed to load from Firestore
      */
     private void updateUI(boolean isError) {
         if (filteredEvents.isEmpty()) {
@@ -402,12 +432,22 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Handles action bar "Up" navigation by finishing the current activity
+     * and returning to the previous screen.
+     *
+     * @return true to indicate that the Up navigation event was handled
+     */
     @Override
     public boolean onSupportNavigateUp() {
         finish();
         return true;
     }
 
+    /**
+     * Reloads event data whenever the activity becomes visible again,
+     * ensuring that admin views stay up-to-date.
+     */
     @Override
     protected void onResume() {
         super.onResume();

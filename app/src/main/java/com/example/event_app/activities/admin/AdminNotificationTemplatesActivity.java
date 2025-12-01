@@ -29,8 +29,22 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * AdminNotificationTemplatesActivity - Manage notification templates
- * Allows admins to create, edit, and manage notification templates used across the app
+ * Activity allowing administrators to manage reusable notification templates
+ * used throughout the platform. Supports creating, editing, activating/
+ * deactivating, deleting, and searching templates.
+ *
+ * <p>Features include:</p>
+ * <ul>
+ *     <li>Search across template name, type, title, and message</li>
+ *     <li>Create new templates via dialog UI</li>
+ *     <li>Edit existing templates</li>
+ *     <li>Enable/disable templates for system use</li>
+ *     <li>Delete templates permanently</li>
+ *     <li>Display total active templates for audit purposes</li>
+ * </ul>
+ *
+ * Used primarily by platform administrators to standardize communication
+ * sent to entrants and organizers across the system.
  */
 public class AdminNotificationTemplatesActivity extends AppCompatActivity {
     private EditText etSearch;
@@ -80,6 +94,10 @@ public class AdminNotificationTemplatesActivity extends AppCompatActivity {
         loadTemplates();
     }
 
+    /**
+     * Initializes UI components including search bar, RecyclerView, empty state
+     * container, progress bar, template counter, and the FAB for adding templates.
+     */
     private void initViews() {
         etSearch = findViewById(R.id.etSearchTemplates);
         recyclerViewTemplates = findViewById(R.id.recyclerViewTemplates);
@@ -89,6 +107,10 @@ public class AdminNotificationTemplatesActivity extends AppCompatActivity {
         fabAddTemplate = findViewById(R.id.fabAddTemplate);
     }
 
+    /**
+     * Configures live search using a TextWatcher. All text changes trigger
+     * filtering of templates in the adapter based on the entered query.
+     */
     private void setupSearch() {
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override
@@ -104,6 +126,15 @@ public class AdminNotificationTemplatesActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Initializes the RecyclerView, attaches the NotificationTemplateAdapter,
+     * and registers click listeners for:
+     * <ul>
+     *     <li>Opening the edit dialog for a template</li>
+     *     <li>Toggling active/inactive state</li>
+     *     <li>Deleting a template</li>
+     * </ul>
+     */
     private void setupRecyclerView() {
         templateAdapter = new NotificationTemplateAdapter();
 
@@ -128,10 +159,21 @@ public class AdminNotificationTemplatesActivity extends AppCompatActivity {
         recyclerViewTemplates.setAdapter(templateAdapter);
     }
 
+    /**
+     * Configures the floating action button to open the "Create Template" dialog
+     * allowing administrators to build a new notification template.
+     */
     private void setupFAB() {
         fabAddTemplate.setOnClickListener(v -> showCreateTemplateDialog());
     }
 
+    /**
+     * Fetches all notification templates from Firestore, populates the internal
+     * list, updates UI state, and refreshes the adapter.
+     *
+     * <p>Shows a progress bar while loading and displays an error message if
+     * retrieval fails.</p>
+     */
     private void loadTemplates() {
         progressBar.setVisibility(View.VISIBLE);
         db.collection("notification_templates")
@@ -154,6 +196,10 @@ public class AdminNotificationTemplatesActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Updates the visibility of UI components based on whether templates exist.
+     * Shows or hides the empty state layout and updates the total count label.
+     */
     private void updateUI() {
         if (templateList.isEmpty()) {
             recyclerViewTemplates.setVisibility(View.GONE);
@@ -168,6 +214,11 @@ public class AdminNotificationTemplatesActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Displays a dialog allowing the administrator to create a new notification
+     * template. Validates required fields and passes input to
+     * {@link #createTemplate(String, String, String, String)}.
+     */
     private void showCreateTemplateDialog() {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_notification_template, null);
 
@@ -199,6 +250,12 @@ public class AdminNotificationTemplatesActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Displays a dialog pre-filled with an existing template’s fields, allowing
+     * administrators to modify and save updates.
+     *
+     * @param template the template being edited
+     */
     private void showEditTemplateDialog(NotificationTemplate template) {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_notification_template, null);
 
@@ -235,6 +292,14 @@ public class AdminNotificationTemplatesActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Creates a new notification template in Firestore.
+     *
+     * @param name     the human-readable template name
+     * @param type     a logical category label for grouping templates
+     * @param title    the template notification title
+     * @param message  the message body supporting placeholders
+     */
     private void createTemplate(String name, String type, String title, String message) {
         String templateId = db.collection("notification_templates").document().getId();
         String adminId = mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getUid() : "unknown";
@@ -263,6 +328,16 @@ public class AdminNotificationTemplatesActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Updates an existing template's fields and modification timestamp in
+     * Firestore.
+     *
+     * @param templateId the ID of the template to update
+     * @param name       updated template name
+     * @param type       updated template category/type
+     * @param title      updated notification title
+     * @param message    updated notification message body
+     */
     private void updateTemplate(String templateId, String name, String type, String title, String message) {
         db.collection("notification_templates")
                 .document(templateId)
@@ -282,6 +357,12 @@ public class AdminNotificationTemplatesActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Toggles a template’s active status and persists the change to Firestore.
+     * Inactive templates are hidden from organizers using template selection.
+     *
+     * @param template the template whose active state is being toggled
+     */
     private void toggleTemplateActive(NotificationTemplate template) {
         boolean newStatus = !template.isActive();
 
@@ -299,6 +380,12 @@ public class AdminNotificationTemplatesActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Displays a confirmation dialog asking the administrator to confirm
+     * permanent deletion of a template.
+     *
+     * @param template the template selected for deletion
+     */
     private void showDeleteConfirmation(NotificationTemplate template) {
         new AlertDialog.Builder(this)
                 .setTitle("Delete Template")
@@ -310,6 +397,11 @@ public class AdminNotificationTemplatesActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Permanently removes a template from Firestore.
+     *
+     * @param template the template to delete
+     */
     private void deleteTemplate(NotificationTemplate template) {
         db.collection("notification_templates")
                 .document(template.getTemplateId())
@@ -323,6 +415,11 @@ public class AdminNotificationTemplatesActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Handles action bar "Up" navigation by closing the activity.
+     *
+     * @return true once the activity is finished
+     */
     @Override
     public boolean onSupportNavigateUp() {
         finish();

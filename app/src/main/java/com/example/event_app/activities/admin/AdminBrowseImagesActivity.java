@@ -24,9 +24,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * AdminBrowseImagesActivity - Admin can view and delete uploaded images
- * US 03.06.01: As an administrator, I want to browse images uploaded by users
- * US 03.03.01: As an administrator, I want to remove uploaded images
+ * Activity that allows administrators to browse, inspect, and delete uploaded images.
+ *
+ * <p>This supports:
+ * <ul>
+ *   <li><b>US 03.06.01</b>: Browse images uploaded by users.</li>
+ *   <li><b>US 03.03.01</b>: Remove uploaded images from the system.</li>
+ * </ul>
+ *
+ * Images are retrieved directly from Firebase Storage (rather than Firestore),
+ * and additional metadata (event or user association) is dynamically resolved
+ * when an image is selected. Admins may view details, detect orphaned files,
+ * and permanently delete the image and its references.
  */
 public class AdminBrowseImagesActivity extends AppCompatActivity {
     private RecyclerView recyclerViewImages;
@@ -58,7 +67,7 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
     }
 
     /**
-     * Initialize views
+     * Initializes UI components displayed on this screen.
      */
     private void initViews() {
         recyclerViewImages = findViewById(R.id.recyclerViewImages);
@@ -67,7 +76,8 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
     }
 
     /**
-     * Set up RecyclerView with adapter
+     * Configures the RecyclerView with a grid layout and attaches an adapter.
+     * Handles click actions for opening details and deleting images.
      */
     private void setupRecyclerView() {
         // Create adapter
@@ -93,7 +103,8 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
     }
 
     /**
-     * Load images directly from Firebase Storage folders
+     * Begins loading images from Firebase Storage.
+     * Currently loads images from the {@code event_posters} folder.
      */
     private void loadImagesFromStorage() {
         progressBar.setVisibility(View.VISIBLE);
@@ -103,7 +114,11 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
     }
 
     /**
-     * Load images from a specific Storage folder
+     * Loads all images inside the given Firebase Storage folder and adds them
+     * to the display list.
+     *
+     * @param folderPath path of the storage folder (e.g., "event_posters")
+     * @param imageType type associated with the images stored in this folder
      */
     private void loadFromStorageFolder(String folderPath, String imageType) {
         StorageReference folderRef = storage.getReference().child(folderPath);
@@ -140,8 +155,12 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
                     updateUI();
                 });
     }
+
     /**
-     * Show detailed information about an image
+     * Determines what the image is associated with (event poster, profile picture,
+     * or orphaned file), then displays a details dialog.
+     *
+     * @param imageData the selected image
      */
     private void showImageDetails(ImageData imageData) {
         progressBar.setVisibility(View.VISIBLE);
@@ -177,7 +196,11 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
     }
 
     /**
-     * Check if image is a profile picture
+     * Checks whether the selected image is being used as a profile picture.
+     * If not, it is marked as an orphaned image.
+     *
+     * @param imageUrl URL of the image file
+     * @param imageData metadata about the image
      */
     private void checkProfilePicture(String imageUrl, ImageData imageData) {
         db.collection("users")
@@ -210,7 +233,13 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
     }
 
     /**
-     * Show dialog with image details
+     * Displays a dialog with image usage information and management actions.
+     *
+     * @param imageType classification (poster, profile picture, orphaned)
+     * @param usedFor where the image is used
+     * @param uploader uploader name
+     * @param uploaderId uploader UID (may be null)
+     * @param imageData image metadata
      */
     private void showImageDetailsDialog(String imageType, String usedFor, String uploader, String uploaderId, ImageData imageData) {
         String details = "TYPE: " + imageType + "\n\n" +
@@ -231,7 +260,8 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
     }
 
     /**
-     * Update UI based on image list
+     * Updates the screen depending on whether images exist.
+     * Shows the empty state if the list is empty.
      */
     private void updateUI() {
         runOnUiThread(() -> {
@@ -251,8 +281,9 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
     }
 
     /**
-     * Show confirmation dialog before deleting image
-     * US 03.03.01: Remove uploaded images
+     * Displays a confirmation dialog before permanently deleting an image.
+     *
+     * @param imageData the image to delete
      */
     private void showDeleteConfirmation(ImageData imageData) {
         new AlertDialog.Builder(this)
@@ -267,8 +298,10 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
     }
 
     /**
-     * Delete image from Firebase Storage
-     * US 03.03.01: Remove images
+     * Deletes the image from Firebase Storage and removes it from the UI.
+     * Also triggers removal of Firestore references.
+     *
+     * @param imageData image to delete
      */
     private void deleteImage(ImageData imageData) {
         progressBar.setVisibility(View.VISIBLE);
@@ -291,7 +324,10 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
     }
 
     /**
-     * Remove image URL references from Firestore documents
+     * Removes references to a deleted image from Firestore documents
+     * (e.g., clearing poster URLs or profile picture URLs).
+     *
+     * @param imageData image whose references should be removed
      */
     private void removeImageReferences(ImageData imageData) {
         String imageUrl = imageData.getImageUrl();

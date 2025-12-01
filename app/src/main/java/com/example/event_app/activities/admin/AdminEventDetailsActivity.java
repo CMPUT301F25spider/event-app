@@ -23,9 +23,20 @@ import java.util.Date;
 import java.util.Locale;
 
 /**
- * AdminEventDetailsActivity - Shows detailed event information with delete option
- * US 03.01.01: Remove events
- * US 03.04.01: Browse events (detailed view)
+ * Displays detailed information for a single event, including poster,
+ * description, organizer details, event date, capacity, entrant count,
+ * and cancellation-rate warnings. Administrators may also permanently
+ * delete the event from the system.
+ *
+ * <p>Supports:
+ * <ul>
+ *   <li><b>US 03.01.01</b> – Remove events</li>
+ *   <li><b>US 03.04.01</b> – Browse events (detailed view)</li>
+ * </ul>
+ *
+ * The activity loads the event from Firestore using an event ID passed
+ * through the intent and renders all available data. Deletion actions are
+ * irreversible and require confirmation via dialog.
  */
 public class AdminEventDetailsActivity extends AppCompatActivity {
     public static final String EXTRA_EVENT_ID = "event_id";
@@ -84,7 +95,8 @@ public class AdminEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Initialize views
+     * Initializes all UI components used to display event details, including
+     * text views, image cards, warning cards, and the delete button.
      */
     private void initViews() {
         cardPoster = findViewById(R.id.cardPoster);
@@ -104,14 +116,19 @@ public class AdminEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Setup delete button
+     * Attaches a click listener to the delete button. When triggered, it opens
+     * a confirmation dialog to prevent accidental event deletion.
      */
     private void setupDeleteButton() {
         btnDeleteEvent.setOnClickListener(v -> showDeleteConfirmation());
     }
 
     /**
-     * Load event details from Firebase
+     * Fetches the event document from Firestore using the event ID provided
+     * through the activity intent. If the document exists, it is converted
+     * into an {@link Event} object and passed to {@link #displayEventDetails()}.
+     *
+     * Displays an error and closes the activity if the event cannot be loaded.
      */
     private void loadEventDetails() {
         db.collection("events")
@@ -140,7 +157,17 @@ public class AdminEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Display event details in UI
+     * Renders all event fields into the UI, including name, status, organizer,
+     * description, event date, entrant count, capacity, and poster image.
+     *
+     * <p>Conditional UI behavior:
+     * <ul>
+     *     <li>Hides capacity layout if capacity is null or zero</li>
+     *     <li>Shows a warning card if cancellation rate is high</li>
+     *     <li>Hides poster card if no poster URL is provided</li>
+     * </ul>
+     *
+     * Fields are displayed with fallbacks when values are missing.
      */
     private void displayEventDetails() {
         // Event name
@@ -236,7 +263,9 @@ public class AdminEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Show delete confirmation dialog
+     * Displays a confirmation dialog warning the administrator that deleting
+     * the event is permanent and will remove all associated data. If confirmed,
+     * invokes {@link #deleteEvent()}.
      */
     private void showDeleteConfirmation() {
         new AlertDialog.Builder(this)
@@ -250,7 +279,11 @@ public class AdminEventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Delete event from Firebase
+     * Permanently deletes the event from Firestore. The delete button is disabled
+     * during processing to avoid duplicate actions. On successful deletion, the
+     * activity closes.
+     *
+     * Shows error messages and re-enables the button if the delete request fails.
      */
     private void deleteEvent() {
         // Show loading
@@ -275,6 +308,11 @@ public class AdminEventDetailsActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Handles action-bar "up" navigation by closing the activity.
+     *
+     * @return true always, indicating the event was consumed
+     */
     @Override
     public boolean onSupportNavigateUp() {
         finish();

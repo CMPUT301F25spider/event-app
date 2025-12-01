@@ -27,10 +27,23 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * AdminBrowseUsersActivity - Complete with search and event viewing
- * US 03.05.01: Browse all profiles
- * US 03.02.01: Remove profiles
- * US 03.07.01: Remove organizers violating policy
+ * Activity allowing administrators to browse, search, inspect, and manage all user profiles.
+ *
+ * <p>Supports:
+ * <ul>
+ *   <li><b>US 03.05.01</b>: Browse all user profiles.</li>
+ *   <li><b>US 03.02.01</b>: Remove user accounts.</li>
+ *   <li><b>US 03.07.01</b>: Remove organizers violating policy (including deleting their events).</li>
+ * </ul>
+ *
+ * Administrators can:
+ * <ul>
+ *   <li>Search users by name or email.</li>
+ *   <li>View user information.</li>
+ *   <li>Delete user accounts.</li>
+ *   <li>View all events hosted by an organizer.</li>
+ *   <li>Remove organizer privileges and automatically delete all their events.</li>
+ * </ul>
  */
 public class AdminBrowseUsersActivity extends AppCompatActivity {
     private EditText etSearch;
@@ -63,16 +76,19 @@ public class AdminBrowseUsersActivity extends AppCompatActivity {
         // Load users
         loadUsers();
     }
+
     /**
-     * Initialize views
+     * Initializes the screen's editable search bar and list container views.
      */
     private void initViews() {
         etSearch = findViewById(R.id.etSearchUsers);  // NEW
         recyclerViewUsers = findViewById(R.id.recyclerViewUsers);
         emptyStateLayout = findViewById(R.id.emptyStateLayout);
     }
+
     /**
-     * Setup search functionality
+     * Sets up the live search functionality so the displayed list updates as the admin types.
+     * Filtering is delegated to {@link UserAdapter#filter(String)}.
      */
     private void setupSearch() {
         etSearch.addTextChangedListener(new TextWatcher() {
@@ -88,8 +104,11 @@ public class AdminBrowseUsersActivity extends AppCompatActivity {
             public void afterTextChanged(Editable s) {}
         });
     }
+
     /**
-     * Set up RecyclerView with adapter
+     * Configures the RecyclerView and attaches listeners for user-level admin actions:
+     * viewing user info, deleting accounts, removing organizer privileges,
+     * and loading events hosted by a user.
      */
     private void setupRecyclerView() {
         // Create adapter
@@ -110,12 +129,12 @@ public class AdminBrowseUsersActivity extends AppCompatActivity {
             }
             @Override
             public void onViewEventsClick(User user) {
-                // NEW: Show organizer's events
+                // Show organizer's events
                 showOrganizerEvents(user);
             }
             @Override
             public void onLoadEventsCount(User user, UserAdapter.EventsCountCallback callback) {
-                // NEW: Load events count
+                // Load events count
                 loadEventsCount(user, callback);
             }
         });
@@ -124,7 +143,8 @@ public class AdminBrowseUsersActivity extends AppCompatActivity {
     }
 
     /**
-     * Load all users from Firebase
+     * Loads all user profiles from Firestore and updates the UI.
+     * Errors show an empty state with a toast.
      */
     private void loadUsers() {
         db.collection("users")
@@ -144,8 +164,13 @@ public class AdminBrowseUsersActivity extends AppCompatActivity {
                     updateUI();
                 });
     }
+
     /**
-     *Load events count for organizer
+     * Loads the number of events an organizer has created.
+     * Used for showing counts in the user list.
+     *
+     * @param user organizer whose events are counted
+     * @param callback returns the count asynchronously
      */
     private void loadEventsCount(User user, UserAdapter.EventsCountCallback callback) {
         db.collection("events")
@@ -159,8 +184,12 @@ public class AdminBrowseUsersActivity extends AppCompatActivity {
                     callback.onCountLoaded(0);
                 });
     }
+
     /**
-     * Show organizer's events in dialog
+     * Displays all events hosted by a selected organizer in a single dialog.
+     * Includes event name, date, and number of entrants.
+     *
+     * @param user organizer whose events are displayed
      */
     private void showOrganizerEvents(User user) {
         db.collection("events")
@@ -205,7 +234,8 @@ public class AdminBrowseUsersActivity extends AppCompatActivity {
     }
 
     /**
-     * Update UI based on user list
+     * Updates the UI depending on whether users exist.
+     * Shows an empty state when no users are found.
      */
     private void updateUI() {
         if (userList.isEmpty()) {
@@ -223,7 +253,10 @@ public class AdminBrowseUsersActivity extends AppCompatActivity {
     }
 
     /**
-     * Show user info dialog
+     * Displays a dialog containing detailed information about the selected user.
+     * Shown fields include name, email, roles, and user ID.
+     *
+     * @param user the user whose information is being displayed
      */
     private void showUserInfo(User user) {
         String roles = user.getRoles() != null ? String.join(", ", user.getRoles()) : "None";
@@ -240,8 +273,11 @@ public class AdminBrowseUsersActivity extends AppCompatActivity {
     }
 
     /**
-     * Show confirmation before removing organizer role
-     * Now warns that events will be deleted too
+     * Shows a high-severity confirmation dialog warning the administrator that
+     * removing an organizer will also permanently delete all events created
+     * by that organizer. This supports policy-violation enforcement.
+     *
+     * @param user the organizer being reviewed for removal
      */
     private void showRemoveOrganizerConfirmation(User user) {
         new AlertDialog.Builder(this)
@@ -263,9 +299,13 @@ public class AdminBrowseUsersActivity extends AppCompatActivity {
     }
 
     /**
-     * Remove organizer role from user AND delete all their events
-     * US 03.07.01: Remove organizers violating policy
+     * Begins the removal process for an organizer. This method first queries
+     * all events owned by the organizer. If any events exist, they are deleted
+     * before the organizer role is removed.
+     *
+     * @param user the organizer whose role is being revoked
      */
+
     private void removeOrganizerRole(User user) {
         // Show progress
         Toast.makeText(this, "Removing organizer privileges and deleting events...",
@@ -288,7 +328,11 @@ public class AdminBrowseUsersActivity extends AppCompatActivity {
     }
 
     /**
-     * Delete all events created by the organizer
+     * Deletes every event created by the organizer. Once all deletions
+     * (successful or failed) are processed, the organizer role is removed.
+     *
+     * @param eventsSnapshot Firestore snapshot of all events created by the organizer
+     * @param user the organizer whose events are being deleted
      */
     private void deleteOrganizerEvents(
             com.google.firebase.firestore.QuerySnapshot eventsSnapshot,
@@ -322,7 +366,10 @@ public class AdminBrowseUsersActivity extends AppCompatActivity {
     }
 
     /**
-     * Remove organizer role from user (after events are deleted)
+     * Removes the "organizer" role from the given user after all their events
+     * have been deleted. The user remains in the system as an entrant.
+     *
+     * @param user the user whose organizer role is being removed
      */
     private void removeOrganizerRoleOnly(User user) {
         db.collection("users")
@@ -343,7 +390,11 @@ public class AdminBrowseUsersActivity extends AppCompatActivity {
     }
 
     /**
-     * Show confirmation dialog before deleting user
+     * Displays a confirmation dialog asking the administrator whether to
+     * permanently delete the selected user account. This action cannot be undone
+     * and removes all associated data.
+     *
+     * @param user the user whose account may be deleted
      */
     private void showDeleteConfirmation(User user) {
         new AlertDialog.Builder(this)
@@ -363,7 +414,10 @@ public class AdminBrowseUsersActivity extends AppCompatActivity {
     }
 
     /**
-     * Delete user from Firebase
+     * Permanently deletes a user from the Firestore database. All notification logs
+     * associated with the user are deleted first to maintain data consistency.
+     *
+     * @param user the user to delete
      */
     private void deleteUser(User user) {
         deleteUserNotificationLogs(user.getUserId());
@@ -385,7 +439,10 @@ public class AdminBrowseUsersActivity extends AppCompatActivity {
     }
 
     /**
-     * NEW: Delete all notification logs associated with a user
+     * Deletes all notification log entries where the user acted as either the sender
+     * or recipient. This is performed before the user account itself is removed.
+     *
+     * @param userId the ID of the user whose notification logs should be deleted
      */
     private void deleteUserNotificationLogs(String userId) {
         db.collection("notification_logs")
@@ -407,6 +464,11 @@ public class AdminBrowseUsersActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Handles the action bar "Back" navigation event by closing the activity.
+     *
+     * @return true indicating the event was consumed
+     */
     @Override
     public boolean onSupportNavigateUp() {
         finish();

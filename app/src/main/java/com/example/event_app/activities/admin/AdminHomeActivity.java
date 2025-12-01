@@ -26,24 +26,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * AdminHomeActivity - Admin dashboard with moderation tools and statistics
+ * Administrative dashboard providing moderation tools, platform statistics,
+ * and access to compliance features. Administrators can browse and manage
+ * events, users, and images; review flagged items; generate reports; and
+ * inspect geolocation usage, notification logs, and notification templates.
  *
- * Features:
- * - Platform statistics (events, users, organizers)
- * - Browse/manage events, users, images
- * - Generate platform reports
- * - Switch back to entrant/organizer view
- * - Flagged content monitoring
- * - Geolocation audit for privacy compliance
- * - Notification logs for compliance tracking
- * - Notification templates management
+ * <p>Supports access control validation, platform-wide reporting, and
+ * switching between admin and regular user roles.</p>
  *
- * US 03.04.01: Browse events
- * US 03.05.01: Browse profiles
- * US 03.06.01: Browse images
- * US 03.13.01: Export platform usage reports
- *
- * UPDATED: Added geolocation audit, notification logs, and notification templates buttons
+ * Features implemented include:
+ * <ul>
+ *     <li>Platform statistics (events, users, organizers, active events)</li>
+ *     <li>Browsing events, users, and uploaded images</li>
+ *     <li>Report exporting (US 03.13.01)</li>
+ *     <li>Flagged event monitoring</li>
+ *     <li>Geolocation access auditing</li>
+ *     <li>Notification logs and template management</li>
+ *     <li>Role switching between admin and entrant/organizer views</li>
+ * </ul>
  */
 public class AdminHomeActivity extends AppCompatActivity {
     private TextView tvEventsCount, tvUsersCount, tvOrganizersCount, tvActiveCount;
@@ -90,7 +90,9 @@ public class AdminHomeActivity extends AppCompatActivity {
     }
 
     /**
-     * Initialize all view components
+     * Initializes all UI elements on the admin dashboard, including
+     * statistic counters, action cards, management buttons,
+     * and the flagged-events section container.
      */
     private void initViews() {
         // Back button
@@ -120,7 +122,16 @@ public class AdminHomeActivity extends AppCompatActivity {
     }
 
     /**
-     * Setup click listeners for all buttons and cards
+     * Configures click listeners for all actionable dashboard elements, including:
+     * <ul>
+     *     <li>browsing events, users, and images</li>
+     *     <li>generating reports</li>
+     *     <li>opening geolocation audit and notification log screens</li>
+     *     <li>viewing flagged events</li>
+     *     <li>switching to entrant/organizer mode</li>
+     * </ul>
+     *
+     * Each listener launches its corresponding admin activity or dialog.
      */
     private void setupButtonListeners() {
         // Browse Events Card
@@ -148,14 +159,14 @@ public class AdminHomeActivity extends AppCompatActivity {
             });
         }
 
-        // ✨ Geolocation Audit Button
+        // Geolocation Audit Button
         if (btnGeolocationAudit != null) {
             btnGeolocationAudit.setOnClickListener(v -> {
                 startActivity(new Intent(this, AdminGeolocationAuditActivity.class));
             });
         }
 
-        // ✨ Notification Logs Button
+        // Notification Logs Button
         if (btnNotificationLogs != null) {
             btnNotificationLogs.setOnClickListener(v -> {
                 startActivity(new Intent(this, AdminNotificationLogsActivity.class));
@@ -183,7 +194,11 @@ public class AdminHomeActivity extends AppCompatActivity {
     }
 
     /**
-     * Check if current user has admin privileges
+     * Verifies that the currently authenticated user has administrator privileges.
+     * If the user is not signed in, not found, or does not hold the "admin" role,
+     * access to the dashboard is denied and the activity is terminated.
+     *
+     * Displays error messages for missing authentication or Firestore issues.
      */
     private void checkAdminAccess() {
         if (mAuth.getCurrentUser() == null) {
@@ -217,7 +232,16 @@ public class AdminHomeActivity extends AppCompatActivity {
     }
 
     /**
-     * Load all platform statistics from Firebase
+     * Loads platform-wide statistics from Firestore and updates the dashboard:
+     * <ul>
+     *     <li>Total number of events</li>
+     *     <li>Total number of users</li>
+     *     <li>Total number of organizers</li>
+     *     <li>Total number of active events</li>
+     * </ul>
+     *
+     * Each statistic is requested independently to improve resilience
+     * in case one query fails.
      */
     private void loadStatistics() {
         // Load Events Count
@@ -268,7 +292,9 @@ public class AdminHomeActivity extends AppCompatActivity {
     }
 
     /**
-     * Load and display flagged events (high cancellation rate)
+     * Retrieves all events and counts how many exhibit a high cancellation rate.
+     * Updates the flagged-items UI section with the current flagged count and
+     * shows or hides the flagged-events card accordingly.
      */
     private void loadFlaggedEvents() {
         db.collection("events")
@@ -302,8 +328,13 @@ public class AdminHomeActivity extends AppCompatActivity {
     }
 
     /**
-     * Generate and export platform usage report
-     * US 03.13.01: Export platform usage reports
+     * Generates a platform-wide usage report by fetching all events and all users.
+     * Once both collections are retrieved, the data is passed to
+     * {@link ReportExporter#exportPlatformReport(android.content.Context, List, List)}.
+     *
+     * Displays feedback on report generation progress and errors.
+     *
+     * US 03.13.01: Export platform usage reports.
      */
     private void generateAndExportReport() {
         Toast.makeText(this, "Generating report...", Toast.LENGTH_SHORT).show();
@@ -340,7 +371,10 @@ public class AdminHomeActivity extends AppCompatActivity {
     }
 
     /**
-     * Show dialog to switch between admin and user views
+     * Displays a dialog describing the available non-admin roles
+     * (entrant and/or organizer) and allows the administrator to
+     * temporarily switch to user mode. If the admin has no other roles,
+     * the dialog is not shown.
      */
     private void showRoleSwitchDialog() {
         if (currentUser == null) return;
@@ -370,7 +404,9 @@ public class AdminHomeActivity extends AppCompatActivity {
     }
 
     /**
-     *Switch to entrant/organizer view (MainActivity)
+     * Switches the current view mode from administrator to user mode
+     * (entrant or organizer), launching {@link MainActivity} and clearing
+     * the back stack so the admin panel cannot be navigated back to.
      */
     private void switchToUserMode() {
         Intent intent = new Intent(this, MainActivity.class);
@@ -379,8 +415,11 @@ public class AdminHomeActivity extends AppCompatActivity {
         finish();
         Toast.makeText(this, "Switched to User mode", Toast.LENGTH_SHORT).show();
     }
+
     /**
-     * Reload statistics when activity resumes
+     * Reloads admin access validation, platform statistics, and flagged-events
+     * data each time the dashboard becomes active, ensuring all values remain
+     * up to date.
      */
     @Override
     protected void onResume() {
