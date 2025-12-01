@@ -28,15 +28,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * NotificationsActivity - View all notifications
- *
- * Real-time Firestore listener for instant notification updates!
+ * NotificationsActivity – Displays all notifications for the current user.
  *
  * Features:
- * - View all notifications (REAL-TIME updates! ⚡)
- * - Mark as read
- * - Delete notifications
- * - Navigate to related events
+ * • Real-time Firestore listener for instant updates
+ * • Mark individual or all notifications as read
+ * • Delete single or all notifications
+ * • Tap notification to navigate to its related event
  *
  * US 01.04.01: Receive notification when chosen
  * US 01.04.02: Receive notification when not chosen
@@ -80,6 +78,13 @@ public class NotificationsActivity extends AppCompatActivity {
         startRealtimeNotificationListener();
     }
 
+    /**
+     * Initializes all view references and sets up the Back button listener.
+     *
+     * Responsibilities:
+     * • Link layout views to fields
+     * • Configure back navigation
+     */
     private void initViews() {
         rvNotifications = findViewById(R.id.rvNotifications);
         progressBar = findViewById(R.id.progressBar);
@@ -92,6 +97,13 @@ public class NotificationsActivity extends AppCompatActivity {
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
     }
 
+    /**
+     * Configures the RecyclerView with a NotificationAdapter.
+     *
+     * Handles:
+     * • Click on notification → mark as read + navigate to event
+     * • Click on delete icon → delete the notification
+     */
     private void setupRecyclerView() {
         adapter = new NotificationAdapter(this, notifications, new NotificationAdapter.NotificationClickListener() {
             @Override
@@ -113,14 +125,28 @@ public class NotificationsActivity extends AppCompatActivity {
         rvNotifications.setAdapter(adapter);
     }
 
+    /**
+     * Sets click listeners for:
+     * • "Mark All Read"
+     * • "Clear All"
+     *
+     * These actions operate on the entire notification list.
+     */
     private void setupListeners() {
         btnMarkAllRead.setOnClickListener(v -> markAllAsRead());
         btnClearAll.setOnClickListener(v -> showClearAllConfirmation());
     }
 
     /**
-     * Real-time Firestore listener for instant notification updates!
-     * Notifications appear IMMEDIATELY when sent - no refresh needed!
+     * Starts a real-time Firestore listener for the user's notifications.
+     *
+     * Notifications update instantly without refreshing the screen.
+     *
+     * Behavior:
+     * • Clears and reloads list when Firestore snapshot changes
+     * • Shows empty state when there are no notifications
+     *
+     * Removes previous listener automatically when set up again.
      */
     private void startRealtimeNotificationListener() {
         String userId = mAuth.getCurrentUser().getUid();
@@ -160,7 +186,13 @@ public class NotificationsActivity extends AppCompatActivity {
     }
 
     /**
-     * One-time load
+     * Performs a one-time load of all notifications for the user.
+     *
+     * Used as a fallback or manual refresh (not real-time).
+     *
+     * Shows loading state, then either:
+     * • Display notifications
+     * • Show empty view
      */
     private void loadNotifications() {
         showLoading();
@@ -190,6 +222,11 @@ public class NotificationsActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Marks a single notification as read using NotificationService.
+     *
+     * @param notification The notification to mark as read.
+     */
     private void markAsRead(Notification notification) {
         notificationService.markAsRead(notification.getNotificationId(),
                 new NotificationService.NotificationCallback() {
@@ -205,6 +242,11 @@ public class NotificationsActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Marks all of the user's notifications as read.
+     *
+     * Updates Firestore and then updates the UI list locally.
+     */
     private void markAllAsRead() {
         String userId = mAuth.getCurrentUser().getUid();
 
@@ -224,6 +266,11 @@ public class NotificationsActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Deletes a single notification from Firestore and updates the RecyclerView.
+     *
+     * @param notification The notification to delete.
+     */
     private void deleteNotification(Notification notification) {
         notificationService.deleteNotification(notification.getNotificationId(),
                 new NotificationService.NotificationCallback() {
@@ -244,6 +291,11 @@ public class NotificationsActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Shows a confirmation dialog before deleting all notifications.
+     *
+     * Prevents accidental bulk deletion.
+     */
     private void showClearAllConfirmation() {
         new AlertDialog.Builder(this)
                 .setTitle("Clear All Notifications")
@@ -253,6 +305,11 @@ public class NotificationsActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Deletes all notifications for the current user from Firestore.
+     *
+     * Clears the local list and updates UI states.
+     */
     private void clearAll() {
         String userId = mAuth.getCurrentUser().getUid();
 
@@ -270,12 +327,26 @@ public class NotificationsActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Navigates to EventDetailsActivity for the event tied to the notification.
+     *
+     * @param eventId The ID of the related event.
+     */
     private void navigateToEvent(String eventId) {
         Intent intent = new Intent(this, EventDetailsActivity.class);
         intent.putExtra("eventId", eventId);
         startActivity(intent);
     }
 
+    /**
+     * Updates the enabled/disabled states of:
+     * • "Mark All Read"
+     * • "Clear All"
+     *
+     * Rules:
+     * • "Mark All Read" enabled only if there are unread notifications
+     * • "Clear All" enabled only if the list is non-empty
+     */
     private void updateButtonStates() {
         boolean hasNotifications = !notifications.isEmpty();
         boolean hasUnread = false;
@@ -294,18 +365,27 @@ public class NotificationsActivity extends AppCompatActivity {
         btnClearAll.setAlpha(hasNotifications ? 1.0f : 0.5f);
     }
 
+    /**
+     * Displays loading spinner and hides list & empty state.
+     */
     private void showLoading() {
         rvNotifications.setVisibility(View.GONE);
         progressBar.setVisibility(View.VISIBLE);
         emptyView.setVisibility(View.GONE);
     }
 
+    /**
+     * Shows the notifications list and hides loading/empty views.
+     */
     private void showNotifications() {
         rvNotifications.setVisibility(View.VISIBLE);
         progressBar.setVisibility(View.GONE);
         emptyView.setVisibility(View.GONE);
     }
 
+    /**
+     * Shows the empty-state view when no notifications are available.
+     */
     private void showEmpty() {
         rvNotifications.setVisibility(View.GONE);
         progressBar.setVisibility(View.GONE);
@@ -313,8 +393,10 @@ public class NotificationsActivity extends AppCompatActivity {
     }
 
     /**
-     * Remove listener when activity is destroyed
-     * Prevents memory leaks and unnecessary battery drain!
+     * Cleans up the Firestore real-time listener to prevent:
+     * • Memory leaks
+     * • Battery drain
+     * • Duplicate listeners
      */
     @Override
     protected void onDestroy() {

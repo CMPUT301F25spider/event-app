@@ -43,18 +43,24 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * EventDetailsActivity - View event details, join waiting list, accept/decline invitations
+ * EventDetailsActivity
+ * Displays full event details for entrants, including poster, description,
+ * organizer info, waiting list status, lottery information, and invitation actions.
  *
- * US 01.01.01: Join waiting list (with location capture)
- * US 01.01.02: Leave waiting list
- * US 01.05.02: Accept invitation
- * US 01.05.03: Decline invitation
- * US 01.06.01: View event from QR code
- * US 01.05.04: See total entrants count
- * US 01.05.05: Show lottery selection criteria (NEW)
- * US 02.02.02: Capture location when joining (for organizer map view)
+ * <p>Implements multiple user stories:
+ * <ul>
+ *   <li>US 01.01.01: Join waiting list (with geolocation capture)</li>
+ *   <li>US 01.01.02: Leave waiting list</li>
+ *   <li>US 01.05.02: Accept invitation</li>
+ *   <li>US 01.05.03: Decline invitation</li>
+ *   <li>US 01.06.01: View event from QR code</li>
+ *   <li>US 01.05.04: Display total entrants count</li>
+ *   <li>US 01.05.05: Show lottery selection criteria</li>
+ *   <li>US 02.02.02: Capture location for organizer map view</li>
+ * </ul>
  *
- * UPDATED: Added geolocation audit logging for privacy compliance
+ * <p>Provides real-time updates via a Firestore snapshot listener.
+ * Also logs geolocation data for privacy-compliant auditing.
  */
 public class EventDetailsActivity extends AppCompatActivity {
     // UI Elements
@@ -111,6 +117,12 @@ public class EventDetailsActivity extends AppCompatActivity {
         loadEventDetails();
     }
 
+    /**
+     * Initializes all UI components, sets up click listeners for user actions,
+     * and wires navigation, invitation buttons, and location card actions.
+     *
+     * <p>This method does not load data — it only binds views and listeners.
+     */
     private void initViews() {
         // Views
         ivPoster = findViewById(R.id.ivEventPoster);
@@ -161,8 +173,17 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Real-time event details - Updates automatically!
-     * If organizer changes event info, entrants see it instantly
+     * Loads event details using a real-time Firestore snapshot listener.
+     * Automatically updates the UI whenever the organizer modifies the event.
+     *
+     * <p>This method:
+     * <ul>
+     *   <li>Shows the loading view</li>
+     *   <li>Attaches a Firestore listener</li>
+     *   <li>Updates UI when event data changes</li>
+     * </ul>
+     *
+     * Handles missing/invalid event IDs and Firestore errors.
      */
     private void loadEventDetails() {
         showLoading();
@@ -195,8 +216,14 @@ public class EventDetailsActivity extends AppCompatActivity {
                 });
     }
 
-
-
+    /**
+     * Populates UI fields with event information including:
+     * name, description, organizer, date, capacity, poster image,
+     * and waiting list count.
+     *
+     * <p>Also handles optional fields gracefully (e.g., missing poster or location).
+     * Shows the content view after binding UI elements.
+     */
     private void displayEventDetails() {
         tvEventName.setText(event.getName());
 
@@ -241,8 +268,11 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Check if current user is organizer and auto-redirect
-     * Organizers shouldn't see the entrant view - redirect to management
+     * Checks whether the current user is the organizer of this event.
+     * If true, the user is redirected to the organizer event management screen
+     * instead of the entrant view.
+     *
+     * <p>This prevents organizers from accidentally viewing the entrant interface.
      */
     private void checkIfOrganizer() {
         if (mAuth.getCurrentUser() == null || event == null) {
@@ -262,6 +292,13 @@ public class EventDetailsActivity extends AppCompatActivity {
         // If not organizer, do nothing - continue showing entrant view
     }
 
+    /**
+     * Opens the event's location in Google Maps (preferred) or a browser fallback
+     * if the Maps app is not available.
+     *
+     * <p>Handles missing or invalid location strings. Uses a geo URI query to allow
+     * users to view or navigate to the event location.
+     */
     private void openLocationInMaps() {
         if (event == null || event.getLocation() == null || event.getLocation().isEmpty()) {
             Toast.makeText(this, "No location available", Toast.LENGTH_SHORT).show();
@@ -287,8 +324,18 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Check user's status: waiting list, selected, or accepted
-     * Added data integrity validation to prevent users in multiple lists
+     * Determines the current user's state with respect to the event:
+     * <ul>
+     *     <li>On waiting list</li>
+     *     <li>Selected</li>
+     *     <li>Accepted/Registered</li>
+     *     <li>Declined (internal)</li>
+     * </ul>
+     *
+     * <p>Also invokes data-integrity checks to ensure that the user is not
+     * incorrectly listed in multiple states simultaneously.
+     *
+     * Updates UI buttons accordingly via {@link #updateButtonState()}.
      */
     private void checkUserStatus() {
         if (mAuth.getCurrentUser() == null) {
@@ -311,8 +358,14 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Validate that user is only in ONE list at a time
-     * This prevents data corruption where users appear in multiple lists
+     * Validates that the user appears in at most one event list.
+     * A user should only be in one of:
+     * waitingList, selectedList, signedUpUsers, or declinedUsers.
+     *
+     * <p>If inconsistencies are detected (e.g., user appears in multiple lists),
+     * a warning is shown and {@link #fixUserListCorruption(String)} is called.
+     *
+     * @param userId The ID of the user whose list membership is being checked.
      */
     private void validateUserListIntegrity(String userId) {
         int listCount = 0;
@@ -354,8 +407,20 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Attempt to fix data corruption by prioritizing the correct list
-     * Priority: signed up > selected > waiting list > declined
+     * Attempts to automatically resolve data corruption where a user appears
+     * in multiple event lists simultaneously.
+     *
+     * <p>Prioritizes lists in the following order:
+     * <ol>
+     *     <li>signedUpUsers (highest priority)</li>
+     *     <li>selectedList</li>
+     *     <li>waitingList</li>
+     *     <li>declinedUsers (lowest priority)</li>
+     * </ol>
+     *
+     * <p>Removes the user from inappropriate lists based on this priority.
+     *
+     * @param userId The ID of the affected user.
      */
     private void fixUserListCorruption(String userId) {
         Map<String, Object> updates = new HashMap<>();
@@ -390,7 +455,18 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Update UI based on user's status
+     * Updates the visibility and enabled state of action buttons
+     * (join, leave, accept, decline) based on the user's event status.
+     *
+     * <p>Supports the following UI flows:
+     * <ul>
+     *     <li>Joined waiting list → show "Leave"</li>
+     *     <li>Selected → show "Accept" and "Decline"</li>
+     *     <li>Accepted → show confirmation message only</li>
+     *     <li>Not registered → show "Join waiting list"</li>
+     * </ul>
+     *
+     * <p>Ensures that only appropriate actions appear for each workflow state.
      */
     private void updateButtonState() {
         // Hide all buttons first
@@ -427,8 +503,19 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * US 01.01.01: Join waiting list with optional location capture
-     * US 02.02.02: Capture location for organizer map view
+     * Attempts to add the current user to the waiting list.
+     *
+     * <p>Implements:
+     * <ul>
+     *     <li>US 01.01.01 — Join waiting list</li>
+     *     <li>US 02.02.02 — Capture location if required by the event</li>
+     * </ul>
+     *
+     * <p>If the event requires geolocation, this method initiates the permission
+     * check and location retrieval sequence. If geolocation is not required,
+     * the user is added directly via {@link #addToWaitingList(String, android.location.Location)}.
+     *
+     * Disables the join button during processing to prevent duplicate actions.
      */
     private void joinWaitingList() {
         if (mAuth.getCurrentUser() == null) {
@@ -449,7 +536,13 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Check location permission and request if needed
+     * Verifies whether fine location permission has been granted.
+     *
+     * <p>If permission is already granted, the method proceeds to retrieve the
+     * user's current location and join the waiting list.
+     * Otherwise, a permission request dialog is triggered.
+     *
+     * @param userId The ID of the user attempting to join the waiting list.
      */
     private void checkLocationPermissionAndJoin(String userId) {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -467,7 +560,16 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Handle permission request result
+     * Handles the result of the location permission request.
+     *
+     * <p>If permission is granted, location retrieval is attempted via
+     * {@link #getCurrentLocationAndJoin(String)}.
+     * If permission is denied, the user is shown an option to join without
+     * location data via {@link #showLocationDeniedDialog(String)}.
+     *
+     * @param requestCode  The request code for permission verification.
+     * @param permissions  The permissions requested.
+     * @param grantResults The results for each requested permission.
      */
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
@@ -488,7 +590,13 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Show dialog when location permission is denied
+     * Displays a confirmation dialog when the user denies location access.
+     *
+     * <p>This dialog explains that the event requires location tracking but
+     * allows the user to join the waiting list without providing location
+     * data if they choose to proceed.
+     *
+     * @param userId The ID of the user attempting to join the waiting list.
      */
     private void showLocationDeniedDialog(String userId) {
         new AlertDialog.Builder(this)
@@ -504,7 +612,15 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Get current location and join waiting list
+     * Attempts to retrieve the user's current location using the
+     * fused location provider.
+     *
+     * <p>If successful, the location is passed to
+     * {@link #addToWaitingList(String, android.location.Location)}.
+     * If unavailable or an error occurs, the method falls back to requesting
+     * the last known location via {@link #getLastKnownLocationAndJoin(String)}.
+     *
+     * @param userId The ID of the user joining the waiting list.
      */
     private void getCurrentLocationAndJoin(String userId) {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -541,7 +657,13 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Fallback: Try to get last known location
+     * Attempts to retrieve the device's last known location.
+     *
+     * <p>If a valid location is obtained, it is used when adding the user to
+     * the waiting list. If not, the user is joined without location data.
+     * This is a fallback when real-time location retrieval fails.
+     *
+     * @param userId The ID of the user joining the waiting list.
      */
     private void getLastKnownLocationAndJoin(String userId) {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -566,8 +688,22 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Add user to waiting list with optional location
-     * Now logs geolocation access for privacy compliance audit
+     * Adds the user to the event waiting list and optionally stores their
+     * geolocation if the event requires location tracking.
+     *
+     * <p>Implements:
+     * <ul>
+     *     <li>US 01.01.01 — Join waiting list</li>
+     *     <li>US 02.02.02 — Save entrant geolocation for organizer map</li>
+     * </ul>
+     *
+     * <p>If valid location data is provided, the user's latitude and longitude
+     * are saved under `entrantLocations.{userId}`.
+     *
+     * <p>After saving, a notification is sent to the user and the UI is refreshed.
+     *
+     * @param userId   The ID of the user joining.
+     * @param location The user's location, or {@code null} if unavailable.
      */
     private void addToWaitingList(String userId, Location location) {
         Map<String, Object> updates = new HashMap<>();
@@ -615,8 +751,23 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Log geolocation access for privacy compliance audit
-     * Records when and where a user's location was captured for event registration
+     * Records an audit entry whenever a user's location is captured during
+     * the waiting list registration process.
+     *
+     * <p>Implements privacy compliance by storing:
+     * <ul>
+     *     <li>User ID and name</li>
+     *     <li>Event ID and event name</li>
+     *     <li>Latitude and longitude</li>
+     *     <li>Timestamp</li>
+     *     <li>Action taken (e.g., "joined_waiting_list")</li>
+     * </ul>
+     *
+     * <p>The audit entry is stored in the `geolocation_audits` collection.
+     * Any failure is silently ignored since logging does not affect user flow.
+     *
+     * @param userId   The ID of the user whose location was captured.
+     * @param location The captured location object.
      */
     private void logGeolocationAccess(String userId, Location location) {
         // Get user name from Firebase Auth (or use userId as fallback)
@@ -652,7 +803,16 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * US 01.01.02: Leave waiting list
+     * Removes the current user from the event's waiting list.
+     *
+     * <p>Implements:
+     * <ul>
+     *     <li>US 01.01.02 — Leave waiting list</li>
+     * </ul>
+     *
+     * <p>The user is removed from the `waitingList` array in Firestore, and the
+     * UI is updated to reflect the change. Displays an error message if the
+     * operation fails.
      */
     private void leaveWaitingList() {
         if (mAuth.getCurrentUser() == null) return;
@@ -673,7 +833,11 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Show confirmation dialog before accepting
+     * Displays a confirmation dialog allowing the user to accept their
+     * invitation to the event.
+     *
+     * <p>Accepting the dialog triggers {@link #acceptInvitation()}, while
+     * cancelling dismisses the dialog with no further action.
      */
     private void showAcceptConfirmation() {
         new AlertDialog.Builder(this)
@@ -685,7 +849,23 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * US 01.05.02: Accept invitation with notification
+     * Confirms the user's attendance for the event.
+     *
+     * <p>Implements:
+     * <ul>
+     *     <li>US 01.05.02 — Accept invitation</li>
+     * </ul>
+     *
+     * <p>The method:
+     * <ol>
+     *     <li>Removes the user from the `selectedList`</li>
+     *     <li>Adds the user to `signedUpUsers`</li>
+     *     <li>Sends a confirmation notification</li>
+     *     <li>Reloads event details with updated state</li>
+     * </ol>
+     *
+     * <p>Buttons are temporarily disabled during the update to prevent
+     * duplicate submissions.
      */
     private void acceptInvitation() {
         if (mAuth.getCurrentUser() == null) return;
@@ -727,7 +907,11 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * Show confirmation dialog before declining
+     * Displays a confirmation dialog asking the user to verify their decision
+     * to decline an event invitation.
+     *
+     * <p>If confirmed, {@link #declineInvitation()} is executed. Declining an
+     * invitation is irreversible and removes the user from selection.
      */
     private void showDeclineConfirmation() {
         new AlertDialog.Builder(this)
@@ -739,7 +923,21 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * US 01.05.03: Decline invitation with notification
+     * Declines the user's invitation for the event.
+     *
+     * <p>Implements:
+     * <ul>
+     *     <li>US 01.05.03 — Decline invitation</li>
+     * </ul>
+     *
+     * <p>The method updates Firestore by:
+     * <ol>
+     *     <li>Removing the user from the `selectedList`</li>
+     *     <li>Adding them to the `declinedUsers` list</li>
+     * </ol>
+     *
+     * <p>A notification is sent to confirm the decline, and the activity
+     * finishes afterward. Failure restores button interactivity.
      */
     private void declineInvitation() {
         if (mAuth.getCurrentUser() == null) return;
@@ -781,7 +979,22 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     /**
-     * US 01.05.05: Show lottery selection criteria
+     * Displays a dialog explaining how the event's lottery system works.
+     *
+     * <p>Implements:
+     * <ul>
+     *     <li>US 01.05.05 — Show lottery selection criteria</li>
+     * </ul>
+     *
+     * <p>The dialog includes:
+     * <ul>
+     *     <li>How entrants are selected</li>
+     *     <li>Registration timeline</li>
+     *     <li>Capacity and remaining spots</li>
+     *     <li>Current waiting and selected counts</li>
+     * </ul>
+     *
+     * <p>This information ensures transparency in lottery-based selection.
      */
     private void showLotteryInfoDialog() {
         // Build the lottery info message
@@ -836,18 +1049,36 @@ public class EventDetailsActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Displays the loading view while hiding the main content and error views.
+     *
+     * <p>Used when fetching event details or performing slow operations.
+     */
     private void showLoading() {
         loadingView.setVisibility(View.VISIBLE);
         contentView.setVisibility(View.GONE);
         errorView.setVisibility(View.GONE);
     }
 
+    /**
+     * Displays the main content view after data has successfully loaded.
+     *
+     * <p>Hides both the loading view and the error view.
+     */
     private void showContent() {
         loadingView.setVisibility(View.GONE);
         contentView.setVisibility(View.VISIBLE);
         errorView.setVisibility(View.GONE);
     }
 
+    /**
+     * Displays an error state with a message explaining what went wrong.
+     *
+     * <p>Hides the loading and content views. The message is shown in the
+     * dedicated error TextView.
+     *
+     * @param message The error message to display to the user.
+     */
     private void showError(String message) {
         loadingView.setVisibility(View.GONE);
         contentView.setVisibility(View.GONE);
@@ -859,6 +1090,16 @@ public class EventDetailsActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Cleans up resources before the activity is destroyed.
+     *
+     * <p>Specifically removes the Firestore real-time listener to prevent:
+     * <ul>
+     *     <li>Memory leaks</li>
+     *     <li>Orphaned listeners</li>
+     *     <li>Unwanted UI updates when activity is no longer active</li>
+     * </ul>
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();

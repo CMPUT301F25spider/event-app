@@ -26,14 +26,17 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 
 /**
- * MainActivity - Main app with bottom navigation
+ * MainActivity - Entrant home screen with bottom navigation.
  *
  * Features:
- * - Home: Quick actions (scan QR, shortcuts)
- * - Events: Browse and join events
- * - Profile: User settings and info
- * - Admin access: Via Profile menu (if user is admin)
- * - FCM: Push notification setup
+ * • Home: Quick actions such as QR scanning and shortcuts
+ * • Events: Browse and join events
+ * • Profile: User information and settings
+ * • Admin access: Profile screen shows admin panel if user is an admin
+ * • FCM integration: Handles push notification permissions and token management
+ *
+ * This activity hosts three fragments and initializes the user's Firestore
+ * information, notification permissions, and FCM token lifecycle.
  */
 public class MainActivity extends AppCompatActivity {
     private BottomNavigationView bottomNav;
@@ -93,9 +96,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Load current user to check admin status
+     * Loads the currently authenticated user's Firestore profile.
      *
-     * Calls checkAndSaveCachedToken() as soon as user is confirmed to be logged in.
+     * <p>This is required for:
+     * <ul>
+     *     <li>Checking admin privileges</li>
+     *     <li>Ensuring cached FCM tokens are synchronized</li>
+     * </ul>
+     *
+     * <p>Once the user document is confirmed to exist, this method triggers
+     * {@link MyFirebaseMessagingService#checkAndSaveCachedToken(android.content.Context)}
+     * to handle token delivery if the device generated a token before login.
      */
     private void loadCurrentUser() {
         if (mAuth.getCurrentUser() == null) return;
@@ -117,7 +128,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     *Request notification permission
+     * Requests Android 13+ POST_NOTIFICATIONS permission.
+     *
+     * <p>For devices running below Android 13, this method logs that no runtime
+     * permission is needed. For Android 13 and above, it checks whether the
+     * permission is granted and requests it if not.
      */
     private void requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -137,7 +152,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Handle permission request result
+     * Handles the result of the POST_NOTIFICATIONS permission request.
+     *
+     * @param requestCode  Identifier for the permission request.
+     * @param permissions  The permissions requested.
+     * @param grantResults Results for each requested permission.
+     *
+     * Logs whether the user granted or denied notification access. No user-facing
+     * UI changes occur here—the app continues functioning normally regardless.
      */
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
@@ -153,8 +175,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Open Admin Panel
-     * Called from ProfileFragment when admin clicks the option
+     * Opens the admin dashboard.
+     *
+     * <p>Called from ProfileFragment when a user with admin privileges selects
+     * the "Admin Panel" option. Launches {@link AdminHomeActivity}.
      */
     public void openAdminPanel() {
         Intent intent = new Intent(this, AdminHomeActivity.class);
@@ -162,19 +186,37 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Get current user (for fragments to check admin status)
+     * Returns the currently loaded User object.
+     *
+     * @return The logged-in {@link User}, or null if not yet loaded.
+     *
+     * <p>Fragments use this method to check role and personalize UI.
      */
     public User getCurrentUser() {
         return currentUser;
     }
 
     /**
-     * Check if current user is admin
+     * Checks whether the currently logged-in user is an admin.
+     *
+     * @return true if admin, false otherwise.
+     *
+     * <p>Used by ProfileFragment to show or hide admin options.
      */
     public boolean isCurrentUserAdmin() {
         return currentUser != null && currentUser.isAdmin();
     }
 
+    /**
+     * Reloads the current user's Firestore document when returning to
+     * MainActivity.
+     *
+     * <p>This ensures that:
+     * <ul>
+     *     <li>Role changes (e.g., promoted to admin) are reflected</li>
+     *     <li>Updated FCM token caches are synchronized</li>
+     * </ul>
+     */
     @Override
     protected void onResume() {
         super.onResume();

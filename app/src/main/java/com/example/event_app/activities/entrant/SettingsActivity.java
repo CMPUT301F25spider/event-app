@@ -24,14 +24,15 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 /**
- * SettingsActivity - Edit profile, manage account, admin access, and accessibility
+ * SettingsActivity – Allows users to edit their profile, manage account settings,
+ * delete their account, and unlock admin mode via secret code.
  *
  * Features:
- * - US 01.02.02: Update profile information
- * - US 01.02.04: Delete profile
- * - US 01.04.03: Opt out of notifications
- * - US 01.08.01 Accessibility options (large text, high contrast)
- * - Admin code unlock (secret: 1234)
+ * • US 01.02.02 – Update profile information
+ * • US 01.02.04 – Delete profile
+ * • US 01.04.03 – Opt out of notifications
+ * • US 01.08.01 – Accessibility options (handled via AccessibilityHelper)
+ * • Hidden admin unlock code ("1234")
  */
 public class SettingsActivity extends AppCompatActivity {
     private static final String ADMIN_SECRET_CODE = "1234"; //Secret code
@@ -48,7 +49,6 @@ public class SettingsActivity extends AppCompatActivity {
     // Data
     private String userId;
     private User currentUser;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +74,17 @@ public class SettingsActivity extends AppCompatActivity {
         loadUserProfile();
     }
 
+    /**
+     * Initializes and binds all UI components including:
+     * • Profile fields (name, email, phone)
+     * • Buttons (save, delete account)
+     * • Admin unlock button
+     *
+     * Also sets listeners for:
+     * • Save profile
+     * • Delete account
+     * • Back navigation
+     */
     private void initViews() {
         // Profile views
         editName = findViewById(R.id.editName);
@@ -94,10 +105,17 @@ public class SettingsActivity extends AppCompatActivity {
 
     }
 
-
-
-
-
+    /**
+     * Retrieves the current user's profile from Firestore.
+     * Shows loading state while fetching and switches back to content view afterward.
+     *
+     * On success:
+     * • Stores User object
+     * • Calls displayUserData() to populate fields
+     *
+     * On failure:
+     * • Shows a toast error but still reveals content view
+     */
     private void loadUserProfile() {
         showLoading();
 
@@ -118,6 +136,11 @@ public class SettingsActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Populates UI fields (name, email, phone) with the user's current profile data.
+     *
+     * Requires: currentUser is already loaded from Firestore.
+     */
     private void displayUserData() {
         // Display profile info
         editName.setText(currentUser.getName());
@@ -127,7 +150,15 @@ public class SettingsActivity extends AppCompatActivity {
 
 
     /**
-     * US 01.02.02: Update profile information
+     * Validates input fields and saves updated profile information to Firestore.
+     *
+     * US 01.02.02 – Update profile information
+     *
+     * Process:
+     * 1. Reads all text fields
+     * 2. Validates name and email
+     * 3. Updates User object and writes it to Firestore
+     * 4. Displays success or failure toast
      */
     private void saveProfile() {
         // Get values
@@ -162,6 +193,13 @@ public class SettingsActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Validates the user's name and email before saving.
+     *
+     * @param name  The entered name.
+     * @param email The entered email.
+     * @return true if all fields are valid, false otherwise.
+     */
     private boolean validateInputs(String name, String email) {
         // Validate name
         if (TextUtils.isEmpty(name)) {
@@ -191,9 +229,13 @@ public class SettingsActivity extends AppCompatActivity {
 
         return true;
     }
+
     /**
-     * US 01.02.04: Delete profile
+     * Displays a confirmation dialog before deleting a user account.
+     *
+     * US 01.02.04 – Delete profile
      */
+
     private void showDeleteAccountDialog() {
         new AlertDialog.Builder(this)
                 .setTitle("Delete Account")
@@ -204,6 +246,15 @@ public class SettingsActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Deletes the user's Firestore document and then attempts to delete
+     * the Firebase Authentication account as well.
+     *
+     * Behavior:
+     * • Disables delete button to prevent double taps
+     * • On full success → signs out & finishes activity
+     * • On partial failure → warns user and stops activity
+     */
     private void deleteAccount() {
         btnDeleteAccount.setEnabled(false);
 
@@ -230,16 +281,26 @@ public class SettingsActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Shows the loading UI and hides the content view.
+     */
     private void showLoading() {
         loadingView.setVisibility(View.VISIBLE);
         contentView.setVisibility(View.GONE);
     }
 
+    /**
+     * Hides the loading UI and shows the content view.
+     */
     private void showContent() {
         loadingView.setVisibility(View.GONE);
         contentView.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Reloads user profile when returning to the screen.
+     * Useful if user role or profile data changed elsewhere.
+     */
     @Override
     protected void onResume() {
         super.onResume();

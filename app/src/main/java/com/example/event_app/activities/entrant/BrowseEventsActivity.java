@@ -22,10 +22,15 @@ import java.util.List;
 
 
 /**
- * BrowseEventsActivity - Browse all available events
+ * BrowseEventsActivity - Allows entrants to browse all active events.
+ *
+ * Features:
+ * • Displays list of active events retrieved from Firestore
+ * • Shows waiting list count for each event
+ * • Handles loading, empty state, and error views
  *
  * US 01.01.03: Browse available events
- * US 01.05.04: See waiting list count for each event
+ * US 01.05.04: View waiting list count for each event
  */
 public class BrowseEventsActivity extends AppCompatActivity {
     // UI Elements
@@ -56,6 +61,10 @@ public class BrowseEventsActivity extends AppCompatActivity {
         loadEvents();
     }
 
+    /**
+     * Initializes all UI components including RecyclerView, loading indicators,
+     * empty/error views, and attaches listeners to the Back and Retry buttons.
+     */
     private void initViews() {
         rvEvents = findViewById(R.id.rvEvents);
         progressBar = findViewById(R.id.progressBar);
@@ -72,12 +81,27 @@ public class BrowseEventsActivity extends AppCompatActivity {
         btnRetry.setOnClickListener(v -> loadEvents());
     }
 
+    /**
+     * Configures the RecyclerView for displaying event cards.
+     * Sets the adapter and applies a vertical LinearLayoutManager.
+     */
     private void setupRecyclerView() {
         adapter = new EventAdapter(this);
         rvEvents.setLayoutManager(new LinearLayoutManager(this));
         rvEvents.setAdapter(adapter);
     }
 
+    /**
+     * Loads all active events from Firestore ordered by creation date.
+     * Handles state transitions between loading, empty, error, and success views.
+     *
+     * Firestore query:
+     * • status = "active"
+     * • ordered by createdAt DESC
+     *
+     * US 01.01.03: Browse available events
+     *
+     */
     private void loadEvents() {
         showLoading();
 
@@ -105,6 +129,10 @@ public class BrowseEventsActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Displays the loading spinner while hiding all other UI sections
+     * (events list, empty state, error state).
+     */
     private void showLoading() {
         progressBar.setVisibility(View.VISIBLE);
         rvEvents.setVisibility(View.GONE);
@@ -112,6 +140,12 @@ public class BrowseEventsActivity extends AppCompatActivity {
         errorView.setVisibility(View.GONE);
     }
 
+    /**
+     * Displays a list of fetched events by updating the adapter and switching
+     * visibility to show the RecyclerView only.
+     *
+     * @param events list of active events retrieved from Firestore
+     */
     private void showEvents(List<Event> events) {
         progressBar.setVisibility(View.GONE);
         rvEvents.setVisibility(View.VISIBLE);
@@ -120,6 +154,10 @@ public class BrowseEventsActivity extends AppCompatActivity {
         adapter.setEvents(events);
     }
 
+    /**
+     * Displays the empty state view when no active events are available.
+     * Hides the list and error views.
+     */
     private void showEmpty() {
         progressBar.setVisibility(View.GONE);
         rvEvents.setVisibility(View.GONE);
@@ -128,6 +166,12 @@ public class BrowseEventsActivity extends AppCompatActivity {
         tvEmptyState.setText("No events available yet.\nCheck back soon!");
     }
 
+    /**
+     * Displays the error view with a message explaining what went wrong
+     * during event fetching.
+     *
+     * @param message the error message to display
+     */
     private void showError(String message) {
         progressBar.setVisibility(View.GONE);
         rvEvents.setVisibility(View.GONE);
@@ -136,6 +180,11 @@ public class BrowseEventsActivity extends AppCompatActivity {
         tvErrorState.setText(message);
     }
 
+    /**
+     * Reloads the list of events whenever the user returns to this screen.
+     *
+     * Ensures the most up-to-date event availability is shown.
+     */
     @Override
     protected void onResume() {
         super.onResume();
