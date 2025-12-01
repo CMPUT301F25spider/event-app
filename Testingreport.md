@@ -7,53 +7,26 @@
 
 ./gradlew test --info
 
-#NOT IMPLEMENTED, COVERAGE IS NOT COMPLETE
-./gradlew test jacocoTestReport
+## Current Status
+- **Execution**: `./gradlew test` currently fails in this environment because the Android SDK location is not configured; configure `ANDROID_HOME`/`sdk.dir` locally or in CI before running.
+- **Scope**: All tests rely on dummy data, mocked Firebase/Auth/Firestore, or Robolectric shadows—no live services or UI automation.
+
 ```
 # COVERAGE 
 ```
 
-##Test Coverage
 
-Result - ResultTest.java : 5 methods Successful
-EntrantsFilter - EntrantsFilterTest.java : 12 methods Successful
-Event - EventTest.java : 13 methods Successful
-UserRole - UserRoleTest.java : 5 methods Successful 
-Basic Tests - ExampleUnitTest.java  
+## Coverage Summary (unit tests)
+- **ActivityLifecycleTest** – 21 lifecycle/intent wiring checks across every activity (entrant, organizer, admin) using mocked Firebase and dummy intent extras.
+- **ActivityIntentFlowTest** – 6 intent payload validations for navigation targets.
+- **NavigatorTest** – Verifies event navigation intent is launched with the correct extra.
+- **QRServiceTest** – 3 QR-code validation paths (valid, invalid, blank) exercising navigation decisions.
+- **UserServiceTest** – 6 service behaviors including validation failures, persistence interactions, and favorite/notification toggles with dummy users.
+- **UserValidatorTest** – Valid and invalid user data permutations plus required-field aggregation.
+- **EventModelTest** – 6 event-derived calculations (spots remaining, cancellation rate, capacity full, replacement pool, past-event logic).
+ 
 
-**Total: 37 test methods across 5 test classes**
-
-##Test Details
-
-ResultTest.java
-- Tests success cases (`Result.ok()`)
-- Tests error cases with Throwable and string random
-- Multiple data types
-
-EntrantsFilterTest.java
-- Tests enum values
-- Tests case matching
-
-EventTest.java
-- Tests cancellation rate Computation
-- Tests edge cases 0, 100+
-- Tests constructors
-
-UserRoleTest.java
-- Tests all role constants
-
-# thorough Null testing in all 5
-
-
-**Removed `.github/workflows/ant.yml`** - Was trying to build with Ant (not applicable for Android/Gradle project)
-
-# Current Status
-
-1. **Single CI Workflow**: Only one workflow file (android.yml) - no conflicts
-2. **Proper Android Setup**: Android SDK configured correctly
-3. **Test Execution**: Tests explicitly run before build
-4. **Error Handling**: Proper error handling and artifact upload
-
+**Total: 45 test methods across 7 test classes**
 
 ### Unit Test Template
 
