@@ -23,12 +23,45 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * MyFirebaseMessagingService - Handles FCM push notifications
+ * MyFirebaseMessagingService - Handles push notifications and FCM token updates.
  *
- * This service:
- * 1. Receives push notifications from Firebase
- * 2. Displays them to the user
- * 3. Stores FCM tokens for targeting
+ * <p>This service performs three core responsibilities:</p>
+ *
+ * <ol>
+ *     <li><b>Receives push notifications</b> sent through Firebase Cloud Messaging (FCM).</li>
+ *     <li><b>Displays notifications</b> to the user using Android’s Notification API.</li>
+ *     <li><b>Manages FCM registration tokens</b> by saving them to Firestore and caching them
+ *         locally when the user is logged out.</li>
+ * </ol>
+ *
+ * <h3>Token Handling</h3>
+ * <p>
+ * FCM may generate a new token at any time (first install, reinstallation,
+ * app restore, permissions change, or security rotation). This class:
+ * </p>
+ *
+ * <ul>
+ *     <li>Saves the token immediately if the user is logged in.</li>
+ *     <li>Caches the token in SharedPreferences if the user is logged out.</li>
+ *     <li>Provides {@link #checkAndSaveCachedToken(Context)} to sync cached tokens
+ *         after login.</li>
+ * </ul>
+ *
+ * <h3>Notification Handling</h3>
+ * <p>Notifications may arrive in two forms:</p>
+ * <ul>
+ *     <li><b>Data messages</b> – custom key–value pairs in {@code remoteMessage.getData()}.</li>
+ *     <li><b>Notification messages</b> – standard FCM notification payloads.</li>
+ * </ul>
+ * <p>This service handles both and displays a system notification using a
+ * dedicated notification channel.</p>
+ *
+ * <h3>Used In:</h3>
+ * <ul>
+ *     <li>{@code FirebaseMessagingService} lifecycle</li>
+ *     <li>Authentication workflows for syncing cached tokens</li>
+ *     <li>Event update notifications for entrants and organizers</li>
+ * </ul>
  */
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
@@ -38,8 +71,13 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     private static final String KEY_CACHED_TOKEN = "cached_fcm_token";
 
     /**
-     * Called when a new FCM token is generated
-     * This happens on first install and when token is refreshed
+     * Called by Firebase whenever a new FCM token is generated.
+     *
+     * <p>This token uniquely identifies the device for push notifications.
+     * The method attempts to save the token to Firestore if a user is logged in.
+     * If no user is logged in, the token is cached locally for later save.</p>
+     *
+     * @param token the newly generated FCM registration token
      */
     @Override
     public void onNewToken(@NonNull String token) {
@@ -50,7 +88,18 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     }
 
     /**
-     * Called when a push notification is received
+     * Called when the device receives a new FCM message.
+     *
+     * <p>Supports two types of incoming messages:</p>
+     * <ul>
+     *     <li><b>Data payload</b> (custom key–value pairs)</li>
+     *     <li><b>Notification payload</b> (standard push notification)</li>
+     * </ul>
+     *
+     * <p>The method extracts the title, message body, and optional eventId,
+     * then displays a system notification.</p>
+     *
+     * @param remoteMessage the message received from FCM
      */
     @Override
     public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
@@ -80,9 +129,12 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     }
 
     /**
-     * Save FCM token to Firestore
+     * Attempts to save the FCM token into the logged-in user's Firestore document.
      *
-     * This method saves the token to Firestore ONLY if the user is logged in.
+     * <p>If no user is logged in, the token is not lost—it is cached locally
+     * so it can be saved immediately after login.</p>
+     *
+     * @param token the FCM token that should be saved
      */
     private void saveFCMTokenToFirestore(String token) {
         FirebaseAuth auth = FirebaseAuth.getInstance();
@@ -112,8 +164,12 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     }
 
     /**
-     * Saves the token to SharedPreferences for persistence
-     * until the user logs in. Use null to clear the cache.
+     * Stores the FCM token in SharedPreferences so it can be synced later
+     * when the user logs in.
+     *
+     * <p>Passing {@code null} clears the cached token.</p>
+     *
+     * @param token the token to cache, or null to remove it
      */
     private void cacheFCMToken(String token) {
         SharedPreferences sharedPref = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -130,8 +186,12 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     }
 
     /**
-     * Call this from your login/on start activity
-     * to check if a token was generated while the user was logged out.
+     * Checks if an FCM token was cached while the user was logged out and,
+     * if so, saves it to Firestore for the currently logged-in user.
+     *
+     * <p>Call this method after login or at the start of MainActivity.</p>
+     *
+     * @param context context used to access SharedPreferences and Firestore
      */
     public static void checkAndSaveCachedToken(Context context) {
         FirebaseAuth auth = FirebaseAuth.getInstance();
@@ -167,7 +227,14 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     }
 
     /**
-     * Display notification to user
+     * Builds and displays a system notification for the received push message.
+     *
+     * <p>If an event ID is included, it is passed to MainActivity so the
+     * app can navigate to the corresponding event page.</p>
+     *
+     * @param title   The notification title
+     * @param message The notification body text
+     * @param eventId Optional event ID included in the notification payload
      */
     private void showNotification(String title, String message, String eventId) {
         // Create notification channel (required for Android 8.0+)
@@ -206,7 +273,10 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     }
 
     /**
-     * Create notification channel (Android 8.0+)
+     * Creates the required notification channel for Android 8.0 (API 26+) and above.
+     *
+     * <p>This ensures that all event-related notifications appear with the correct
+     * priority and settings.</p>
      */
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
