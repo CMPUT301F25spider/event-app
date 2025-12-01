@@ -1,0 +1,456 @@
+package com.example.event_app.activities.admin;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.View;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.event_app.R;
+import com.example.event_app.adapters.AdminEventAdapter;
+import com.example.event_app.models.Event;
+import com.example.event_app.utils.AccessibilityHelper;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+
+/**
+ * AdminBrowseEventsActivity
+ *
+ * <p>Allows administrators to browse, search, filter, and sort all events in the system.
+ * The activity supports the following features:</p>
+ *
+ * <ul>
+ *     <li>Real-time search by event name or organizer name</li>
+ *     <li>Status filtering using Material Design chips</li>
+ *     <li>Sorting by name, date, and entrant count</li>
+ *     <li>Viewing event details through the admin event details screen</li>
+ * </ul>
+ *
+ * <p>This activity fulfills US 03.04.01 — administrators can browse all created events.</p>
+ */
+public class AdminBrowseEventsActivity extends AppCompatActivity {
+
+    // Sort options
+    private enum SortOption {
+        NAME_ASC("Name (A-Z)"),
+        NAME_DESC("Name (Z-A)"),
+        DATE_NEWEST("Date (Newest First)"),
+        DATE_OLDEST("Date (Oldest First)"),
+        ENTRANTS_HIGH("Entrants (High to Low)"),
+        ENTRANTS_LOW("Entrants (Low to High)");
+        private final String displayName;
+        SortOption(String displayName) {
+            this.displayName = displayName;
+        }
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+
+    // Views
+    private RecyclerView recyclerViewEvents;
+    private LinearLayout emptyStateLayout;
+    private TextView tvEmptyMessage;
+    private TextView tvResultsCount;
+    private TextInputEditText searchEvents;
+    private ChipGroup chipGroupStatus;
+    private Chip chipAll, chipActive, chipInactive, chipCompleted, chipCancelled, chipFlagged;
+    private Button btnSort;
+    private AdminEventAdapter eventAdapter;
+
+    // Firebase
+    private FirebaseFirestore db;
+
+    // Data
+    private final List<Event> allEvents = new ArrayList<>();
+    private final List<Event> filteredEvents = new ArrayList<>();
+
+    // Current filters and sort
+    private String currentSearchQuery = "";
+    private String currentStatusFilter = "all";
+    private SortOption currentSort = SortOption.NAME_ASC;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_admin_browse_events);
+        new AccessibilityHelper(this).applyAccessibilitySettings(this);
+
+        // Set up action bar
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle("Browse Events");
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+        // Initialize Firebase
+        db = FirebaseFirestore.getInstance();
+        // Initialize views
+        initViews();
+        // Set up RecyclerView
+        setupRecyclerView();
+        // Set up search
+        setupSearch();
+        // Set up filters
+        setupFilters();
+        // Set up sort
+        setupSort();
+        // Load events
+        loadEvents();
+    }
+    /**
+     * Initializes all view references used in this activity, including RecyclerView,
+     * filter chips, search bar, and empty state layout.
+     */
+    private void initViews() {
+        recyclerViewEvents = findViewById(R.id.recyclerViewEvents);
+        emptyStateLayout = findViewById(R.id.emptyStateLayout);
+        tvEmptyMessage = findViewById(R.id.tvEmptyMessage);
+        tvResultsCount = findViewById(R.id.tvResultsCount);
+        searchEvents = findViewById(R.id.searchEvents);
+        chipGroupStatus = findViewById(R.id.chipGroupStatus);
+        chipAll = findViewById(R.id.chipAll);
+        chipActive = findViewById(R.id.chipActive);
+        chipInactive = findViewById(R.id.chipInactive);
+        chipCompleted = findViewById(R.id.chipCompleted);
+        btnSort = findViewById(R.id.btnSort);
+        chipCancelled = findViewById(R.id.chipCancelled);
+        chipFlagged = findViewById(R.id.chipFlagged);
+    }
+
+    /**
+     * Configures the RecyclerView for displaying admin event items, initializes the adapter,
+     * and attaches a click listener that navigates to the admin event details screen.
+     */
+    private void setupRecyclerView() {
+        // Create admin adapter
+        eventAdapter = new AdminEventAdapter();
+        // Set click listener
+        eventAdapter.setOnEventClickListener(event -> {
+            // Open event details activity
+            Intent intent = new Intent(this, AdminEventDetailsActivity.class);
+            intent.putExtra(AdminEventDetailsActivity.EXTRA_EVENT_ID, event.getEventId());
+            startActivity(intent);
+        });
+        // Set layout manager and adapter
+        recyclerViewEvents.setLayoutManager(new LinearLayoutManager(this));
+        recyclerViewEvents.setAdapter(eventAdapter);
+    }
+
+    /**
+     * Sets up search functionality using a TextWatcher. Updates the displayed events
+     * whenever the search query changes.
+     */
+    private void setupSearch() {
+        if (searchEvents == null) {
+            return;
+        }
+
+        searchEvents.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                currentSearchQuery = s.toString();
+                applyFiltersAndSort();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) { }
+        });
+    }
+
+    /**
+     * Configures status filter chips and updates the event list whenever the
+     * selected status filter changes.
+     */
+    private void setupFilters() {
+        if (chipGroupStatus == null) {
+            return;
+        }
+
+        chipGroupStatus.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (checkedIds.isEmpty()) {
+                return;
+            }
+
+            int checkedId = checkedIds.get(0);
+
+            if (checkedId == R.id.chipAll) {
+                currentStatusFilter = "all";
+            } else if (checkedId == R.id.chipActive) {
+                currentStatusFilter = "active";
+            } else if (checkedId == R.id.chipInactive) {
+                currentStatusFilter = "inactive";
+            } else if (checkedId == R.id.chipCompleted) {
+                currentStatusFilter = "completed";
+            } else if (checkedId == R.id.chipCancelled) {
+                currentStatusFilter = "cancelled";
+            } else if (checkedId == R.id.chipFlagged) {
+                currentStatusFilter = "flagged";
+            }
+            applyFiltersAndSort();
+        });
+    }
+
+    /**
+     * Attaches a click listener to the sort button which opens a dialog
+     * allowing administrators to choose a sorting option.
+     */
+    private void setupSort() {
+        if (btnSort == null) {
+            return;
+        }
+
+        btnSort.setOnClickListener(v -> showSortDialog());
+    }
+
+    /**
+     * Displays a single-choice dialog listing all available sort options.
+     * Updates the sorting state and refreshes the event list when a choice is made.
+     */
+    private void showSortDialog() {
+        String[] sortOptions = new String[SortOption.values().length];
+        for (int i = 0; i < SortOption.values().length; i++) {
+            sortOptions[i] = SortOption.values()[i].getDisplayName();
+        }
+
+        // Find current selection index
+        int currentIndex = currentSort.ordinal();
+
+        new AlertDialog.Builder(this)
+                .setTitle("Sort Events")
+                .setSingleChoiceItems(sortOptions, currentIndex, (dialog, which) -> {
+                    currentSort = SortOption.values()[which];
+                    applyFiltersAndSort();
+                    dialog.dismiss();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /**
+     * Loads all event documents from Firestore, converts them to Event objects,
+     * stores them in memory, and applies search, filter, and sort operations.
+     *
+     * <p>Displays an error message if Firebase retrieval fails.</p>
+     */
+    private void loadEvents() {
+        db.collection("events")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    allEvents.clear();
+
+                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        Event event = document.toObject(Event.class);
+                        event.setEventId(document.getId());
+                        allEvents.add(event);
+                    }
+                    applyFiltersAndSort();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Error loading events: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                    updateUI(true);
+                });
+    }
+
+    /**
+     * Applies the current search query, status filter, and selected sort option
+     * to the list of all events. The resulting list is displayed through the adapter.
+     */
+    private void applyFiltersAndSort() {
+        String searchQuery = currentSearchQuery.toLowerCase().trim();
+        filteredEvents.clear();
+
+        // Step 1: Apply filters
+        for (Event event : allEvents) {
+            if (!matchesStatusFilter(event)) {
+                continue;
+            }
+
+            if (!searchQuery.isEmpty() && !matchesSearchQuery(event, searchQuery)) {
+                continue;
+            }
+
+            filteredEvents.add(event);
+        }
+
+        // Step 2: Apply sort
+        sortEvents(filteredEvents);
+
+        updateUI(false);
+    }
+
+    /**
+     * Sorts the given list of events according to the currently selected sort option.
+     *
+     * @param events the list of events to be sorted
+     */
+    private void sortEvents(List<Event> events) {
+        switch (currentSort) {
+            case NAME_ASC:
+                Collections.sort(events, (e1, e2) -> {
+                    String name1 = e1.getName() != null ? e1.getName() : "";
+                    String name2 = e2.getName() != null ? e2.getName() : "";
+                    return name1.compareToIgnoreCase(name2);
+                });
+                break;
+
+            case NAME_DESC:
+                Collections.sort(events, (e1, e2) -> {
+                    String name1 = e1.getName() != null ? e1.getName() : "";
+                    String name2 = e2.getName() != null ? e2.getName() : "";
+                    return name2.compareToIgnoreCase(name1);
+                });
+                break;
+
+            case DATE_NEWEST:
+                Collections.sort(events, (e1, e2) -> {
+                    Date date1 = e1.getEventDate();
+                    Date date2 = e2.getEventDate();
+                    if (date1 == null && date2 == null) return 0;
+                    if (date1 == null) return 1;
+                    if (date2 == null) return -1;
+                    return date2.compareTo(date1); // Newest first
+                });
+                break;
+
+            case DATE_OLDEST:
+                Collections.sort(events, (e1, e2) -> {
+                    Date date1 = e1.getEventDate();
+                    Date date2 = e2.getEventDate();
+                    if (date1 == null && date2 == null) return 0;
+                    if (date1 == null) return 1;
+                    if (date2 == null) return -1;
+                    return date1.compareTo(date2); // Oldest first
+                });
+                break;
+
+            case ENTRANTS_HIGH:
+                Collections.sort(events, (e1, e2) ->
+                        Integer.compare(e2.getEntrantCount(), e1.getEntrantCount()) // High to low
+                );
+                break;
+
+            case ENTRANTS_LOW:
+                Collections.sort(events, (e1, e2) ->
+                        Integer.compare(e1.getEntrantCount(), e2.getEntrantCount()) // Low to high
+                );
+                break;
+        }
+    }
+
+    /**
+     * Determines whether an event matches the active status filter, including
+     * special handling for flagged events (high cancellation rate).
+     *
+     * @param event the event to evaluate
+     * @return true if the event should be included in results
+     */
+    private boolean matchesStatusFilter(Event event) {
+        if ("all".equals(currentStatusFilter)) {
+            return true;
+        }
+
+        if ("flagged".equals(currentStatusFilter)) {
+            return event.hasHighCancellationRate();
+        }
+
+        String eventStatus = event.getStatus();
+        if (eventStatus == null) {
+            eventStatus = "active";
+        }
+
+        return eventStatus.equalsIgnoreCase(currentStatusFilter);
+    }
+
+    /**
+     * Checks whether an event matches the current text-based search query by comparing
+     * the query against both the event name and the organizer name.
+     *
+     * @param event the event being tested
+     * @param query lowercase trimmed search query
+     * @return true if the event name or organizer name contains the query
+     */
+    private boolean matchesSearchQuery(Event event, String query) {
+        boolean matchesName = event.getName() != null &&
+                event.getName().toLowerCase().contains(query);
+
+        boolean matchesOrganizer = event.getOrganizerName() != null &&
+                event.getOrganizerName().toLowerCase().contains(query);
+
+        return matchesName || matchesOrganizer;
+    }
+
+    /**
+     * Updates the visibility and content of UI elements based on whether
+     * filtered event results exist or whether an error occurred.
+     *
+     * @param isError true if events failed to load from Firestore
+     */
+    private void updateUI(boolean isError) {
+        if (filteredEvents.isEmpty()) {
+            recyclerViewEvents.setVisibility(View.GONE);
+            emptyStateLayout.setVisibility(View.VISIBLE);
+            tvResultsCount.setVisibility(View.GONE);
+
+            if (isError) {
+                tvEmptyMessage.setText("Failed to load events");
+            } else if (!currentSearchQuery.isEmpty() || !"all".equals(currentStatusFilter)) {
+                tvEmptyMessage.setText("No matching events found");
+            } else {
+                tvEmptyMessage.setText("No events available");
+            }
+        } else {
+            recyclerViewEvents.setVisibility(View.VISIBLE);
+            emptyStateLayout.setVisibility(View.GONE);
+
+            tvResultsCount.setVisibility(View.VISIBLE);
+            String countText = filteredEvents.size() == 1
+                    ? "Showing 1 event"
+                    : "Showing " + filteredEvents.size() + " events";
+            tvResultsCount.setText(countText);
+
+            eventAdapter.setEvents(filteredEvents);
+        }
+    }
+
+    /**
+     * Handles action bar "Up" navigation by finishing the current activity
+     * and returning to the previous screen.
+     *
+     * @return true to indicate that the Up navigation event was handled
+     */
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
+    }
+
+    /**
+     * Reloads event data whenever the activity becomes visible again,
+     * ensuring that admin views stay up-to-date.
+     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadEvents();
+    }
+}

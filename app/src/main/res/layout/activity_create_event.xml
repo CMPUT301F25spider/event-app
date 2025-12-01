@@ -1,161 +1,406 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/layoutRoot"
-    android:orientation="vertical"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface">
 
-    <!-- Top half: Poster (already implemented by you) -->
-    <FrameLayout
-        android:id="@+id/posterContainer"
+    <!-- Header -->
+    <LinearLayout
+        android:id="@+id/header"
         android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:background="@android:color/darker_gray">
-        <!-- Your existing poster/image upload view goes here -->
-    </FrameLayout>
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical"
+        app:layout_constraintTop_toTopOf="parent">
 
-    <!-- Bottom half: Event details form -->
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:contentDescription="Back"
+            app:tint="?attr/colorOnSurface"/>
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="16dp"
+            android:text="Create Event"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="24sp"
+            android:fontFamily="sans-serif-medium"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPreview"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="Preview"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="14sp"
+            android:textAllCaps="false"
+            app:backgroundTint="?attr/colorSurfaceVariant"
+            app:strokeColor="#000000"
+            app:strokeWidth="1dp"
+            app:cornerRadius="8dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"/>
+
+    </LinearLayout>
+
+    <!-- Content -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:fillViewport="true">
+        app:layout_constraintTop_toBottomOf="@id/header"
+        app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
-            android:orientation="vertical"
-            android:padding="16dp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
 
             <!-- Event Name -->
-            <EditText
-                android:id="@+id/inputEventName"
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Event Name"
-                android:inputType="textPersonName"/>
+                android:layout_marginBottom="16dp"
+                android:hint="Event name"
+                app:boxStrokeColor="#000000"
+                app:hintTextColor="?attr/colorOnSurfaceVariant">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editEventName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Description -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:hint="Description"
+                app:boxStrokeColor="#000000"
+                app:hintTextColor="?attr/colorOnSurfaceVariant">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textMultiLine"
+                    android:minLines="3"
+                    android:gravity="top"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp"/>
+            </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Location -->
-            <EditText
-                android:id="@+id/inputLocation"
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Location"
-                android:inputType="textPostalAddress"
-                android:layout_marginTop="12dp"/>
+                android:layout_marginBottom="16dp"
+                android:hint="Location (optional)"
+                app:boxStrokeColor="#000000"
+                app:hintTextColor="?attr/colorOnSurfaceVariant">
 
-            <!-- Start Date -->
-            <TextView
-                android:id="@+id/inputStartDate"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Start Date"
-                android:padding="12dp"
-                android:background="@android:drawable/edit_text"
-                android:layout_marginTop="12dp"/>
-
-            <!-- End Date -->
-            <TextView
-                android:id="@+id/inputEndDate"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="End Date"
-                android:padding="12dp"
-                android:background="@android:drawable/edit_text"
-                android:layout_marginTop="12dp"/>
-
-            <!-- Start Time -->
-            <TextView
-                android:id="@+id/inputStartTime"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Start Time"
-                android:padding="12dp"
-                android:background="@android:drawable/edit_text"
-                android:layout_marginTop="12dp"/>
-
-            <!-- End Time -->
-            <TextView
-                android:id="@+id/inputEndTime"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="End Time"
-                android:padding="12dp"
-                android:background="@android:drawable/edit_text"
-                android:layout_marginTop="12dp"/>
-
-            <!-- Number of Entrants -->
-            <EditText
-                android:id="@+id/inputEntrantsCount"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Number of Entrants"
-                android:inputType="number"
-                android:layout_marginTop="12dp"/>
-
-            <!-- Registration Opens -->
-            <TextView
-                android:id="@+id/inputRegOpens"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Registration Opens"
-                android:padding="12dp"
-                android:background="@android:drawable/edit_text"
-                android:layout_marginTop="12dp"/>
-
-            <!-- Registration Closes -->
-            <TextView
-                android:id="@+id/inputRegCloses"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Registration Closes"
-                android:padding="12dp"
-                android:background="@android:drawable/edit_text"
-                android:layout_marginTop="12dp"/>
-
-            <!-- Enable Geolocation -->
-            <LinearLayout
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp">
-
-                <TextView
-                    android:layout_width="0dp"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editLocation"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Enable Geolocation"/>
+                    android:inputType="text"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp"/>
+            </com.google.android.material.textfield.TextInputLayout>
 
-                <Switch
-                    android:id="@+id/switchGeolocation"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"/>
-            </LinearLayout>
+            <!-- Category -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Category"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginBottom="8dp"/>
 
-            <!-- Buttons -->
-            <LinearLayout
-                android:orientation="horizontal"
-                android:gravity="end"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSelectCategory"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Select Category"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="16sp"
+                android:textAllCaps="false"
+                app:backgroundTint="?attr/colorSurfaceVariant"
+                app:strokeColor="#000000"
+                app:strokeWidth="1dp"
+                app:cornerRadius="8dp"
+                app:icon="@android:drawable/ic_menu_sort_by_size"
+                app:iconTint="#000000"
+                android:layout_marginBottom="16dp"/>
+
+            <!-- Capacity -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp">
+                android:layout_marginBottom="24dp"
+                android:hint="Capacity (optional)"
+                app:boxStrokeColor="#000000"
+                app:hintTextColor="?attr/colorOnSurfaceVariant">
 
-                <Button
-                    android:id="@+id/btnSaveDraft"
-                    android:layout_width="wrap_content"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editCapacity"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="12dp"
-                    android:text="Save draft" />
+                    android:inputType="number"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp"/>
+            </com.google.android.material.textfield.TextInputLayout>
 
-                <Button
-                    android:id="@+id/btnCancel"
-                    android:layout_width="wrap_content"
+            <!-- Geolocation Toggle -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#E0E0E0"
+                app:strokeWidth="1dp"
+                android:layout_marginBottom="24dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Cancel"/>
-            </LinearLayout>
+                    android:orientation="horizontal"
+                    android:padding="16dp"
+                    android:gravity="center_vertical">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Require Geolocation"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="16sp"
+                            android:fontFamily="sans-serif-medium"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Track where entrants join from"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:textSize="14sp"
+                            android:layout_marginTop="4dp"/>
+
+                    </LinearLayout>
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchGeolocation"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="false"/>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Event Poster -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Event Poster"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginBottom="8dp"/>
+
+            <!-- Poster Preview Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardPosterPreview"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#E0E0E0"
+                app:strokeWidth="1dp"
+                android:layout_marginBottom="12dp">
+
+                <ImageView
+                    android:id="@+id/ivPosterPreview"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:background="?attr/colorSurfaceVariant"
+                    android:contentDescription="Poster preview"/>
+
+                <LinearLayout
+                    android:id="@+id/emptyPosterView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:background="?attr/colorSurfaceVariant">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🖼️"
+                        android:textSize="48sp"
+                        android:layout_marginBottom="8dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="No poster selected"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="14sp"/>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSelectPoster"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Select Poster"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="16sp"
+                android:textAllCaps="false"
+                app:backgroundTint="?attr/colorSurfaceVariant"
+                app:strokeColor="#000000"
+                app:strokeWidth="1dp"
+                app:cornerRadius="8dp"
+                android:layout_marginBottom="24dp"/>
+
+            <!-- Event Date -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Event Date &amp; Time"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginBottom="8dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSelectEventDate"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Select Date &amp; Time"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="16sp"
+                android:textAllCaps="false"
+                app:backgroundTint="?attr/colorSurfaceVariant"
+                app:strokeColor="#000000"
+                app:strokeWidth="1dp"
+                app:cornerRadius="8dp"
+                app:icon="@android:drawable/ic_menu_my_calendar"
+                app:iconTint="#000000"
+                android:layout_marginBottom="24dp"/>
+
+            <!-- Registration Period -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Registration Period"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginBottom="8dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSelectRegStart"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Registration Start Date"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="16sp"
+                android:textAllCaps="false"
+                app:backgroundTint="?attr/colorSurfaceVariant"
+                app:strokeColor="#000000"
+                app:strokeWidth="1dp"
+                app:cornerRadius="8dp"
+                android:layout_marginBottom="12dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSelectRegEnd"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Registration End Date"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="16sp"
+                android:textAllCaps="false"
+                app:backgroundTint="?attr/colorSurfaceVariant"
+                app:strokeColor="#000000"
+                app:strokeWidth="1dp"
+                app:cornerRadius="8dp"
+                android:layout_marginBottom="32dp"/>
+
+            <!-- Create Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCreateEvent"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Create Event"
+                android:textColor="?attr/colorSurface"
+                android:textSize="16sp"
+                android:textAllCaps="false"
+                android:fontFamily="sans-serif-medium"
+                app:backgroundTint="?attr/colorPrimary"
+                app:cornerRadius="8dp"/>
 
         </LinearLayout>
+
     </ScrollView>
-</LinearLayout>
+
+    <!-- Loading Overlay -->
+    <FrameLayout
+        android:id="@+id/loadingView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <ProgressBar
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Creating event..."
+                android:textColor="?attr/colorSurface"
+                android:textSize="16sp"
+                android:layout_marginTop="16dp"/>
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

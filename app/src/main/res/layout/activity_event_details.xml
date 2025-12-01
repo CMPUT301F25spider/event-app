@@ -1,97 +1,1029 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+
+    xmlns:android="http://schemas.android.com/apk/res/android"
+
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+
     android:layout_width="match_parent"
+
     android:layout_height="match_parent"
-    tools:context=".EventDetailsActivity">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    android:background="?attr/colorSurface">
+
+
+
+    <!-- Loading View -->
+
+    <LinearLayout
+
+        android:id="@+id/loadingView"
+
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
 
-        <!-- 1. Loading Indicator: Shown while fetching data -->
+        android:layout_height="match_parent"
+
+        android:gravity="center"
+
+        android:orientation="vertical"
+
+        android:visibility="visible">
+
+
+
         <ProgressBar
-            android:id="@+id/progressBar_event_details"
+
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="visible"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            tools:visibility="gone" /> <!-- Hide in preview -->
 
-        <!-- 2. Content Group: Hidden during loading -->
-        <androidx.constraintlayout.widget.Group
-            android:id="@+id/content_group"
+            android:layout_height="wrap_content"/>
+
+
+
+        <TextView
+
             android:layout_width="wrap_content"
+
             android:layout_height="wrap_content"
-            android:visibility="gone"
-            app:constraint_referenced_ids="image_event_poster,text_event_name,text_event_description,button_join_event"
-            tools:visibility="visible" /> <!-- Show in preview -->
 
-        <!-- 3. Event Poster Image -->
-        <ImageView
-            android:id="@+id/image_event_poster"
-            android:layout_width="0dp"
-            android:layout_height="250dp"
-            android:background="@color/gray_light"
-            android:scaleType="centerCrop"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            tools:src="@tools:sample/backgrounds/scenic"
-            android:contentDescription="Event Poster" />
+            android:text="Loading event..."
 
-        <!-- 4. Event Name -->
+            android:textColor="?attr/colorOnSurfaceVariant"
+
+            android:layout_marginTop="16dp"/>
+
+    </LinearLayout>
+
+
+
+    <!-- Error View -->
+
+    <LinearLayout
+
+        android:id="@+id/errorView"
+
+        android:layout_width="match_parent"
+
+        android:layout_height="match_parent"
+
+        android:gravity="center"
+
+        android:orientation="vertical"
+
+        android:padding="24dp"
+
+        android:visibility="gone">
+
+
+
         <TextView
-            android:id="@+id/text_event_name"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            app:layout_constraintTop_toBottomOf="@id/image_event_poster"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            tools:text="Hack the North Info Session" />
 
-        <!-- 5. Event Description -->
+            android:layout_width="wrap_content"
+
+            android:layout_height="wrap_content"
+
+            android:text="⚠️"
+
+            android:textSize="64sp"
+
+            android:layout_marginBottom="16dp"/>
+
+
+
         <TextView
-            android:id="@+id/text_event_description"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:layout_constraintTop_toBottomOf="@id/text_event_name"
-            app:layout_constraintStart_toStartOf="@id/text_event_name"
-            app:layout_constraintEnd_toEndOf="@id/text_event_name"
-            tools:text="Learn how to register and prepare for Canada's largest hackathon." />
 
-        <!-- 6. Join/Status Button -->
-        <Button
-            android:id="@+id/button_join_event"
-            android:layout_width="0dp"
+            android:id="@+id/tvError"
+
+            android:layout_width="wrap_content"
+
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
+
+            android:text="Error loading event"
+
+            android:textColor="?attr/colorOnSurface"
+
+            android:textSize="18sp"
+
+            android:fontFamily="sans-serif-medium"
+
+            android:layout_marginBottom="16dp"/>
+
+
+
+        <com.google.android.material.button.MaterialButton
+
+            android:id="@+id/btnRetry"
+
+            android:layout_width="wrap_content"
+
+            android:layout_height="wrap_content"
+
+            android:text="Retry"
+
+            android:textColor="?attr/colorSurface"
+
+            app:backgroundTint="?attr/colorPrimary"
+
+            app:cornerRadius="8dp"/>
+
+    </LinearLayout>
+
+
+
+    <!-- Main Content -->
+
+    <androidx.core.widget.NestedScrollView
+
+        android:id="@+id/contentView"
+
+        android:layout_width="match_parent"
+
+        android:layout_height="match_parent"
+
+        android:visibility="gone">
+
+
+
+        <LinearLayout
+
+            android:layout_width="match_parent"
+
+            android:layout_height="wrap_content"
+
+            android:orientation="vertical">
+
+
+
+            <!-- Event Poster -->
+
+            <androidx.cardview.widget.CardView
+
+                android:layout_width="match_parent"
+
+                android:layout_height="300dp"
+
+                app:cardCornerRadius="0dp"
+
+                app:cardElevation="4dp">
+
+
+
+                <ImageView
+
+                    android:id="@+id/ivEventPoster"
+
+                    android:layout_width="match_parent"
+
+                    android:layout_height="match_parent"
+
+                    android:scaleType="centerCrop"
+
+                    android:background="?attr/colorSurfaceVariant"
+
+                    android:contentDescription="Event poster"/>
+
+            </androidx.cardview.widget.CardView>
+
+
+
+            <!-- Event Details -->
+
+            <LinearLayout
+
+                android:layout_width="match_parent"
+
+                android:layout_height="wrap_content"
+
+                android:orientation="vertical"
+
+                android:padding="24dp">
+
+
+
+                <!-- Event Name -->
+
+                <TextView
+
+                    android:id="@+id/tvEventName"
+
+                    android:layout_width="wrap_content"
+
+                    android:layout_height="wrap_content"
+
+                    android:text="Event Name"
+
+                    android:textColor="?attr/colorOnSurface"
+
+                    android:textSize="32sp"
+
+                    android:fontFamily="sans-serif-medium"
+
+                    android:layout_marginBottom="12dp"/>
+
+
+
+                <!-- Organizer -->
+
+                <LinearLayout
+
+                    android:layout_width="wrap_content"
+
+                    android:layout_height="wrap_content"
+
+                    android:orientation="horizontal"
+
+                    android:gravity="center_vertical"
+
+                    android:layout_marginBottom="24dp">
+
+
+
+                    <TextView
+
+                        android:layout_width="wrap_content"
+
+                        android:layout_height="wrap_content"
+
+                        android:text="Hosted by "
+
+                        android:textColor="?attr/colorOnSurfaceVariant"
+
+                        android:textSize="16sp"/>
+
+
+
+                    <TextView
+
+                        android:id="@+id/tvOrganizer"
+
+                        android:layout_width="wrap_content"
+
+                        android:layout_height="wrap_content"
+
+                        android:text="Event Organizer"
+
+                        android:textColor="?attr/colorOnSurface"
+
+                        android:textSize="16sp"
+
+                        android:fontFamily="sans-serif-medium"/>
+
+                </LinearLayout>
+
+
+
+                <!-- Info Cards -->
+
+
+
+                <!-- Date Card -->
+
+                <com.google.android.material.card.MaterialCardView
+
+                    android:layout_width="match_parent"
+
+                    android:layout_height="wrap_content"
+
+                    app:cardCornerRadius="12dp"
+
+                    app:cardElevation="0dp"
+
+                    app:strokeColor="#E0E0E0"
+
+                    app:strokeWidth="1dp"
+
+                    android:layout_marginBottom="12dp">
+
+
+
+                    <LinearLayout
+
+                        android:layout_width="match_parent"
+
+                        android:layout_height="wrap_content"
+
+                        android:orientation="horizontal"
+
+                        android:padding="16dp"
+
+                        android:gravity="center_vertical">
+
+
+
+                        <ImageView
+
+                            android:layout_width="24dp"
+
+                            android:layout_height="24dp"
+
+                            android:src="@android:drawable/ic_menu_my_calendar"
+
+                            android:layout_marginEnd="12dp"
+
+                            app:tint="?attr/colorOnSurface"/>
+
+
+
+                        <LinearLayout
+
+                            android:layout_width="0dp"
+
+                            android:layout_height="wrap_content"
+
+                            android:layout_weight="1"
+
+                            android:orientation="vertical">
+
+
+
+                            <TextView
+
+                                android:layout_width="wrap_content"
+
+                                android:layout_height="wrap_content"
+
+                                android:text="Date &amp; Time"
+
+                                android:textColor="?attr/colorOnSurfaceVariant"
+
+                                android:textSize="12sp"/>
+
+
+
+                            <TextView
+
+                                android:id="@+id/tvEventDate"
+
+                                android:layout_width="wrap_content"
+
+                                android:layout_height="wrap_content"
+
+                                android:text="Nov 07, 2025 at 12:36 AM"
+
+                                android:textColor="?attr/colorOnSurface"
+
+                                android:textSize="16sp"
+
+                                android:fontFamily="sans-serif-medium"
+
+                                android:layout_marginTop="4dp"/>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+
+
+                <!-- Location Card -->
+
+                <com.google.android.material.card.MaterialCardView
+
+                    android:id="@+id/cardLocation"
+
+                    android:layout_width="match_parent"
+
+                    android:layout_height="wrap_content"
+
+                    app:cardCornerRadius="12dp"
+
+                    app:cardElevation="0dp"
+
+                    app:strokeColor="#E0E0E0"
+
+                    app:strokeWidth="1dp"
+
+                    android:layout_marginBottom="12dp"
+
+                    android:clickable="true"
+
+                    android:focusable="true"
+
+                    android:foreground="?attr/selectableItemBackground">
+
+
+
+                    <LinearLayout
+
+                        android:layout_width="match_parent"
+
+                        android:layout_height="wrap_content"
+
+                        android:orientation="horizontal"
+
+                        android:padding="16dp"
+
+                        android:gravity="center_vertical">
+
+
+
+                        <ImageView
+
+                            android:layout_width="24dp"
+
+                            android:layout_height="24dp"
+
+                            android:src="@android:drawable/ic_dialog_map"
+
+                            android:layout_marginEnd="12dp"
+
+                            app:tint="?attr/colorOnSurface"/>
+
+
+
+                        <LinearLayout
+
+                            android:layout_width="0dp"
+
+                            android:layout_height="wrap_content"
+
+                            android:layout_weight="1"
+
+                            android:orientation="vertical">
+
+
+
+                            <TextView
+
+                                android:layout_width="wrap_content"
+
+                                android:layout_height="wrap_content"
+
+                                android:text="Location"
+
+                                android:textColor="?attr/colorOnSurfaceVariant"
+
+                                android:textSize="12sp"/>
+
+
+
+                            <TextView
+
+                                android:id="@+id/tvLocation"
+
+                                android:layout_width="wrap_content"
+
+                                android:layout_height="wrap_content"
+
+                                android:text="Event Location"
+
+                                android:textColor="?attr/colorOnSurface"
+
+                                android:textSize="16sp"
+
+                                android:fontFamily="sans-serif-medium"
+
+                                android:layout_marginTop="4dp"/>
+
+                        </LinearLayout>
+
+
+
+                        <ImageView
+
+                            android:layout_width="20dp"
+
+                            android:layout_height="20dp"
+
+                            android:src="@android:drawable/ic_menu_directions"
+
+                            app:tint="?attr/colorOnSurfaceVariant"/>
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+
+
+                <!-- Capacity Card -->
+
+                <com.google.android.material.card.MaterialCardView
+
+                    android:layout_width="match_parent"
+
+                    android:layout_height="wrap_content"
+
+                    app:cardCornerRadius="12dp"
+
+                    app:cardElevation="0dp"
+
+                    app:strokeColor="#E0E0E0"
+
+                    app:strokeWidth="1dp"
+
+                    android:layout_marginBottom="24dp">
+
+
+
+                    <LinearLayout
+
+                        android:layout_width="match_parent"
+
+                        android:layout_height="wrap_content"
+
+                        android:orientation="horizontal"
+
+                        android:padding="16dp"
+
+                        android:gravity="center_vertical">
+
+
+
+                        <ImageView
+
+                            android:layout_width="24dp"
+
+                            android:layout_height="24dp"
+
+                            android:src="@android:drawable/ic_menu_my_calendar"
+
+                            android:layout_marginEnd="12dp"
+
+                            app:tint="?attr/colorOnSurface"/>
+
+
+
+                        <LinearLayout
+
+                            android:layout_width="0dp"
+
+                            android:layout_height="wrap_content"
+
+                            android:layout_weight="1"
+
+                            android:orientation="vertical">
+
+
+
+                            <TextView
+
+                                android:id="@+id/tvCapacity"
+
+                                android:layout_width="wrap_content"
+
+                                android:layout_height="wrap_content"
+
+                                android:text="Capacity: 50 spots"
+
+                                android:textColor="?attr/colorOnSurface"
+
+                                android:textSize="16sp"
+
+                                android:fontFamily="sans-serif-medium"/>
+
+
+
+                            <TextView
+
+                                android:id="@+id/tvWaitingListCount"
+
+                                android:layout_width="wrap_content"
+
+                                android:layout_height="wrap_content"
+
+                                android:text="0 people on waiting list"
+
+                                android:textColor="?attr/colorOnSurfaceVariant"
+
+                                android:textSize="14sp"
+
+                                android:layout_marginTop="4dp"/>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+
+
+                <com.google.android.material.card.MaterialCardView
+
+                    android:id="@+id/cardLotteryInfo"
+
+                    android:layout_width="match_parent"
+
+                    android:layout_height="wrap_content"
+
+                    app:cardCornerRadius="12dp"
+
+                    app:cardElevation="0dp"
+
+                    app:strokeColor="#2196F3"
+
+                    app:strokeWidth="1dp"
+
+                    android:layout_marginBottom="24dp"
+
+                    android:clickable="true"
+
+                    android:focusable="true"
+
+                    android:foreground="?attr/selectableItemBackground">
+
+
+
+                    <LinearLayout
+
+                        android:layout_width="match_parent"
+
+                        android:layout_height="wrap_content"
+
+                        android:orientation="horizontal"
+
+                        android:padding="16dp"
+
+                        android:gravity="center_vertical">
+
+
+
+                        <ImageView
+
+                            android:layout_width="24dp"
+
+                            android:layout_height="24dp"
+
+                            android:src="@android:drawable/ic_dialog_info"
+
+                            android:layout_marginEnd="12dp"
+
+                            app:tint="#2196F3"/>
+
+
+
+                        <LinearLayout
+
+                            android:layout_width="0dp"
+
+                            android:layout_height="wrap_content"
+
+                            android:layout_weight="1"
+
+                            android:orientation="vertical">
+
+
+
+                            <TextView
+
+                                android:layout_width="wrap_content"
+
+                                android:layout_height="wrap_content"
+
+                                android:text="Lottery Selection"
+
+                                android:textColor="?attr/colorOnSurface"
+
+                                android:textSize="16sp"
+
+                                android:fontFamily="sans-serif-medium"/>
+
+
+
+                            <TextView
+
+                                android:layout_width="wrap_content"
+
+                                android:layout_height="wrap_content"
+
+                                android:text="How it works &amp; your chances"
+
+                                android:textColor="?attr/colorOnSurfaceVariant"
+
+                                android:textSize="14sp"
+
+                                android:layout_marginTop="4dp"/>
+
+                        </LinearLayout>
+
+
+
+                        <ImageView
+
+                            android:layout_width="20dp"
+
+                            android:layout_height="20dp"
+
+                            android:src="@android:drawable/ic_menu_help"
+
+                            app:tint="#2196F3"/>
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+
+
+                <!-- Description Section -->
+
+                <TextView
+
+                    android:layout_width="wrap_content"
+
+                    android:layout_height="wrap_content"
+
+                    android:text="About this event"
+
+                    android:textColor="?attr/colorOnSurface"
+
+                    android:textSize="20sp"
+
+                    android:fontFamily="sans-serif-medium"
+
+                    android:layout_marginBottom="12dp"/>
+
+
+
+                <TextView
+
+                    android:id="@+id/tvEventDescription"
+
+                    android:layout_width="wrap_content"
+
+                    android:layout_height="wrap_content"
+
+                    android:text="Event description will appear here"
+
+                    android:textColor="?attr/colorOnSurfaceVariant"
+
+                    android:textSize="16sp"
+
+                    android:lineSpacingExtra="4dp"
+
+                    android:layout_marginBottom="80dp"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+
+
+    <!-- Back Button -->
+
+    <ImageButton
+
+        android:id="@+id/btnBack"
+
+        android:layout_width="48dp"
+
+        android:layout_height="48dp"
+
+        android:layout_margin="16dp"
+
+        android:background="@android:drawable/btn_dialog"
+
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+
+        android:contentDescription="Back"
+
+        app:tint="?attr/colorSurface"
+
+        android:elevation="4dp"/>
+
+
+
+    <!-- Bottom Actions -->
+
+    <com.google.android.material.card.MaterialCardView
+
+        android:layout_width="match_parent"
+
+        android:layout_height="wrap_content"
+
+        android:layout_gravity="bottom"
+
+        app:cardElevation="8dp"
+
+        app:cardCornerRadius="0dp">
+
+
+
+        <LinearLayout
+
+            android:layout_width="match_parent"
+
+            android:layout_height="wrap_content"
+
+            android:orientation="vertical"
+
             android:padding="16dp"
-            app:layout_constraintTop_toBottomOf="@id/text_event_description"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            tools:text="Join Waiting List" />
 
-        <!-- 7. Home Button -->
-        <Button
-            android:id="@+id/button_go_back"
-            android:layout_width="223dp"
-            android:layout_height="72dp"
-            android:layout_marginTop="8dp"
-            android:text="Back to Home"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/button_join_event" />
+            android:background="?attr/colorSurface">
 
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
-</ScrollView>
+
+            <!-- Join Waiting List -->
+
+            <com.google.android.material.button.MaterialButton
+
+                android:id="@+id/btnJoinWaitingList"
+
+                android:layout_width="match_parent"
+
+                android:layout_height="56dp"
+
+                android:text="Join Waiting List"
+
+                android:textColor="?attr/colorSurface"
+
+                android:textSize="16sp"
+
+                android:textAllCaps="false"
+
+                android:fontFamily="sans-serif-medium"
+
+                app:backgroundTint="?attr/colorPrimary"
+
+                app:cornerRadius="8dp"
+
+                app:icon="@android:drawable/ic_input_add"
+
+                app:iconTint="?attr/colorSurface"/>
+
+
+
+            <!-- Leave Waiting List -->
+
+            <com.google.android.material.button.MaterialButton
+
+                android:id="@+id/btnLeaveWaitingList"
+
+                android:layout_width="match_parent"
+
+                android:layout_height="56dp"
+
+                android:text="Leave Waiting List"
+
+                android:textColor="#D32F2F"
+
+                android:textSize="16sp"
+
+                android:textAllCaps="false"
+
+                android:fontFamily="sans-serif-medium"
+
+                app:backgroundTint="#FFEBEE"
+
+                app:strokeColor="#D32F2F"
+
+                app:strokeWidth="1dp"
+
+                app:cornerRadius="8dp"
+
+                android:visibility="gone"/>
+
+
+
+            <!-- 🔥 Invitation Card (added here) -->
+
+            <com.google.android.material.card.MaterialCardView
+
+                android:id="@+id/cardInvitation"
+
+                android:layout_width="match_parent"
+
+                android:layout_height="wrap_content"
+
+                android:layout_marginTop="16dp"
+
+                android:visibility="gone"
+
+                app:cardCornerRadius="12dp"
+
+                app:cardElevation="4dp"
+
+                app:strokeColor="#2196F3"
+
+                app:strokeWidth="2dp">
+
+
+
+                <LinearLayout
+
+                    android:layout_width="match_parent"
+
+                    android:layout_height="wrap_content"
+
+                    android:orientation="vertical"
+
+                    android:padding="16dp">
+
+
+
+                    <TextView
+
+                        android:id="@+id/tvInvitationStatus"
+
+                        android:layout_width="match_parent"
+
+                        android:layout_height="wrap_content"
+
+                        android:text="🎉 You've been selected! Accept or decline your invitation:"
+
+                        android:textColor="?attr/colorOnSurface"
+
+                        android:textSize="16sp"
+
+                        android:fontFamily="sans-serif-medium"
+
+                        android:layout_marginBottom="16dp"/>
+
+
+
+                    <LinearLayout
+
+                        android:layout_width="match_parent"
+
+                        android:layout_height="wrap_content"
+
+                        android:orientation="horizontal">
+
+
+
+                        <!-- Accept -->
+
+                        <com.google.android.material.button.MaterialButton
+
+                            android:id="@+id/btnAcceptInvitation"
+
+                            android:layout_width="0dp"
+
+                            android:layout_height="56dp"
+
+                            android:layout_weight="1"
+
+                            android:layout_marginEnd="8dp"
+
+                            android:text="✅ Accept"
+
+                            android:textColor="?attr/colorSurface"
+
+                            android:textSize="16sp"
+
+                            android:textAllCaps="false"
+
+                            android:fontFamily="sans-serif-medium"
+
+                            app:backgroundTint="#4CAF50"
+
+                            app:cornerRadius="8dp"
+
+                            app:icon="@android:drawable/ic_input_add"
+
+                            app:iconTint="?attr/colorSurface"
+
+                            app:iconGravity="start"/>
+
+
+
+                        <!-- Decline -->
+
+                        <com.google.android.material.button.MaterialButton
+
+                            android:id="@+id/btnDeclineInvitation"
+
+                            android:layout_width="0dp"
+
+                            android:layout_height="56dp"
+
+                            android:layout_weight="1"
+
+                            android:layout_marginStart="8dp"
+
+                            android:text="❌ Decline"
+
+                            android:textColor="?attr/colorSurface"
+
+                            android:textSize="16sp"
+
+                            android:textAllCaps="false"
+
+                            android:fontFamily="sans-serif-medium"
+
+                            app:backgroundTint="#F44336"
+
+                            app:cornerRadius="8dp"
+
+                            app:icon="@android:drawable/ic_menu_close_clear_cancel"
+
+                            app:iconTint="?attr/colorSurface"
+
+                            app:iconGravity="start"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
