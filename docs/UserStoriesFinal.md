@@ -21,8 +21,7 @@
 | [US 01.06.01](US-01.06.01) | As an entrant, I want to view event details by scanning the event's QR code. | 5 | Medium | **Must Have** | ✅ |
 | [US 01.06.02](US-01.06.02) | As an entrant, I want to sign up for an event directly from its detail page. | 3 | Low | **Must Have** | ✅ |
 | [US 01.07.01](US-01.07.01) | As an entrant, I want to be identified by my device so I don't need a password. | 3 | High | **Could Have** | ✅ |
-| [US 01.08.01](US-01.08.01) | As an entrant, I want accessibility options (e.g., large text, high contrast). | 3 | Low | **Could Have** | ✅ |
-| [US 01.08.02](US-01.08.02) | As an entrant, I want to receive a reminder notification shortly before my event. | 5 | Medium | **Should Have** | ✅ |
+| [US 01.08.01](US-01.08.01) | As an entrant, I want accessibility options (e.g., large text, high contrast). | 3 | Low | **Could Have** | ✅ 
 | [US 01.08.03](US-01.08.03) | As an entrant, I want to mark events as favorites for quick access. | 3 | Low | **Could Have** | ✅ |
 | [US 01.08.05](US-01.08.05) | As an entrant, I want to receive a summary of my lottery outcomes. | 6 | Low | **Should Have** | ✅ |
 | [US 02.01.01](US-02.01.01) | As an organizer, I want to create a new event and generate a promotional QR code. | 8 | High | **Must Have** | ✅ |
