@@ -18,7 +18,8 @@ import com.google.android.material.card.MaterialCardView;
 import java.util.List;
 
 /**
- * NotificationAdapter - Display notifications in RecyclerView
+ * Adapter for displaying a list of user notifications inside a RecyclerView.
+ * Supports click actions, delete actions, unread highlighting, and relative timestamps.
  */
 public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapter.NotificationViewHolder> {
 
@@ -26,11 +27,32 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     private final List<Notification> notifications;
     private final NotificationClickListener listener;
 
+    /**
+     * Listener interface for notification item interactions.
+     */
     public interface NotificationClickListener {
+        /**
+         * Called when a notification item is tapped.
+         *
+         * @param notification the notification that was clicked
+         */
         void onNotificationClick(Notification notification);
+
+        /**
+         * Called when a notification's delete button is tapped.
+         *
+         * @param notification the notification being deleted
+         */
         void onDeleteClick(Notification notification);
     }
 
+    /**
+     * Creates a new adapter for rendering notifications.
+     *
+     * @param context        the context used to inflate layouts and access resources
+     * @param notifications  the list of notifications to display
+     * @param listener       callback interface for notification click and delete actions
+     */
     public NotificationAdapter(Context context, List<Notification> notifications,
                                NotificationClickListener listener) {
         this.context = context;
@@ -38,6 +60,13 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         this.listener = listener;
     }
 
+    /**
+     * Inflates the layout for a single notification item.
+     *
+     * @param parent   the parent ViewGroup
+     * @param viewType unused (single view type)
+     * @return a new NotificationViewHolder instance
+     */
     @NonNull
     @Override
     public NotificationViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -45,17 +74,32 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         return new NotificationViewHolder(view);
     }
 
+    /**
+     * Binds the notification at the given list position to the ViewHolder.
+     *
+     * @param holder   the ViewHolder responsible for rendering the item
+     * @param position the index of the notification in the list
+     */
     @Override
     public void onBindViewHolder(@NonNull NotificationViewHolder holder, int position) {
         Notification notification = notifications.get(position);
         holder.bind(notification);
     }
 
+    /**
+     * Returns the number of notifications in the adapter.
+     *
+     * @return total notification count
+     */
     @Override
     public int getItemCount() {
         return notifications.size();
     }
 
+    /**
+     * ViewHolder representing a single notification card, including icon,
+     * title, message, timestamp, event label, delete button, and unread indicator.
+     */
     class NotificationViewHolder extends RecyclerView.ViewHolder {
 
         private final MaterialCardView card;
@@ -63,6 +107,11 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         private final ImageButton btnDelete;
         private final View unreadIndicator;
 
+        /**
+         * Initializes all UI components for a notification item.
+         *
+         * @param itemView the inflated notification layout
+         */
         public NotificationViewHolder(@NonNull View itemView) {
             super(itemView);
             card = (MaterialCardView) itemView;
@@ -75,6 +124,19 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             unreadIndicator = itemView.findViewById(R.id.unreadIndicator);
         }
 
+        /**
+         * Binds a Notification object to the UI by:
+         * <ul>
+         *     <li>Displaying icon, title, message, and event name (if present)</li>
+         *     <li>Formatting timestamp as a relative time</li>
+         *     <li>Showing or hiding unread indicator</li>
+         *     <li>Applying read/unread styling</li>
+         *     <li>Highlighting important unread notifications</li>
+         *     <li>Setting click and delete listeners</li>
+         * </ul>
+         *
+         * @param notification the notification to render
+         */
         public void bind(Notification notification) {
             // Set icon
             tvIcon.setText(notification.getIcon());

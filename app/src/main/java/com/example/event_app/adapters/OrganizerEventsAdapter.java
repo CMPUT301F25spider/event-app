@@ -24,18 +24,31 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * OrganizerEventsAdapter - Shows organizer's events with stats
+ * RecyclerView adapter used by organizers to view their created events.
+ * Displays event poster, dates, attendance stats, and cancellation status.
  */
 public class OrganizerEventsAdapter extends RecyclerView.Adapter<OrganizerEventsAdapter.EventViewHolder> {
 
     private Context context;
     private List<Event> events;
 
+    /**
+     * Creates a new OrganizerEventsAdapter.
+     *
+     * @param context the context used to inflate layouts and start activities
+     */
     public OrganizerEventsAdapter(Context context) {
         this.context = context;
         this.events = new ArrayList<>();
     }
 
+    /**
+     * Inflates the organizer event item layout and creates a ViewHolder.
+     *
+     * @param parent   the parent ViewGroup holding the RecyclerView
+     * @param viewType the view type (unused since there is one type)
+     * @return a new EventViewHolder instance
+     */
     @NonNull
     @Override
     public EventViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -43,22 +56,43 @@ public class OrganizerEventsAdapter extends RecyclerView.Adapter<OrganizerEvents
         return new EventViewHolder(view);
     }
 
+    /**
+     * Binds the event at the given position to the ViewHolder.
+     *
+     * @param holder   the ViewHolder to populate
+     * @param position the index of the event in the list
+     */
     @Override
     public void onBindViewHolder(@NonNull EventViewHolder holder, int position) {
         Event event = events.get(position);
         holder.bind(event);
     }
 
+    /**
+     * Returns the total number of organizer events being displayed.
+     *
+     * @return number of events in the list
+     */
     @Override
     public int getItemCount() {
         return events.size();
     }
 
+    /**
+     * Replaces the current list of events with a new list and refreshes the UI.
+     *
+     * @param events the updated list of events to display
+     */
     public void setEvents(List<Event> events) {
         this.events = events;
         notifyDataSetChanged();
     }
 
+    /**
+     * ViewHolder representing a single organizer event card.
+     * Displays stats such as waiting count, selected count, and attending count,
+     * and handles navigation to the organizer event details screen.
+     */
     class EventViewHolder extends RecyclerView.ViewHolder {
 
         MaterialCardView cardEvent;
@@ -66,6 +100,11 @@ public class OrganizerEventsAdapter extends RecyclerView.Adapter<OrganizerEvents
         TextView tvEventName, tvDate, tvWaitingCount, tvSelectedCount, tvAttendingCount;
         TextView tvCancelledTag;
 
+        /**
+         * Initializes UI components for an organizer event card.
+         *
+         * @param itemView the inflated layout for one event item
+         */
         public EventViewHolder(@NonNull View itemView) {
             super(itemView);
             cardEvent = itemView.findViewById(R.id.cardEvent);
@@ -78,6 +117,21 @@ public class OrganizerEventsAdapter extends RecyclerView.Adapter<OrganizerEvents
             tvCancelledTag = itemView.findViewById(R.id.tvCancelledTag);
         }
 
+        /**
+         * Binds an Event object to the UI elements inside the ViewHolder.
+         * Populates:
+         * <ul>
+         *     <li>Event name</li>
+         *     <li>Event date</li>
+         *     <li>Waiting, selected, and attending counts</li>
+         *     <li>Poster image</li>
+         *     <li>Cancelled status indicator</li>
+         * </ul>
+         *
+         * Also assigns a click listener that opens OrganizerEventDetailsActivity.
+         *
+         * @param event the event being bound to this ViewHolder
+         */
         public void bind(Event event) {
             // Event name
             tvEventName.setText(event.getName());

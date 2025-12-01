@@ -26,10 +26,11 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * HorizontalEventAdapter - Displays events in horizontal scrolling lists
- * Used in HomeFragment for "Happening Soon" and "Popular This Week" sections
- *
- * Added favorite heart button functionality
+ * Adapter for displaying events in a horizontally scrolling list.
+ * <p>
+ * Used on the home screen for sections like "Happening Soon" and
+ * "Popular This Week". Each card shows the poster, name, date, and
+ * waiting-list count, and lets the user mark events as favorites.
  */
 public class HorizontalEventAdapter extends RecyclerView.Adapter<HorizontalEventAdapter.EventViewHolder> {
 
@@ -37,12 +38,24 @@ public class HorizontalEventAdapter extends RecyclerView.Adapter<HorizontalEvent
     private List<Event> events;
     private FavoritesManager favoritesManager;
 
+    /**
+     * Creates a new {@code HorizontalEventAdapter} with an empty event list.
+     *
+     * @param context the {@link Context} used to inflate layouts and start activities
+     */
     public HorizontalEventAdapter(Context context) {
         this.context = context;
         this.events = new ArrayList<>();
         this.favoritesManager = new FavoritesManager();
     }
 
+    /**
+     * Inflates the horizontal event item layout and wraps it in a {@link EventViewHolder}.
+     *
+     * @param parent   the parent {@link ViewGroup} into which the new view will be added
+     * @param viewType the view type of the new view (not used, single view type only)
+     * @return a new {@link EventViewHolder} holding the inflated item view
+     */
     @NonNull
     @Override
     public EventViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -50,19 +63,32 @@ public class HorizontalEventAdapter extends RecyclerView.Adapter<HorizontalEvent
         return new EventViewHolder(view);
     }
 
+    /**
+     * Binds the event at the given position to the provided {@link EventViewHolder}.
+     *
+     * @param holder   the {@link EventViewHolder} that should be updated
+     * @param position the position of the item within the adapter's data set
+     */
     @Override
     public void onBindViewHolder(@NonNull EventViewHolder holder, int position) {
         Event event = events.get(position);
         holder.bind(event);
     }
 
+    /**
+     * Returns the number of events currently held by the adapter.
+     *
+     * @return the size of the event list
+     */
     @Override
     public int getItemCount() {
         return events.size();
     }
 
     /**
-     * Update the list of events
+     * Replaces the current list of events and refreshes the UI.
+     *
+     * @param events the new list of {@link Event} objects to display
      */
     public void setEvents(List<Event> events) {
         this.events = events;
@@ -70,7 +96,7 @@ public class HorizontalEventAdapter extends RecyclerView.Adapter<HorizontalEvent
     }
 
     /**
-     * Clear all events
+     * Clears all events from the adapter and notifies that the data set changed.
      */
     public void clearEvents() {
         this.events.clear();
@@ -78,7 +104,10 @@ public class HorizontalEventAdapter extends RecyclerView.Adapter<HorizontalEvent
     }
 
     /**
-     * ViewHolder for horizontal event cards
+     * ViewHolder representing a single horizontal event card.
+     * <p>
+     * Holds references to the poster image, event name, date, waiting count,
+     * and favorite button, and handles click events for the card and the heart icon.
      */
     class EventViewHolder extends RecyclerView.ViewHolder {
 
@@ -88,6 +117,12 @@ public class HorizontalEventAdapter extends RecyclerView.Adapter<HorizontalEvent
 
         private boolean isFavorited = false;
 
+        /**
+         * Creates a new {@code EventViewHolder} and finds all view references
+         * from the provided item view.
+         *
+         * @param itemView the inflated layout for a single horizontal event card
+         */
         public EventViewHolder(@NonNull View itemView) {
             super(itemView);
             ivPoster = itemView.findViewById(R.id.ivEventPoster);
@@ -108,6 +143,14 @@ public class HorizontalEventAdapter extends RecyclerView.Adapter<HorizontalEvent
             });
         }
 
+        /**
+         * Binds an {@link Event} to this view holder's UI components.
+         * <p>
+         * Sets the event name, date, waiting-list count, poster image, and initializes
+         * the favorite button state for this item.
+         *
+         * @param event the {@link Event} whose data should be displayed
+         */
         public void bind(Event event) {
             // Event name
             tvEventName.setText(event.getName() != null ? event.getName() : "Untitled Event");
@@ -144,7 +187,13 @@ public class HorizontalEventAdapter extends RecyclerView.Adapter<HorizontalEvent
         }
 
         /**
-         * NEW: Setup favorite button with current state
+         * Configures the favorite (heart) button for the given event.
+         * <p>
+         * Checks whether the event is already in the user's favorites,
+         * updates the heart icon accordingly, and sets up click handling to
+         * add or remove the event from favorites using {@link FavoritesManager}.
+         *
+         * @param event the {@link Event} whose favorite state is being controlled
          */
         private void setupFavoriteButton(Event event) {
             String eventId = event.getId() != null ? event.getId() : event.getEventId();
@@ -196,7 +245,9 @@ public class HorizontalEventAdapter extends RecyclerView.Adapter<HorizontalEvent
         }
 
         /**
-         * NEW: Update heart icon based on favorite state
+         * Updates the heart icon drawable based on the current {@code isFavorited} state.
+         * <p>
+         * Shows a filled heart when the event is favorited, and an outline otherwise.
          */
         private void updateFavoriteIcon() {
             if (isFavorited) {

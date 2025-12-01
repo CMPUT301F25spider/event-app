@@ -31,11 +31,15 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * MyEventsAdapter - Shows user's events with status and action buttons
- *
- * US 01.05.02: Accept invitation
- * US 01.05.03: Decline invitation
- * US 01.05.01: Automatic replacement when someone declines
+ * Adapter for displaying events associated with the current user, including
+ * their participation status and available actions (Accept / Decline).
+ * <p>
+ * Supports:
+ * • US 01.05.02 — Accept invitation
+ * • US 01.05.03 — Decline invitation
+ * • US 01.05.01 — Auto-replacement when a user declines
+ * <p>
+ * Presented as a vertical list of event cards with status badges and controls.
  */
 public class MyEventsAdapter extends RecyclerView.Adapter<MyEventsAdapter.EventViewHolder> {
 
@@ -46,6 +50,12 @@ public class MyEventsAdapter extends RecyclerView.Adapter<MyEventsAdapter.EventV
     private String userId;
     private FirebaseFirestore db;
 
+    /**
+     * Creates a new MyEventsAdapter used to display the user's event participation list.
+     *
+     * @param context the calling context, used for inflating views and navigation
+     * @param userId  the ID of the currently authenticated user
+     */
     public MyEventsAdapter(Context context, String userId) {
         this.context = context;
         this.userId = userId;
@@ -53,6 +63,13 @@ public class MyEventsAdapter extends RecyclerView.Adapter<MyEventsAdapter.EventV
         this.db = FirebaseFirestore.getInstance();
     }
 
+    /**
+     * Inflates the layout for a single "My Event" card.
+     *
+     * @param parent   the parent UI container
+     * @param viewType unused (single view type)
+     * @return a fully initialized {@link EventViewHolder}
+     */
     @NonNull
     @Override
     public EventViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -60,22 +77,42 @@ public class MyEventsAdapter extends RecyclerView.Adapter<MyEventsAdapter.EventV
         return new EventViewHolder(view);
     }
 
+    /**
+     * Binds the event at the given position to the ViewHolder.
+     *
+     * @param holder   the ViewHolder responsible for binding UI elements
+     * @param position the adapter index of the item to bind
+     */
     @Override
     public void onBindViewHolder(@NonNull EventViewHolder holder, int position) {
         Event event = events.get(position);
         holder.bind(event);
     }
 
+    /**
+     * Returns the number of events being displayed.
+     *
+     * @return the event count
+     */
     @Override
     public int getItemCount() {
         return events.size();
     }
 
+    /**
+     * Replaces the current event list and refreshes the RecyclerView.
+     *
+     * @param events a list of events associated with the current user
+     */
     public void setEvents(List<Event> events) {
         this.events = events;
         notifyDataSetChanged();
     }
 
+    /**
+     * ViewHolder for rendering a user's event card, including poster,
+     * event name, date, status badge, and optional action buttons.
+     */
     class EventViewHolder extends RecyclerView.ViewHolder {
 
         MaterialCardView cardEvent;
@@ -84,6 +121,11 @@ public class MyEventsAdapter extends RecyclerView.Adapter<MyEventsAdapter.EventV
         LinearLayout buttonContainer;
         MaterialButton btnAccept, btnDecline;
 
+        /**
+         * Creates the ViewHolder and retrieves references to all subviews.
+         *
+         * @param itemView the inflated card layout for one event item
+         */
         public EventViewHolder(@NonNull View itemView) {
             super(itemView);
             cardEvent = itemView.findViewById(R.id.cardEvent);
@@ -96,6 +138,15 @@ public class MyEventsAdapter extends RecyclerView.Adapter<MyEventsAdapter.EventV
             btnDecline = itemView.findViewById(R.id.btnDecline);
         }
 
+        /**
+         * Binds a single {@link Event} object to the UI, including:
+         * • Poster image
+         * • Name and date
+         * • Participation status
+         * • Accept/Decline buttons when applicable
+         *
+         * @param event the event to be displayed in this ViewHolder
+         */
         public void bind(Event event) {
             // Event name
             tvEventName.setText(event.getName());
@@ -140,7 +191,10 @@ public class MyEventsAdapter extends RecyclerView.Adapter<MyEventsAdapter.EventV
         }
 
         /**
-         * Determine user's status for this event
+         * Determines the participation status of the current user for the event.
+         *
+         * @param event the event to evaluate
+         * @return one of: "Attending", "Declined", "🎉 Selected!", "Waiting", or "Unknown"
          */
         private String getUserStatus(Event event) {
             boolean isInWaitingList = event.getWaitingList() != null &&
@@ -164,6 +218,12 @@ public class MyEventsAdapter extends RecyclerView.Adapter<MyEventsAdapter.EventV
             return "Unknown";
         }
 
+        /**
+         * Applies background and text colors to the status badge depending on the status type.
+         *
+         * @param textView the status badge TextView
+         * @param status   the user's event status string
+         */
         private void setStatusColor(TextView textView, String status) {
             int backgroundColor;
             int textColor;
@@ -196,7 +256,10 @@ public class MyEventsAdapter extends RecyclerView.Adapter<MyEventsAdapter.EventV
         }
 
         /**
-         * US 01.05.02 & US 01.05.03: Setup Accept/Decline buttons
+         * Sets up click listeners for Accept and Decline buttons.
+         * Buttons appear only when the user is in the "Selected" state.
+         *
+         * @param event the event for which the user is choosing to accept or decline
          */
         private void setupActionButtons(Event event) {
             // Accept button
@@ -221,8 +284,13 @@ public class MyEventsAdapter extends RecyclerView.Adapter<MyEventsAdapter.EventV
         }
 
         /**
-         * US 01.05.02: Accept invitation - move to attending list
-         * FIX: Remove from BOTH selectedList AND waitingList
+         * Handles the acceptance of an invitation for the event:
+         * • Adds the user to the signed-up (attending) list
+         * • Removes them from both the selected and waiting lists
+         * • Updates Firestore accordingly
+         * • Removes the event card from the list on success
+         *
+         * @param event the event being accepted
          */
         private void acceptInvitation(Event event) {
             btnAccept.setEnabled(false);
@@ -244,7 +312,7 @@ public class MyEventsAdapter extends RecyclerView.Adapter<MyEventsAdapter.EventV
                 event.getSignedUpUsers().add(userId);
             }
 
-            // ✅ FIX: Remove from BOTH selected list AND waiting list
+            // Remove from both selected list and waiting list
             event.getSelectedList().remove(userId);
             event.getWaitingList().remove(userId);
 
@@ -275,8 +343,16 @@ public class MyEventsAdapter extends RecyclerView.Adapter<MyEventsAdapter.EventV
         }
 
         /**
-         * US 01.05.03: Decline invitation - remove from event
-         * US 01.05.01: Automatically draw replacement from waiting list
+         * Handles a user's decision to decline an invitation:
+         * <ul>
+         *   <li>Adds user to declinedUsers</li>
+         *   <li>Removes user from selectedList and waitingList</li>
+         *   <li>Increments cancellation count</li>
+         *   <li>Automatically draws a replacement from waitingList (US 01.05.01)</li>
+         *   <li>Updates Firestore and removes the event card on success</li>
+         * </ul>
+         *
+         * @param event the event the user is declining
          */
         private void declineInvitation(Event event) {
             btnAccept.setEnabled(false);
