@@ -24,8 +24,22 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * FullEventAdapter - Displays events in vertical list with full details
- * Used in EventsFragment and BrowseEventsActivity for main browsing
+ * FullEventAdapter - Displays events in a vertical list with full details.
+ *
+ * Used in:
+ * - EventsFragment
+ * - BrowseEventsActivity
+ *
+ * Provides:
+ * - Poster image
+ * - Event name
+ * - Organizer
+ * - Date & Time
+ * - Location
+ * - Waiting list count
+ * - Capacity
+ *
+ * Supports filtering via search.
  */
 public class FullEventAdapter extends RecyclerView.Adapter<FullEventAdapter.EventViewHolder> {
 
@@ -33,12 +47,24 @@ public class FullEventAdapter extends RecyclerView.Adapter<FullEventAdapter.Even
     private List<Event> events;
     private List<Event> eventsFiltered; // For search/filter
 
+    /**
+     * Constructor for FullEventAdapter.
+     *
+     * @param context the context used for inflating layouts and navigation
+     */
     public FullEventAdapter(Context context) {
         this.context = context;
         this.events = new ArrayList<>();
         this.eventsFiltered = new ArrayList<>();
     }
 
+    /**
+     * Inflates the full event card layout.
+     *
+     * @param parent the parent view group
+     * @param viewType type of view (unused)
+     * @return an {@link EventViewHolder} for the event row
+     */
     @NonNull
     @Override
     public EventViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -46,19 +72,32 @@ public class FullEventAdapter extends RecyclerView.Adapter<FullEventAdapter.Even
         return new EventViewHolder(view);
     }
 
+    /**
+     * Binds event data to the ViewHolder at a given position.
+     *
+     * @param holder the ViewHolder to bind to
+     * @param position index of the event in the filtered list
+     */
     @Override
     public void onBindViewHolder(@NonNull EventViewHolder holder, int position) {
         Event event = eventsFiltered.get(position);
         holder.bind(event);
     }
 
+    /**
+     * Returns the number of filtered events.
+     *
+     * @return count of displayed events
+     */
     @Override
     public int getItemCount() {
         return eventsFiltered.size();
     }
 
     /**
-     * Update the list of events
+     * Updates the adapter with a new list of events.
+     *
+     * @param events the full list of events to display
      */
     public void setEvents(List<Event> events) {
         this.events = new ArrayList<>(events);
@@ -67,7 +106,9 @@ public class FullEventAdapter extends RecyclerView.Adapter<FullEventAdapter.Even
     }
 
     /**
-     * Filter events based on search query
+     * Filters events based on a search query.
+     *
+     * @param query the text used to filter by name, description, organizer, or location
      */
     public void filter(String query) {
         eventsFiltered.clear();
@@ -91,14 +132,16 @@ public class FullEventAdapter extends RecyclerView.Adapter<FullEventAdapter.Even
     }
 
     /**
-     * Get filtered event count
+     * Gets the number of events currently visible (after filtering).
+     *
+     * @return count of filtered events
      */
     public int getFilteredCount() {
         return eventsFiltered.size();
     }
 
     /**
-     * Clear all events
+     * Clears all event lists.
      */
     public void clearEvents() {
         this.events.clear();
@@ -107,7 +150,7 @@ public class FullEventAdapter extends RecyclerView.Adapter<FullEventAdapter.Even
     }
 
     /**
-     * ViewHolder for full event cards
+     * ViewHolder class for full event cards.
      */
     class EventViewHolder extends RecyclerView.ViewHolder {
 
@@ -115,6 +158,11 @@ public class FullEventAdapter extends RecyclerView.Adapter<FullEventAdapter.Even
         TextView tvEventName, tvOrganizer, tvDate, tvLocation, tvWaitingCount, tvCapacity;
         LinearLayout layoutLocation, layoutCapacity;
 
+        /**
+         * Initializes UI components for the event card.
+         *
+         * @param itemView the inflated row layout
+         */
         public EventViewHolder(@NonNull View itemView) {
             super(itemView);
 
@@ -140,6 +188,11 @@ public class FullEventAdapter extends RecyclerView.Adapter<FullEventAdapter.Even
             });
         }
 
+        /**
+         * Binds event data to the ViewHolder UI.
+         *
+         * @param event the Event object to display
+         */
         public void bind(Event event) {
             // Event name
             tvEventName.setText(event.getName() != null ? event.getName() : "Untitled Event");
