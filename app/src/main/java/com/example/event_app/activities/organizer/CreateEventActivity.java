@@ -583,21 +583,8 @@ public class CreateEventActivity extends AppCompatActivity {
     private void generateAndUploadQRCode(String eventId, String eventName) {
         try {
             // Generate QR code bitmap
-            QRCodeWriter writer = new QRCodeWriter();
-            BitMatrix bitMatrix = writer.encode(eventId, BarcodeFormat.QR_CODE, 512, 512);
-
-            int width = bitMatrix.getWidth();
-            int height = bitMatrix.getHeight();
-            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
-
-            for (int x = 0; x < width; x++) {
-                for (int y = 0; y < height; y++) {
-                    bitmap.setPixel(x, y, bitMatrix.get(x, y) ? 0xFF000000 : 0xFFFFFFFF);
-                }
-            }
-
-            // Store QR bitmap for display
-            qrBitmap = bitmap;
+            generateQRCodeBitmap(eventId);
+            Bitmap bitmap = qrBitmap;
 
             // Convert to byte array
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -635,9 +622,39 @@ public class CreateEventActivity extends AppCompatActivity {
         if (qrBitmap != null) {
             showQRCodeDialog(eventId, eventName);
         } else {
-            // If QR bitmap is not available, navigate directly
-            navigateToQRCodeActivity(eventId, eventName);
+            // If QR bitmap is not available, try to generate it again
+            try {
+                generateQRCodeBitmap(eventId);
+                if (qrBitmap != null) {
+                    showQRCodeDialog(eventId, eventName);
+                } else {
+                    navigateToQRCodeActivity(eventId, eventName);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error generating QR code for display", e);
+                navigateToQRCodeActivity(eventId, eventName);
+            }
         }
+    }
+
+    /**
+     * Generate QR code bitmap (helper method)
+     */
+    private void generateQRCodeBitmap(String eventId) throws WriterException {
+        QRCodeWriter writer = new QRCodeWriter();
+        BitMatrix bitMatrix = writer.encode(eventId, BarcodeFormat.QR_CODE, 512, 512);
+
+        int width = bitMatrix.getWidth();
+        int height = bitMatrix.getHeight();
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                bitmap.setPixel(x, y, bitMatrix.get(x, y) ? 0xFF000000 : 0xFFFFFFFF);
+            }
+        }
+
+        qrBitmap = bitmap;
     }
 
     /**
