@@ -5,15 +5,13 @@ import com.google.firebase.firestore.ServerTimestamp;
 import java.util.Date;
 
 /**
- * Notification Model
- * Represents an in-app notification for entrants
+ * Represents an in-app notification delivered to a user within the LuckySpot system.
+ * Notifications are generated for key event-related actions such as lottery results,
+ * invitations, organizer messages, reminders, and administrative updates.
  *
- * Types:
- * - LOTTERY_WON: Selected in lottery
- * - LOTTERY_LOST: Not selected in lottery
- * - EVENT_REMINDER: Reminder before event starts
- * - ORGANIZER_MESSAGE: Custom message from organizer
- * - INVITATION_SENT: Invited to sign up for event
+ * <p>Each notification stores a type, title, message body, associated event ID,
+ * and read status. The model is designed for easy rendering inside the mobile app’s
+ * notification center and for tracking unread alerts.</p>
  */
 public class Notification {
 
@@ -46,7 +44,15 @@ public class Notification {
     }
 
     /**
-     * Constructor for creating new notifications
+     * Creates a new notification with the essential information. The notification
+     * is initially marked unread, and a creation timestamp is recorded.
+     *
+     * @param userId     ID of the recipient user
+     * @param eventId    ID of the related event, if applicable
+     * @param eventName  human-readable event name for display
+     * @param type       one of the predefined notification type constants
+     * @param title      short heading shown in the UI
+     * @param message    full text describing the notification
      */
     public Notification(String userId, String eventId, String eventName, String type,
                         String title, String message) {
@@ -85,7 +91,10 @@ public class Notification {
     public void setTimestamp(Date timestamp) { this.timestamp = timestamp; }
 
     /**
-     * Helper method to get notification icon based on type
+     * Returns a small icon or emoji representing the notification type.
+     * This is used to visually distinguish different notification categories.
+     *
+     * @return an emoji representing the notification’s category
      */
     public String getIcon() {
         switch (type) {
@@ -107,7 +116,10 @@ public class Notification {
     }
 
     /**
-     * Helper method to determine if notification is important
+     * Identifies notifications that are considered high-priority for the user,
+     * such as lottery results or time-sensitive event reminders.
+     *
+     * @return true if this notification is important enough to highlight
      */
     public boolean isImportant() {
         return type.equals(TYPE_LOTTERY_WON) ||
