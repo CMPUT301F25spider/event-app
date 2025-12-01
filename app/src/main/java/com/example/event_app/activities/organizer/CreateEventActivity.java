@@ -676,6 +676,13 @@ public class CreateEventActivity extends AppCompatActivity {
             editDescription.requestFocus();
             return false;
         }
+        String capacityStr = editCapacity.getText().toString().trim();
+        if (TextUtils.isEmpty(capacityStr)) {
+            editCapacity.setError("Capacity is required");
+            editCapacity.requestFocus();
+            return false;
+        }
+
 
         if (eventDate == null) {
             Toast.makeText(this, "Please select event date", Toast.LENGTH_SHORT).show();
