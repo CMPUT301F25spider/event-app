@@ -6,12 +6,11 @@
 ./gradlew test --tests "com.example.event_app.domain.ResultTest"
 
 ./gradlew test --info
-
+```
 ## Current Status
 - **Execution**: `./gradlew test` currently fails in this environment because the Android SDK location is not configured; configure `ANDROID_HOME`/`sdk.dir` locally or in CI before running.
 - **Scope**: All tests rely on dummy data, mocked Firebase/Auth/Firestore, or Robolectric shadows—no live services or UI automation.
 
-```
 # COVERAGE 
 ```
 
